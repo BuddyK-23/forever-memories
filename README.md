@@ -9,10 +9,8 @@ More information is available on our 👉 [technical documentation](https://docs
 ## Features
 
 - User Photo Upload Interface
-
   ☛ A user-friendly interface that allows users to either take a photo using their device’s camera or upload a photo from their file system.
   ☛ This interface should be built using React for a seamless integration with the LUKSO blockchain and IPFS.
-
 - Client-Side Encryption
   ☛ Implement encryption of the photo file directly on the user's device before it is uploaded to IPFS to ensure privacy and security.
   ☛ Use a strong encryption standard, ensuring that the encryption keys are managed securely and ideally are unique to the user or session.
@@ -57,4 +55,4 @@ Run the development server:
 ```bash
 npm run dev
 ```
-### Modified Date: 2024. 4. 30
+### Development Start Date: 2024. 4. 30
