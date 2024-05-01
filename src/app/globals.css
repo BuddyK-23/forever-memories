@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+  --lukso-pink: #f6025b;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      #fff0f8,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.main-content {
+  height: calc(100vh - 64px);
+}
+
+.elementBox {
+  border: 2px solid #fde2e2;
+  background-color: #fdf2f8;
+  margin: 0 2rem 2rem 2rem;
+  padding: 2rem;
+  align-items: center;
+  border-radius: 1rem;
+  min-width: 320px;
+}
+
+.elementDescription {
+  text-align: center;
+}
+
+.bg-lukso-pink {
+  background-color: var(--lukso-pink);
+}
+
+.bg-lukso-pink:hover {
+  background-color: #ef2b6c;
+}
+
+select:focus {
+  border-color: var(--lukso-pink);
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--lukso-pink);
+}
