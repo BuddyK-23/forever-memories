@@ -14,22 +14,15 @@ More information is available on our 👉 [technical documentation](https://docs
   ☛ This interface should be built using React for a seamless integration with the LUKSO blockchain and IPFS.
 
 - Client-Side Encryption
-
   ☛ Implement encryption of the photo file directly on the user's device before it is uploaded to IPFS to ensure privacy and security.
   ☛ Use a strong encryption standard, ensuring that the encryption keys are managed securely and ideally are unique to the user or session.
-
 - IPFS Integration for Storage
-
   ☛ After encryption, the photo will be uploaded to IPFS, and the IPFS hash of the encrypted file will be stored.
   ☛ The IPFS hash is critical as it will be used within the blockchain for referencing the photo in a decentralised manner.
-  
 - Vault Management (LSP-9)
-
   ☛ Develop smart contracts that allow users to create and manage different vaults for categorising their photos.
   ☛ Each vault can represent a different category (e.g., vacations, family, friends) and will contain multiple LSP-8 tokens, each corresponding to an individual photo or memory.
-
 - Minting LSP-8 Tokens
-
   ☛ For each photo uploaded, an LSP-8 token will be minted. This token will represent the "memory," which includes the encrypted photo and metadata such as title, description, and the vault category it belongs to.
   ☛ The minting process will include assigning the photo's IPFS hash as part of the token's metadata to ensure that the photo can be identified and retrieved securely from IPFS.
 
