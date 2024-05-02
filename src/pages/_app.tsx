@@ -14,7 +14,7 @@ import NavBar from '@/components/NavBar';
  *
  * @param { Component, pageProps } - Current page and its properties.
  */
-function LUKSOdAppBoilerplate({ Component, pageProps }: AppProps) {
+function ForeverMemoriesDapp({ Component, pageProps }: AppProps) {
   return (
     <EthereumProvider>
       <NetworkProvider>
@@ -29,4 +29,4 @@ function LUKSOdAppBoilerplate({ Component, pageProps }: AppProps) {
   );
 }
 
-export default LUKSOdAppBoilerplate;
+export default ForeverMemoriesDapp;

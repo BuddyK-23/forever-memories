@@ -15,6 +15,7 @@
   "dependencies": {
     "@cloudflare/next-on-pages": "^1.11.1",
     "@erc725/erc725.js": "^0.24.2",
+    "@lukso/data-provider-urlresolver": "^0.1.0",
     "@lukso/lsp-smart-contracts": "^0.14.0",
     "@lukso/web3-onboard-config": "^1.1.2",
     "@web3-onboard/core": "^2.21.2",
