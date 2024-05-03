@@ -21,6 +21,7 @@ const nextConfig = {
   // https://docs.walletconnect.com/web3modal/nextjs/about
   webpack: (config) => {
     config.externals.push('pino-pretty', 'lokijs', 'encoding');
+    config.resolve.fallback = { fs: false };
     return config;
   },
 };
