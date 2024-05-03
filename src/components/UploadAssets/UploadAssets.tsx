@@ -1,32 +1,46 @@
-import React from 'react';
-import Image from 'next/image';
+import { createReadStream } from 'fs';
+import { IPFSHttpClientUploader } from '@lukso/data-provider-ipfs-http-client';
 
-import identicon from 'ethereum-blockies-base64';
+// Pinata
+const provider = new PinataUploader({
+  pinataApiKey: process.env.TEST_PINATAAPIKEY,
+  pinataSecretApiKey: process.env.TEST_PINATASECRETAPIKEY,
+});
 
-import { useProfile } from '@/contexts/ProfileContext';
-import { useEthereum } from '@/contexts/EthereumContext';
-import styles from './UploadAssets.module.css';
+const file = createReadStream('./path-to-your-file');
+const url = await provider.upload(file);
 
-/**
- * Displays the user's profile information including images,
- * name, account address, description, and tags. The component
- * uses the useProfile and useEthereum hooks to fetch profile
- * and account data, respectively.
- */
-const UploadAssets: React.FC = () => {
-  const { profile } = useProfile();
-  const { account } = useEthereum();
-  const identiconUrl = account ? identicon(account) : '';
+console.log('File URL:', url);
+
+export default function UploadAssets({ gateway, options }: Props) {
+  const provider = useMemo(
+    () => new IPFSHttpClientUploader(gateway, options),
+    []
+  );
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [url, setUrl] = useState("");
+  const [hash, setHash] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+
+  const upload = useCallback(async () => {
+    const file = fileInput?.current?.files?.item(0) as File;
+    const formData = new FormData();
+    formData.append("file", file); // FormData keys are called fields
+    const { hash, url } = await provider.upload(file);
+    setUrl(url);
+    setHash(hash);
+    // const destination = UrlResolver.resolveUrl(url);
+    // setImageUrl(destination);
+  }, []);
 
   return (
-    <div
-      className={`relative bg-white rounded-lg shadow-lg p-4 mx-auto`}
-    >
-      <div className="flex justify-center relative">
-         Upload the assets
+    <div>
+      <input ref={fileInput} type="file" accept="image/*" />
+      <button onClick={upload}>Upload</button>
+      <div className="url">{url}</div>
+      <div>
+        <img className="image" src={imageUrl} alt="uploaded image" />
       </div>
     </div>
   );
-};
-
-export default UploadAssets;
+}
