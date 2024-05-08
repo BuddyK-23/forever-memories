@@ -8,6 +8,7 @@
 
 # PackageJSON
 .package-lock.json
+.yarn-lock.json
 
 # testing
 /coverage

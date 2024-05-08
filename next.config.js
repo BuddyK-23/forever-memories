@@ -19,9 +19,9 @@ const nextConfig = {
   },
   // Wallet Connect Configuration
   // https://docs.walletconnect.com/web3modal/nextjs/about
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.externals.push('pino-pretty', 'lokijs', 'encoding');
-    config.resolve.fallback = { fs: false };
+    config.resolve.fallback = { fs: false};
     return config;
   },
 };

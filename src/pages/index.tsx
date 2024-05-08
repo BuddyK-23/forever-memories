@@ -1,7 +1,8 @@
+'use client'
+
 import ProfilePreview from '@/components/ProfilePreview';
 import UploadAssets from '@/components/UploadAssets';
-import Image from 'next/image';
-
+import Head from 'next/head'
 /**
  * Displays the contents of the landing page within the app.
  */
