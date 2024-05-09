@@ -22,15 +22,20 @@
     "@web3-onboard/core": "^2.21.6",
     "@web3-onboard/injected-wallets": "^2.10.16",
     "@web3modal/ethers": "^4.1.11",
+    "crypto": "^1.0.1",
     "dotenv": "^16.4.5",
     "ethereum-blockies-base64": "^1.0.2",
     "ethers": "^6.11.1",
+    "fs": "^0.0.1-security",
     "next": "14.2.3",
     "react": "^18",
     "react-dom": "^18",
-    "siwe": "^2.3.2"
+    "siwe": "^2.3.2",
+    "util": "^0.12.5"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.0",
+    "@types/next": "^9.0.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

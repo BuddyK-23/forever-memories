@@ -1,13 +1,41 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import Image from 'next/image';
+import React, { useCallback, useRef, useState } from 'react';
 import styles from './UploadAssets.module.css';
-import { config } from 'dotenv';
-config({ path: './.env' });
+import { generateEncryptionKey, decryptFile } from '@/utils/upload';
+// import { config } from 'dotenv';
+// config({ path: './.env' });
 
 const UploadAssets: React.FC = () => {
   const fileInput = useRef<HTMLInputElement>(null);
   const [cid, setCid] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [assetsUrl, setAssetsUrl] = useState('');
+
+  const showAssets = async (ipfsHash: string) => {
+    try {
+      console.log('ipfsHashipfsHash', ipfsHash);
+
+      const response = await fetch(`https://ipfs.io/ipfs/${ipfsHash}`);
+      console.log('response', response);
+      if (!response.ok) {
+        throw new Error('Failed to fetch image from IPFS');
+      }
+      const encryptedData = await response.arrayBuffer();
+      const encryptionKey = await generateEncryptionKey(
+        process.env.NEXT_PUBLIC_ENCRYPTION_KEY!
+      ); // Ensure 256-bit key
+      console.log('encryptionKey', encryptionKey);
+      const decryptedData = await decryptFile(
+        new Uint8Array(encryptedData),
+        encryptionKey
+      );
+      const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
+      const objectURL = URL.createObjectURL(blob);
+      setAssetsUrl(objectURL);
+    } catch (error) {
+      // console.error('Error:', error); // Re-enable error logging
+    }
+  };
+
   const uploadAssets = useCallback(async () => {
     try {
       setUploading(true);
@@ -19,7 +47,8 @@ const UploadAssets: React.FC = () => {
         body: formData,
       });
       const resData = await res.json();
-      setCid(resData.IpfsHash);
+      setCid(resData.ipfsHash);
+      showAssets(resData.ipfsHash);
       setUploading(false);
     } catch (e) {
       console.log(e);
@@ -71,8 +100,8 @@ const UploadAssets: React.FC = () => {
         <div className="hashCid">hashCID: {cid}</div>
         {cid && (
           <img
-            className="w-12 h-12"
-            src={`https://ipfs.io/ipfs/${cid}`}
+            className="w-24 h-24"
+            src={`${assetsUrl}`}
             alt="Image from IPFS"
           />
         )}
