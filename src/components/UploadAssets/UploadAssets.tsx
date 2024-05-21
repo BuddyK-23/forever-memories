@@ -1,8 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import styles from './UploadAssets.module.css';
 import { generateEncryptionKey, decryptFile } from '@/utils/upload';
-// import { config } from 'dotenv';
-// config({ path: './.env' });
 
 const UploadAssets: React.FC = () => {
   const fileInput = useRef<HTMLInputElement>(null);
@@ -62,6 +60,7 @@ const UploadAssets: React.FC = () => {
       className={`${styles.profileContainer} relative bg-white rounded-lg shadow-lg p-4 mx-auto`}
     >
       <div>Pinata upload test interface</div>
+
       <div>
         <div className="flex items-center justify-center w-full">
           <div>
