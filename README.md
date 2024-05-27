@@ -1,58 +1,36 @@
-# 🏗️ Forever Memories (LUKSO dApp)
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-"Forever Memories" dApp focus on creating a dApp on the LUKSO blockchain that allows users to upload photos, encrypt them client-side, store them on IPFS, and manage them through categorised vaults (LSP-9). Each photo, along with its metadata, will be represented as an LSP-8 token, which will be stored in a relevant vault based on its category.
+## Getting Started
 
-Demo URL: <https://forever.memories/>
-
-More information is available on our 👉 [technical documentation](https://docs.lukso.tech/learn/introduction).
-
-## Features
-
-- User Photo Upload Interface <br>
-  ☛ A user-friendly interface that allows users to either take a photo using their device’s camera or upload a photo from their file system. <br>
-  ☛ This interface should be built using React for a seamless integration with the LUKSO blockchain and IPFS. <br>
-- Client-Side Encryption <br>
-  ☛ Implement encryption of the photo file directly on the user's device before it is uploaded to IPFS to ensure privacy and security. <br>
-  ☛ Use a strong encryption standard, ensuring that the encryption keys are managed securely and ideally are unique to the user or session. <br>
-- IPFS Integration for Storage <br>
-  ☛ After encryption, the photo will be uploaded to IPFS, and the IPFS hash of the encrypted file will be stored. <br>
-  ☛ The IPFS hash is critical as it will be used within the blockchain for referencing the photo in a decentralised manner. <br>
-- Vault Management (LSP-9) <br>
-  ☛ Develop smart contracts that allow users to create and manage different vaults for categorising their photos. <br>
-  ☛ Each vault can represent a different category (e.g., vacations, family, friends) and will contain multiple LSP-8 tokens, each corresponding to an individual photo or memory. <br>
-- Minting LSP-8 Tokens <br>
-  ☛ For each photo uploaded, an LSP-8 token will be minted. This token will represent the "memory," which includes the encrypted photo and metadata such as title, description, and the vault category it belongs to. <br>
-  ☛ The minting process will include assigning the photo's IPFS hash as part of the token's metadata to ensure that the photo can be identified and retrieved securely from IPFS.
-
-## Development
-
-- Built-in [`ethers.js`](https://docs.ethers.org/), [`erc725.js`](https://docs.lukso.tech/tools/erc725js/getting-started), [`lsp-smart-contracts`](https://docs.lukso.tech/tools/lsp-smart-contracts/getting-started)
-- Uses `Tailwind`, `Prettier`, `TypeScript`
-
-
-Clone the repository:
-
-```bash
-git clone https://github.com/BuddyK-23/forever-memories.git
-```
-
-Install all packages and libraries:
-
-```bash
-npm install
-```
-
-Setup local environment variables:
-
-> If you use Wallet Connect, you will have to import a Project ID. You can simply copy the example environment file and input the parameter.
-
-```bash
-cp .env.local.example .env.local
-```
-
-Run the development server:
+First, run the development server:
 
 ```bash
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
-### Development Start Date: 2024. 4. 30
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.

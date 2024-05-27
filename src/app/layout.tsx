@@ -1,7 +1,7 @@
-import React from 'react';
-import Head from 'next/head';
-
-import { config } from '@/app/config';
+import React from "react";
+import Header from "@/components/Header";
+import { config } from "@/app/config";
+import "./globals.css";
 
 /**
  * Defines the basic layout for the application. It includes the
@@ -15,13 +15,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div>
-      <Head>
+    <html>
+      <>
         <title>{config.metadata.title}</title>
         <meta name="description" content={config.metadata.description} />
-        <link rel="icon" href="/images/favicon.ico" sizes="any" />
-      </Head>
-      <div>{children}</div>
-    </div>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+      </>
+      <body>
+        <Header />
+        {children}
+      </body>
+    </html>
   );
 }

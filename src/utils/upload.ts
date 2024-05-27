@@ -1,9 +1,9 @@
-import crypto, { createHash, createDecipheriv } from 'crypto';
+import crypto, { createHash, createDecipheriv } from "crypto";
 
 export async function generateEncryptionKey(
   encryptionKey: string
 ): Promise<Uint8Array> {
-  const hash = createHash('sha256');
+  const hash = createHash("sha256");
   hash.update(encryptionKey);
   return hash.digest();
 }
@@ -20,16 +20,16 @@ export async function encryptFile(
 
   // Import encryption key
   const key = await crypto.subtle.importKey(
-    'raw',
+    "raw",
     encryptionKey,
-    'AES-CBC',
+    "AES-CBC",
     false,
-    ['encrypt']
+    ["encrypt"]
   );
 
   // Encrypt the file content directly
   const encryptedData = await crypto.subtle.encrypt(
-    { name: 'AES-CBC', iv },
+    { name: "AES-CBC", iv },
     key,
     fileBuffer
   );
@@ -49,7 +49,7 @@ export async function decryptFile(
   const encryptedContent = encryptedData.slice(16);
 
   // Create a Decipheriv object using AES-CBC algorithm
-  const decipher = createDecipheriv('aes-256-cbc', encryptionKey, iv);
+  const decipher = createDecipheriv("aes-256-cbc", encryptionKey, iv);
 
   // Perform decryption
   let decryptedData = decipher.update(encryptedContent);
