@@ -11,8 +11,9 @@ const Navbar = () => {
   const [nav, setNav] = useState(false);
   const [showModal, setShowModal] = React.useState(false);
   const providers = useSyncProviders();
-  const [selectedWallet, setSelectedWallet] = useState<EIP6963ProviderDetail>();
+  // const [selectedWallet, setSelectedWallet] = useState<EIP6963ProviderDetail>();
   const [userAccount, setUserAccount] = useState<string>("");
+  const [walletType, setWalletType] = useState<string>("");
 
   const links = [
     {
@@ -58,6 +59,7 @@ const Navbar = () => {
 
   useEffect(() => {
     setUserAccount(localStorage.getItem("userAccount") || "");
+    setWalletType(localStorage.getItem("walletType") || "");
   }, []);
 
   const handleConnect = async (providerWithInfo: EIP6963ProviderDetail) => {
@@ -65,12 +67,11 @@ const Navbar = () => {
     if (providerWithInfo.info.name == "MetaMask") {
       provider = new ethers.BrowserProvider(window.ethereum);
       localStorage.setItem("walletType", "MetaMask");
+      setWalletType("MetaMask");
     } else if (providerWithInfo.info.name == "Universal Profile") {
       provider = new ethers.BrowserProvider(window.lukso);
       localStorage.setItem("walletType", "UP");
-    } else if (providerWithInfo.info.name == "Trust Wallet") {
-      provider = new ethers.BrowserProvider(window.TrustBinanceChain);
-      localStorage.setItem("walletType", "TrustBinanceChain");
+      setWalletType("UP");
     } else {
       console.log("Unknown provider");
       return;
@@ -129,7 +130,7 @@ const Navbar = () => {
         type="button"
         className="px-6 pb-2 pt-2.5 text-xs bg-red-500 font-medium uppercase leading-normal text-white rounded-md"
       >
-        {userAccount ? "Disconnect" : "Connect"}
+        {userAccount ? walletType + " : " + userAccount : "Connect"}
       </button>
 
       {showModal ? (

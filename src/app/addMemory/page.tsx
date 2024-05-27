@@ -96,6 +96,7 @@ export default function AddMemory() {
   const handleAddMemory = async (e: React.FormEvent<HTMLFormElement>) => {
     try {
       e.preventDefault();
+      setUploading(true);
       const formData = new FormData();
       !file ? "" : formData.append("file", file); // FormData keys are called fields
       console.log("formData", formData);
@@ -267,13 +268,15 @@ export default function AddMemory() {
     );
     await tx.wait();
     console.log("tx", tx);
+
+    setUploading(false);
   };
 
   return (
     <div className="flex flex-col items-center justify-center main-content">
       <div className="rounded-lg border border-red-100 p-5 bg-pink-50 mt-4 w-1/2">
         <h4 className="text-xl mb-2 font-bold">Add Memory</h4>
-        <form className="max-w-sm" onSubmit={handleAddMemory}>
+        <form className="" onSubmit={handleAddMemory}>
           <div className="mb-4">
             <div className="flex items-center justify-center w-full">
               <label
@@ -379,7 +382,7 @@ export default function AddMemory() {
               id="headline"
               type="text"
               className="rounded p-2 w-full border-solid border-2 border-black-500"
-              placeholder="Input the Token Name"
+              placeholder="Input the Owner Address"
               value={ownerAddress}
               onChange={(e) => setOwnerAddress(e.target.value)}
             />
@@ -489,13 +492,14 @@ export default function AddMemory() {
               value={selectedTags}
             />
           </div>
-
-          <button
-            type="submit"
-            className="mt-4 bg-blue-500 text-white py-2 px-4 rounded"
-          >
-            Store Memory On Chain
-          </button>
+          <div className="w-full flex justify-center">
+            <button
+              type="submit"
+              className="mt-4 bg-blue-500 text-white py-2 px-4 rounded"
+            >
+              {uploading ? "Storing..." : "Store Memory On Chain"}
+            </button>
+          </div>
         </form>
       </div>
     </div>
