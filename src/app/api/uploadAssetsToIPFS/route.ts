@@ -1,14 +1,15 @@
 import { NextResponse, NextRequest } from "next/server";
 import { generateEncryptionKey, encryptFile } from "@/utils/upload";
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+export const dynamic = "auto";
+export const dynamicParams = true;
+export const revalidate = false;
+export const fetchCache = "auto";
+export const runtime = "nodejs";
+export const preferredRegion = "auto";
+export const maxDuration = 5;
 
-export async function uploadToPinata(data: ArrayBuffer): Promise<string> {
-  console.log("server dispatch");
+async function uploadToPinata(data: ArrayBuffer): Promise<string> {
   const formData = new FormData();
   formData.append("file", new Blob([data]));
   const response = await fetch(

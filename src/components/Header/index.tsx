@@ -3,17 +3,14 @@
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
-import { useSyncProviders } from "@/hooks/useSyncProviders";
 import { ethers } from "ethers";
+import { useConnectWallet } from "@web3-onboard/react";
+
 import "./index.css";
 
 const Navbar = () => {
   const [nav, setNav] = useState(false);
-  const [showModal, setShowModal] = React.useState(false);
-  const providers = useSyncProviders();
-  // const [selectedWallet, setSelectedWallet] = useState<EIP6963ProviderDetail>();
-  const [userAccount, setUserAccount] = useState<string>("");
-  const [walletType, setWalletType] = useState<string>("");
+  const [{ wallet, connecting }, connect, disconnect] = useConnectWallet();
 
   const links = [
     {
@@ -43,50 +40,9 @@ const Navbar = () => {
     },
   ];
 
-  const handleWalletButton = async () => {
-    if (userAccount) {
-      handleDisconnect();
-    } else {
-      setShowModal(true);
-    }
-  };
-
-  const handleDisconnect = async () => {
-    localStorage.removeItem("userAccount");
-    localStorage.removeItem("walletType");
-    setUserAccount("");
-  };
-
-  useEffect(() => {
-    setUserAccount(localStorage.getItem("userAccount") || "");
-    setWalletType(localStorage.getItem("walletType") || "");
-  }, []);
-
-  const handleConnect = async (providerWithInfo: EIP6963ProviderDetail) => {
-    let provider;
-    if (providerWithInfo.info.name == "MetaMask") {
-      provider = new ethers.BrowserProvider(window.ethereum);
-      localStorage.setItem("walletType", "MetaMask");
-      setWalletType("MetaMask");
-    } else if (providerWithInfo.info.name == "Universal Profile") {
-      provider = new ethers.BrowserProvider(window.lukso);
-      localStorage.setItem("walletType", "UP");
-      setWalletType("UP");
-    } else {
-      console.log("Unknown provider");
-      return;
-    }
-    const accounts = await provider.send("eth_requestAccounts", []);
-    localStorage.setItem("userAccount", accounts[0]);
-
-    setUserAccount(accounts[0]);
-    setShowModal(false);
-  };
-
   return (
     <div className="flex justify-between items-center w-full h-20 px-4 text-white bg-black nav">
       <div>
-        {/* <h1 className="text-5xl font-signature ml-2"><a className="link-underline hover:transition ease-in-out delay-150 hover:underline hover:decoration-solid" href="">Logo</a></h1> */}
         <h1 className="text-3xl font-signature ml-2">
           <Link href={"/"}>Forever Memories</Link>
         </h1>
@@ -126,54 +82,12 @@ const Navbar = () => {
       )}
 
       <button
-        onClick={handleWalletButton}
-        type="button"
-        className="px-6 pb-2 pt-2.5 text-xs bg-red-500 font-medium uppercase leading-normal text-white rounded-md"
+        className="walletStyle"
+        disabled={connecting}
+        onClick={() => (wallet ? disconnect(wallet) : connect())}
       >
-        {userAccount ? walletType + " : " + userAccount : "Connect"}
+        {connecting ? "Connecting" : wallet ? "Disconnect" : "Connect"}
       </button>
-
-      {showModal ? (
-        <>
-          <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-            <div className="w-auto my-6 mx-auto max-w-3xl flex justify-center items-center relative">
-              {/*content*/}
-              <div className="text-red-500 border-0 rounded-lg shadow-lg  relative w-full bg-white outline-none focus:outline-none">
-                {/*body*/}
-                <div className="relative p-6 flex-auto text-center">
-                  <h2 className="pb-6">Wallets Detected:</h2>
-                  <div>
-                    {providers.length > 0 ? (
-                      providers?.map((provider: EIP6963ProviderDetail) => (
-                        <button
-                          key={provider.info.uuid}
-                          onClick={() => handleConnect(provider)}
-                        >
-                          <img
-                            className="walletStyle"
-                            src={provider.info.icon}
-                            alt={provider.info.name}
-                          />
-                          <div>{provider.info.name}</div>
-                        </button>
-                      ))
-                    ) : (
-                      <div>No Announced Wallet Providers</div>
-                    )}
-                  </div>
-                  <button
-                    className="px-3 pb-2 pt-2.5 text-xs bg-red-400 font-medium uppercase leading-normal text-white rounded-md mt-4"
-                    onClick={() => setShowModal(false)}
-                  >
-                    close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
-        </>
-      ) : null}
     </div>
   );
 };

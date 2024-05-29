@@ -1,8 +1,11 @@
+"use client";
+
 import React from "react";
 import Header from "@/components/Header";
 import { config } from "@/app/config";
 import "./globals.css";
-
+import web3Onboard from "@/components/WalletContext";
+import { Web3OnboardProvider } from "@web3-onboard/react";
 /**
  * Defines the basic layout for the application. It includes the
  * global font styling and a consistent layout for all pages.
@@ -19,11 +22,13 @@ export default function RootLayout({
       <>
         <title>{config.metadata.title}</title>
         <meta name="description" content={config.metadata.description} />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href={config.metadata.icon} sizes="any" />
       </>
       <body>
-        <Header />
-        {children}
+        <Web3OnboardProvider web3Onboard={web3Onboard}>
+          <Header />
+          {children}
+        </Web3OnboardProvider>
       </body>
     </html>
   );
