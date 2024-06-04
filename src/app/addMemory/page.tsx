@@ -7,9 +7,12 @@ import { ethers } from "ethers";
 import { ERC725 } from "@erc725/erc725.js";
 import LSP4DigitalAsset from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
 import LSP8Collection from "@/smartcontracts/artifacts/LSP8Collection.json";
+import ForeverMemoryCollection from "@/smartcontracts/artifacts/ForeverMemoryCollection.json";
 import { useConnectWallet } from "@web3-onboard/react";
+import { FMTContract } from "@/components/MasterWalletProvider";
 import "./index.css";
-
+const ForeverMemoryCollectionContractAddress =
+  "0xfce4290Dd973eF4d68CA95E600334D66a8Fe849C"; // Daily Selfie Contract Address on Mainnet
 interface TagOption {
   value: number;
   label: string;
@@ -119,8 +122,9 @@ export default function AddMemory() {
   };
 
   const handleStoreMemory = async (e: React.FormEvent<HTMLFormElement>) => {
-    console.log("handleStoreMemory clicked");
     e.preventDefault();
+
+    /////////////////////////////////////////////////////////
     if (wallet) {
       try {
         setUploading(true);
@@ -140,91 +144,108 @@ export default function AddMemory() {
           wallet.provider,
           "any"
         );
-        console.log("wallet", wallet.accounts[0].address);
         const owner = wallet.accounts[0].address;
         const provider = wallet.provider;
         const signer = await ethersProvider.getSigner(owner);
-        console.log("provider", provider);
-        const lsp7SubCollectionMetadata = {
-          LSP4Metadata: {
-            // name: 'Daily Selfie',
-            headline,
-            description,
-            links: [],
-            icons: [
-              {
-                width: 256,
-                height: 256,
-                url: "ipfs://" + cid,
-                verification: {
-                  method: "keccak256(bytes)",
-                  data: "0xdd6b5fb6dc984fda0222fb6f6e96b471c0667b12f03b1e804f7b5e6ab62acdb0",
-                },
-              },
-            ],
-            images: [
-              [
+        console.log("owner", owner);
+
+        const ForeverMemoryContract = new ethers.Contract(
+          ForeverMemoryCollectionContractAddress,
+          ForeverMemoryCollection.abi,
+          signer
+        );
+
+        const isOneDay = await ForeverMemoryContract.isOneDay(owner);
+
+        if (isOneDay) {
+          ///////////// mint function logic
+          const lsp7SubCollectionMetadata = {
+            LSP4Metadata: {
+              // name: 'Daily Selfie',
+              headline,
+              description,
+              links: [],
+              icons: [
                 {
-                  width: 1024,
-                  height: 974,
+                  width: 256,
+                  height: 256,
                   url: "ipfs://" + cid,
                   verification: {
                     method: "keccak256(bytes)",
-                    data: "0x951bf983a4b7bcebc5c0b00a5e783630dcb788e95ee9e44b0b7d4bde4a0b4d81",
+                    data: "0xdd6b5fb6dc984fda0222fb6f6e96b471c0667b12f03b1e804f7b5e6ab62acdb0",
                   },
                 },
               ],
-            ],
-            assets: [
-              {
-                verification: {
-                  method: "keccak256(bytes)",
-                  data: "0x88f3d704f3d534267c564019ce2b70a5733d070e71bf2c1f85b5fc487f47a46f",
+              images: [
+                [
+                  {
+                    width: 1024,
+                    height: 974,
+                    url: "ipfs://" + cid,
+                    verification: {
+                      method: "keccak256(bytes)",
+                      data: "0x951bf983a4b7bcebc5c0b00a5e783630dcb788e95ee9e44b0b7d4bde4a0b4d81",
+                    },
+                  },
+                ],
+              ],
+              assets: [
+                {
+                  verification: {
+                    method: "keccak256(bytes)",
+                    data: "0x88f3d704f3d534267c564019ce2b70a5733d070e71bf2c1f85b5fc487f47a46f",
+                  },
+                  url: "ifps://" + cid,
+                  fileType: "jpg",
                 },
-                url: "ifps://" + cid,
-                fileType: "jpg",
-              },
-            ],
-            attributes: [],
-          },
-        };
-        const lsp7SubCollectionMetadataCID = "ipfs://" + cid;
-        const erc725 = new ERC725(LSP4DigitalAsset, "", "", {});
-        const encodeLSP7Metadata = erc725.encodeData([
-          {
-            keyName: "LSP4Metadata",
-            value: {
-              json: lsp7SubCollectionMetadata,
-              url: lsp7SubCollectionMetadataCID,
+              ],
+              attributes: [],
             },
-          },
-        ]);
-        console.log("owner", owner);
+          };
+          const lsp7SubCollectionMetadataCID = "ipfs://" + cid;
+          const erc725 = new ERC725(LSP4DigitalAsset, "", "", {});
+          const encodeLSP7Metadata = erc725.encodeData([
+            {
+              keyName: "LSP4Metadata",
+              value: {
+                json: lsp7SubCollectionMetadata,
+                url: lsp7SubCollectionMetadataCID,
+              },
+            },
+          ]);
+          console.log("owner", owner);
 
-        const LSP8CollectionContractAddress =
-          "0x208a4d0224f7b4d52e5ee0b4b376b3ec78fe5c44"; // Daily Selfie Contract Address on Mainnet
-
-        const LSP8contract = new ethers.Contract(
-          LSP8CollectionContractAddress,
-          LSP8Collection.abi,
-          signer
-        );
-        console.log("encodeLSP7Metadata", encodeLSP7Metadata.values[0]);
-        const tx = await LSP8contract.mint(
-          tokenName, // tokenName
-          tokenSymbol, //tokenSymbol
-          2, //token type, if 1, NFT
-          false, // isNonDivisible
-          copies, // totalSupplyofLSP7
-          owner, //receiverOfInitialTokens_
-          encodeLSP7Metadata.values[0]
-        );
-        console.log("Transaction sent:", tx.hash);
-        const receipt = await tx.wait();
-        console.log("Transaction confirmed:", receipt);
-        setTxHash(receipt.transactionHash);
-        setBlockHash(receipt.blockHash);
-        setUploading(false);
+          const tx = await ForeverMemoryContract.mint(
+            tokenName, // tokenName
+            tokenSymbol, //tokenSymbol
+            2, //token type, if 1, NFT
+            false, // isNonDivisible
+            copies, // totalSupplyofLSP7
+            owner, //receiverOfInitialTokens_
+            encodeLSP7Metadata.values[0]
+          );
+          //////////// send reward token logic
+          const gasLimit = 100000;
+          const rewardAmount = await ForeverMemoryContract.rewardAmount();
+          const mWalletOwner = await FMTContract.owner();
+          console.log("mWalletOwner:", mWalletOwner);
+          const decimals = await FMTContract.balanceOf(mWalletOwner);
+          console.log("decimals:", decimals);
+          const amount = ethers.utils.parseUnits(rewardAmount, 18);
+          console.log("amount:", amount);
+          const txt = await FMTContract.transfer(
+            mWalletOwner,
+            owner,
+            amount,
+            false,
+            "0x",
+            { gasLimit: gasLimit }
+          );
+          console.log("tx:", txt);
+          setUploading(false);
+        } else {
+          alert("Minting only once a day!");
+        }
       } catch (e) {
         console.log(e);
         setUploading(false);

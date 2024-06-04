@@ -2,6 +2,7 @@
 
 import React from "react";
 import Header from "@/components/Header";
+
 import { config } from "@/app/config";
 import "./globals.css";
 import web3Onboard from "@/components/WalletContext";
