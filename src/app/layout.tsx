@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html>
+    <html lang="en-US">
       <>
         <title>{config.metadata.title}</title>
         <meta name="description" content={config.metadata.description} />
