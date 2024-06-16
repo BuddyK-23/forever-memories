@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import FMT from "@/smartcontracts/artifacts/FMT.json";
+import FMT from "@/artifacts/FMT.json";
 
 // Test
 const providerUrl = "https://4201.rpc.thirdweb.com/";
