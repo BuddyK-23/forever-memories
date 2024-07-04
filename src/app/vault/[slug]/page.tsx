@@ -130,9 +130,8 @@ export default function Page({ params }: { params: { slug: string } }) {
             },
           ]);
           const ipfsHash = decodedMetadata[0].value.url;
-          console.log("decodedMetadata", decodedMetadata);
-          console.log("ipfsHash", ipfsHash);
 
+          if (ipfsHash == "") continue;
           const fetchUrl = "https://ipfs.io/ipfs/" + ipfsHash;
           const response = await fetch(fetchUrl);
           console.log("response", response);
