@@ -157,7 +157,8 @@ export default function AddMemory() {
         });
 
         const resData = await res.json();
-        setCid(resData.ipfsHash);
+        const ipfsHash = resData.ipfsHash;
+        setCid(ipfsHash);
 
         ethersProvider = new ethers.providers.Web3Provider(
           wallet.provider,
@@ -216,14 +217,14 @@ export default function AddMemory() {
                     method: "keccak256(bytes)",
                     data: "0x88f3d704f3d534267c564019ce2b70a5733d070e71bf2c1f85b5fc487f47a46f",
                   },
-                  url: "ifps://" + cid,
+                  url: "ifps://" + ipfsHash,
                   fileType: "jpg",
                 },
               ],
               attributes: [],
             },
           };
-          const lsp7SubCollectionMetadataCID = cid;
+          const lsp7SubCollectionMetadataCID = ipfsHash;
           const erc725 = new ERC725(LSP4DigitalAsset, "", "", {});
           const encodeLSP7Metadata = erc725.encodeData([
             {
@@ -234,7 +235,6 @@ export default function AddMemory() {
               },
             },
           ]);
-          console.log("owner", owner);
 
           const tx = await ForeverMemoryContract.mint(
             tokenName, // tokenName

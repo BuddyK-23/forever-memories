@@ -11,7 +11,6 @@ import lsp4Schema from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
 import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
 import { generateEncryptionKey, decryptFile } from "@/utils/upload";
 
-
 interface TokenData {
   cid: string;
   tokenSymbol: string;
@@ -41,7 +40,7 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [vaultSymbol, setVaultSymbol] = useState<string>();
   const [{ wallet }] = useConnectWallet();
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
-  
+
   useEffect(() => {
     fetchNFT();
   }, [wallet]);
@@ -78,9 +77,11 @@ export default function Page({ params }: { params: { slug: string } }) {
 
       const name = await vaultAsset.getData("LSP4TokenName");
       const symbol = await vaultAsset.getData("LSP4TokenSymbol");
+
       setVaultName(name.value as string);
       setVaultSymbol(symbol.value as string);
       const vault = await vaultAsset.getData("LSP4Metadata");
+
       let vault_ipfsHash;
       if (hasUrlProperty(vault?.value)) {
         vault_ipfsHash = vault.value.url;
@@ -88,7 +89,9 @@ export default function Page({ params }: { params: { slug: string } }) {
         // Handle the case where vault?.value does not have a 'url' property
         console.log("The value does not have a 'url' property.");
       }
-      const response = await fetch(`https://ipfs.io/ipfs/${vault_ipfsHash}`);
+      const fetchUrl = "https://ipfs.io/ipfs/" + vault_ipfsHash;
+      const response = await fetch(fetchUrl);
+     
       if (!response.ok) {
         throw new Error("Failed to fetch image from IPFS");
       }
@@ -102,6 +105,7 @@ export default function Page({ params }: { params: { slug: string } }) {
       setVaultCid(_vaultCid);
 
       const result = await VaultContract.tokenIdsOf(vaultAddress);
+   
 
       // NFT info
       if (result.length > 0) {
@@ -112,12 +116,12 @@ export default function Page({ params }: { params: { slug: string } }) {
             signer
           );
           const balance = await lsp7Contract.balanceOf(owner);
+        
           if (hexToDecimal(balance._hex) == 0) continue;
           const tokenIdMetadata = await VaultContract.getDataForTokenId(
             result[i],
             ERC725YDataKeys.LSP4["LSP4Metadata"]
           );
-
           const erc725js = new ERC725(lsp4Schema);
           const decodedMetadata = erc725js.decodeData([
             {
@@ -126,8 +130,12 @@ export default function Page({ params }: { params: { slug: string } }) {
             },
           ]);
           const ipfsHash = decodedMetadata[0].value.url;
+          console.log("decodedMetadata", decodedMetadata);
+          console.log("ipfsHash", ipfsHash);
 
-          const response = await fetch(`https://ipfs.io/ipfs/${ipfsHash}`);
+          const fetchUrl = "https://ipfs.io/ipfs/" + ipfsHash;
+          const response = await fetch(fetchUrl);
+          console.log("response", response);
           if (!response.ok) {
             throw new Error("Failed to fetch image from IPFS");
           }
