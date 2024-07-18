@@ -1,117 +1,52 @@
 // Import the necessary components
-import { ConnectModalOptions } from "@web3-onboard/core/dist/types";
-import injectedModule from "@web3-onboard/injected-wallets";
-import luksoModule from "@lukso/web3-onboard-config";
-import { init } from "@web3-onboard/react";
+import { createWeb3Modal, defaultConfig } from "@web3modal/ethers5/react";
 
-// Initialize the LUKSO provider from this library
+const projectId = "a1bda241f0519c5d662bd07e0705acaf";
 export const luksoProvider = luksoModule();
 
-// Define the download link for the extension
-export const UP_BROWSER_EXTENSION_URL =
-  "https://chrome.google.com/webstore/detail/universal-profiles/abpickdkkbnbcoepogfhkhennhfhehfn?hl";
+// Setup the Metadata
+const walletConnectMetadata = {
+  name: "Example dApp",
+  description: "dApp using Wallet Connect",
+  url: "https://my.dapp.domain",
+  icons: ["https://my.dapp.domain/icon.svg"],
+};
 
-// Set up the injected wallet interface
-export const injectedWallets = injectedModule({
-  /**
-   * Add custom wallets here that you want
-   * to inject into Web3-Onboard
-   */
-  custom: [luksoProvider],
-
-  // OPTIONAL: Add sorting for supported wallets
-  sort: (wallets) => {
-    const sorted = wallets.reduce<any[]>((sorted, wallet) => {
-      /**
-       * Universal Profiles will be placed at the
-       * top of the wallet connection screen
-       *
-       * Add other injected wallet names here
-       * to adjust their order
-       */
-      if (wallet.label === "Universal Profiles") {
-        sorted.unshift(wallet);
-      } else {
-        sorted.push(wallet);
-      }
-      return sorted;
-    }, []);
-    return sorted;
-  },
-
-  /**
-   * OPTIONAL: Specify wallets that should still be displayed
-   * in the list, even when unavailable in the browser
-   */
-  displayUnavailable: ["Universal Profiles"],
+// Initialize the Configuration Element
+const walletConnectConfig = defaultConfig({
+  metadata: walletConnectMetadata,
 });
 
-/**
- * Define at least one blockchain network that is able to
- * interact with the Universal Profile Browser Extension
- */
-export const supportedChains = [
-  // https://docs.lukso.tech/networks/mainnet/parameters
-  {
-    id: 42,
-    token: "LYX",
-    label: "LUKSO Mainnet",
-    rpcUrl: "https://42.rpc.thirdweb.com/",
-  },
+// Define the supported networks
+const supportedChains = [
   // https://docs.lukso.tech/networks/testnet/parameters
   {
-    id: 4021,
-    token: "LYXt",
-    label: "LUKSO Testnet",
+    chainId: 4021,
+    name: "LUKSO Testnet",
+    currency: "LYXt",
+    explorerUrl: "https://explorer.execution.testnet.lukso.network/",
     rpcUrl: "https://4201.rpc.thirdweb.com/",
+  },
+  {
+    chainId: 42,
+    name: "LUKSO Mainnet",
+    currency: "LYXt",
+    explorerUrl: "https://explorer.lukso.network",
+    rpcUrl: "https://42.rpc.thirdweb.com/",
   },
 ];
 
-/**
- * OPTIONAL: Set up the app description of the
- * Web3-Onboard connection window
- */
-export const appInfo = {
-  name: "Forever Memories Dapp",
-  /**
-   * Pictures can either be a valid
-   * Image URL or SVG as string
-   *
-   * The icon shows behind the extension picture
-   * on the right side, while the connection
-   * is being established
-   */
-  icon: "favicon.ico",
-  /**
-   * The logo shows left of the wallet list,
-   * indicating the used app
-   */
-  logo: "favicon.ico",
-  description: "Forever Memories Dapp using Web3-Onboard",
-  recommendedInjectedWallets: [
-    /**
-     * Add other injected wallets and their download links
-     * to directly take users to the installation screen
-     */
-    {
-      name: "Universal Profiles",
-      url: UP_BROWSER_EXTENSION_URL,
-    },
-  ],
+// Define chain images for the network screen
+const walletConnectChainImages = {
+  42: "https://my.dapp.domain/lyx_symbol.svg",
+  4201: "https://my.dapp.domain/lyx_symbol.svg",
 };
 
-// OPTIONAL: Set up global installation notices
-const connectionOptions: ConnectModalOptions = {
-  iDontHaveAWalletLink: UP_BROWSER_EXTENSION_URL,
-  removeWhereIsMyWalletWarning: true,
-};
-
-// Create the Web3-Onboard Component
-export default init({
-  wallets: [injectedWallets],
+// Create the Web3 Modal Instance
+export const walletConnectInstance = createWeb3Modal({
+  ethersConfig: walletConnectConfig,
   chains: supportedChains,
-
-  // OPTIONAL COMPONENTS:
-  appMetadata: appInfo,
-  connect: connectionOptions,
+  projectId, // Import the project ID from https://cloud.walletconnect.com
+  chainImages: walletConnectChainImages,
+  featuredWalletIds: ["NONE"], // OPTIONAL: Only show wallets that are installed by the user
 });

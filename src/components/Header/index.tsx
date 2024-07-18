@@ -3,40 +3,19 @@
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
-import { useConnectWallet } from "@web3-onboard/react";
-
+import { useWeb3ModalAccount } from "@web3modal/ethers5/react";
+import { walletConnectInstance } from "@/components/WalletContext";
 import "./index.css";
 
 const Navbar = () => {
   const [nav, setNav] = useState(false);
-  const [{ wallet, connecting }, connect, disconnect] = useConnectWallet();
-
-  useEffect(() => {
-    const storedConnectedLabel = localStorage.getItem("connectedLabel");
-    if (storedConnectedLabel) {
-      connect({
-        autoSelect: { label: storedConnectedLabel, disableModals: true },
-      });
-    }
-  }, []);
-
+  const { address, isConnected } = useWeb3ModalAccount();
   const handleConnect = async () => {
-    const wallets = await connect();
-    if (wallets.length > 0) {
-      const connectedWallet = wallets[0];
-      localStorage.setItem("connectedLabel", connectedWallet.label);
-      localStorage.setItem(  
-        "connectedAddress",
-        connectedWallet.accounts[0].address
-      );
-    }
+    await walletConnectInstance.open();
   };
 
   const handleDisconnect = async () => {
-    if (wallet) {
-      disconnect(wallet);
-    }
-    localStorage.removeItem("connectedLabel");
+    await walletConnectInstance.disconnect();
     localStorage.removeItem("connectedAddress");
   };
 
@@ -108,13 +87,12 @@ const Navbar = () => {
           ))}
         </ul>
       )}
-
       <button
         className="walletStyle"
-        disabled={connecting}
-        onClick={() => (wallet ? handleDisconnect() : handleConnect())}
+        // disabled={connecting}
+        onClick={() => (isConnected ? handleDisconnect() : handleConnect())}
       >
-        {connecting ? "Connecting" : wallet ? "Disconnect" : "Connect"}
+        {isConnected ? "Disconnect" : "Connect"}
       </button>
     </div>
   );

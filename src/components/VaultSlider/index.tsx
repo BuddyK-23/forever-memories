@@ -5,7 +5,10 @@ import Link from "next/link";
 import { FaAngleLeft, FaAngleRight, FaRegCircleCheck } from "react-icons/fa6";
 import ForeverMemoryCollection from "@/artifacts/ForeverMemoryCollection.json";
 import { ethers } from "ethers";
-import { useConnectWallet } from "@web3-onboard/react";
+import {
+  useWeb3ModalAccount,
+  useWeb3ModalProvider,
+} from "@web3modal/ethers5/react";
 import { ERC725 } from "@erc725/erc725.js";
 import lsp4Schema from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
 import { hexToDecimal } from "@/utils/format";
@@ -66,22 +69,22 @@ interface VaultsData {
 
 const VaultSlider = () => {
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [{ wallet }] = useConnectWallet();
+  const { address, isConnected } = useWeb3ModalAccount();
+  const { walletProvider } = useWeb3ModalProvider();
   const [vaultsDataArray, setVaultsDataArray] = useState<VaultsData[]>([]);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   useEffect(() => {
     fetchData();
-  }, [wallet]);
+  }, [isConnected]);
 
   const fetchData = async () => {
-    if (wallet) {
+    if (isConnected && walletProvider) {
       const ethersProvider = new ethers.providers.Web3Provider(
-        wallet.provider,
+        walletProvider,
         "any"
       );
-      const owner = wallet.accounts[0].address;
-      const signer = ethersProvider.getSigner(owner);
+      const signer = ethersProvider.getSigner(address);
       const newVaultsDataArray: VaultsData[] = [];
 
       for (let i = 0; i < vaults.length; i++) {

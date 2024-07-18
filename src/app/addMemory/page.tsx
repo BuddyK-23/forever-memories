@@ -7,7 +7,10 @@ import { ethers } from "ethers";
 import { ERC725 } from "@erc725/erc725.js";
 import LSP4DigitalAsset from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
 import ForeverMemoryCollection from "@/artifacts/ForeverMemoryCollection.json";
-import { useConnectWallet } from "@web3-onboard/react";
+import {
+  useWeb3ModalAccount,
+  useWeb3ModalProvider,
+} from "@web3modal/ethers5/react";
 import { FMTContract } from "@/components/MasterWalletProvider";
 import { hexToDecimal } from "@/utils/format";
 import "./index.css";
@@ -57,7 +60,8 @@ const vaultOptions = [
 type VaultOption = (typeof vaultOptions)[number];
 
 export default function AddMemory() {
-  const [{ wallet }] = useConnectWallet();
+  const { address, isConnected } = useWeb3ModalAccount();
+  const { walletProvider } = useWeb3ModalProvider();
   const [selectedTags, setSelectedTags] = useState<MultiValue<TagOption>>([]);
   const [headline, setHeadline] = useState<string>("");
   const [tokenName, setTokenName] = useState<string>("");
@@ -69,12 +73,6 @@ export default function AddMemory() {
   const [cid, setCid] = useState("");
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-  // create an ethers provider
-  let ethersProvider;
-  if (wallet) {
-    ethersProvider = new ethers.providers.Web3Provider(wallet.provider, "any");
-  }
 
   const handleTagChange = (selectedOptions: MultiValue<TagOption>) => {
     setSelectedTags(selectedOptions);
@@ -145,7 +143,7 @@ export default function AddMemory() {
     e.preventDefault();
 
     /////////////////////////////////////////////////////////
-    if (wallet) {
+    if (address && walletProvider) {
       try {
         setUploading(true);
         const formData = new FormData();
@@ -158,14 +156,14 @@ export default function AddMemory() {
 
         const resData = await res.json();
         const ipfsHash = resData.ipfsHash;
+
         setCid(ipfsHash);
 
-        ethersProvider = new ethers.providers.Web3Provider(
-          wallet.provider,
+        const ethersProvider = new ethers.providers.Web3Provider(
+          walletProvider,
           "any"
         );
-        const owner = wallet.accounts[0].address;
-        const signer = await ethersProvider.getSigner(owner);
+        const signer = await ethersProvider.getSigner(address);
 
         const ForeverMemoryContract = new ethers.Contract(
           vault.contract,
@@ -173,10 +171,10 @@ export default function AddMemory() {
           signer
         );
 
-        const _lastClaimed = await ForeverMemoryContract.lastClaimed(owner);
+        const _lastClaimed = await ForeverMemoryContract.lastClaimed(address);
         const lastClaimed = hexToDecimal(_lastClaimed._hex);
         const timestamp: number = Date.now();
-
+        // console.log("lastClaimed", lastClaimed);
         // first mint or over 24 hours
         if (lastClaimed == 0 || timestamp / 1000 - lastClaimed > 86400) {
           ///////////// mint function logic
@@ -236,13 +234,18 @@ export default function AddMemory() {
             },
           ]);
 
+          console.log("tokenName", tokenName);
+          console.log("tokenSymbol", tokenSymbol);
+          console.log("address", address);
+          console.log("copies", copies);
+
           const tx = await ForeverMemoryContract.mint(
             tokenName, // tokenName
             tokenSymbol, //tokenSymbol
             2, //token type, if 1, NFT
             true, // isNonDivisible
             copies, // totalSupplyofLSP7
-            owner, //receiverOfInitialTokens_
+            address, //receiverOfInitialTokens_
             encodeLSP7Metadata.values[0]
           );
           console.log("tx", tx);
@@ -503,7 +506,6 @@ export default function AddMemory() {
             </div>
             <div className="w-full flex justify-center">
               <button
-                // disabled
                 type="submit"
                 className="mt-4 bg-blue-500 text-white py-2 px-4 rounded shadow-lg shadow-gray-500/50"
               >

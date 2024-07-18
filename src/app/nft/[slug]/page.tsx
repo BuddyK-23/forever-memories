@@ -5,7 +5,10 @@ import { FaHeart } from "react-icons/fa6";
 import { BsChatLeftTextFill, BsFillShareFill } from "react-icons/bs";
 import ForeverMemoryCollection from "@/artifacts/ForeverMemoryCollection.json";
 import FMT from "@/artifacts/FMT.json";
-import { useConnectWallet } from "@web3-onboard/react";
+import {
+  useWeb3ModalAccount,
+  useWeb3ModalProvider,
+} from "@web3modal/ethers5/react";
 import { ethers } from "ethers";
 import { ERC725 } from "@erc725/erc725.js";
 import lsp4Schema from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
@@ -31,7 +34,8 @@ function hasUrlProperty(value: any): value is URLDataWithHash {
 
 export default function Page({ params }: { params: { slug: string } }) {
   const tokenId = params.slug;
-  const [{ wallet }] = useConnectWallet();
+  const { address, isConnected } = useWeb3ModalAccount();
+  const { walletProvider } = useWeb3ModalProvider();
   const [showModal, setShowModal] = useState(false);
   const [cid, setCid] = useState<string>();
   const [mintedDate, setMintedDate] = useState<string>();
@@ -46,16 +50,15 @@ export default function Page({ params }: { params: { slug: string } }) {
 
   useEffect(() => {
     fetchNFT();
-  }, [wallet]);
+  }, [isConnected]);
 
   const fetchNFT = async () => {
-    if (wallet) {
+    if (walletProvider) {
       const ethersProvider = new ethers.providers.Web3Provider(
-        wallet.provider,
+        walletProvider,
         "any"
       );
-      const owner = wallet.accounts[0].address;
-      const signer = ethersProvider.getSigner(owner);
+      const signer = ethersProvider.getSigner(address);
 
       const lsp7Contract = new ethers.Contract(
         bytes32ToAddress(tokenId),
@@ -63,7 +66,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         signer
       );
 
-      const _balance = await lsp7Contract.balanceOf(owner);
+      const _balance = await lsp7Contract.balanceOf(address);
       setMyBalance(hexToDecimal(_balance._hex));
       const _totalSuppy = await lsp7Contract.totalSupply();
       setTotalSupply(hexToDecimal(_totalSuppy._hex));
@@ -133,13 +136,12 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   const handleLike = async () => {
-    if (wallet) {
+    if (walletProvider) {
       const ethersProvider = new ethers.providers.Web3Provider(
-        wallet.provider,
+        walletProvider,
         "any"
       );
-      const owner = wallet.accounts[0].address;
-      const signer = ethersProvider.getSigner(owner);
+      const signer = ethersProvider.getSigner(address);
 
       const lsp7Contract = new ethers.Contract(
         bytes32ToAddress(tokenId),
@@ -155,7 +157,7 @@ export default function Page({ params }: { params: { slug: string } }) {
       );
 
       const likesA = await VaultContract.getLikes(tokenId);
-      if (likesA.includes(owner)) {
+      if (likesA.includes(address)) {
         alert("Already liked");
       } else {
         await VaultContract.like(tokenId);
@@ -169,7 +171,7 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   const handleSend = async () => {
-    if (wallet) {
+    if (walletProvider) {
       // Define the provider (e.g., Infura, Alchemy, or a local node)
       // const providerUrl = "https://4201.rpc.thirdweb.com/";
       // const provider = new ethers.providers.JsonRpcProvider(providerUrl);
@@ -197,11 +199,10 @@ export default function Page({ params }: { params: { slug: string } }) {
       // console.log("Transaction successful with receipt:", receipt);
 
       const ethersProvider = new ethers.providers.Web3Provider(
-        wallet.provider,
+        walletProvider,
         "any"
       );
-      const owner = wallet.accounts[0].address;
-      const signer = ethersProvider.getSigner(owner);
+      const signer = ethersProvider.getSigner(address);
 
       const lsp7Contract = new ethers.Contract(
         bytes32ToAddress(tokenId),
