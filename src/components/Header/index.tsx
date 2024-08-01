@@ -45,6 +45,11 @@ const Navbar = () => {
       title: "Add memory",
       link: "/addMemory",
     },
+    {
+      id: 6,
+      title: "My Profile",
+      link: "/myProfile",
+    },
   ];
 
   return (
