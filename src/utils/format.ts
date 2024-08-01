@@ -34,3 +34,22 @@ export function hexToDecimal(hexString: string): number {
   return parseInt(hexString, 16);
 }
 
+/**
+ * Converts an IPFS URI to a URL using a specified gateway.
+ *
+ * @param {string} ipfsUri - The IPFS URI, e.g., "ipfs://Qm...".
+ * @param {string} gateway - The gateway URL to use, e.g., "https://ipfs.io/ipfs/".
+ * @returns {string} - The full URL to access the resource.
+ */
+export function convertIpfsUriToUrl(ipfsUri: string, gateway: string = 'https://ipfs.io/ipfs/'): string {
+  // Check if the IPFS URI starts with "ipfs://"
+  if (ipfsUri.startsWith('ipfs://')) {
+    // Remove the "ipfs://" prefix and append the hash to the gateway URL
+    const ipfsHash = ipfsUri.substring(7); // "ipfs://" is 7 characters long
+    return `${gateway}${ipfsHash}`;
+  }
+
+  // If the IPFS URI doesn't have the "ipfs://" prefix, return it as-is or handle it accordingly
+  throw new Error('Invalid IPFS URI');
+}
+
