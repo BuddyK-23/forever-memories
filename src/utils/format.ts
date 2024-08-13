@@ -53,3 +53,17 @@ export function convertIpfsUriToUrl(ipfsUri: string, gateway: string = 'https://
   throw new Error('Invalid IPFS URI');
 }
 
+// Convert Uint8Array to bytes
+export function uint8ArrayToHexString(array: Uint8Array): string {
+  return '0x' + Array.from(array).map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+// Retrieving and Converting Back to Uint8Array
+export function hexStringToUint8Array(hexString: string): Uint8Array {
+  hexString = hexString.replace(/^0x/, '');
+  const bytes = new Uint8Array(hexString.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(hexString.substr(i * 2, 2), 16);
+  }
+  return bytes;
+}

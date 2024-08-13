@@ -10,13 +10,14 @@ import {
 import { hexToDecimal, convertIpfsUriToUrl } from "@/utils/format";
 import LSP3Schema from "@erc725/erc725.js/schemas/LSP3ProfileMetadata.json";
 import FMT from "@/artifacts/FMT.json";
+
 const FMTContractAddress = "0x186f3468Ff169AEe9c7E72ABEF83c2c6aDB5D5cc";
 
 interface LSP3Profile {
   name: string;
   description: string;
-  profileImage?: string;
-  backgroundImage?: string;
+  profileImage?: { url: string }[];
+  backgroundImage?: { url: string }[];
   tags?: string[];
   links?: string[];
 }
@@ -41,10 +42,7 @@ export default function MyProfile() {
 
   const fetchNFT = async () => {
     if (walletProvider) {
-      const ethersProvider = new ethers.providers.Web3Provider(
-        walletProvider,
-        "any"
-      );
+      const ethersProvider = new ethers.providers.Web3Provider(walletProvider, "any");
       const signer = ethersProvider.getSigner(address);
       const _lyxBalance = await ethersProvider.getBalance(address as string);
       const lyxBalance = ethers.utils.formatEther(_lyxBalance);
@@ -62,29 +60,20 @@ export default function MyProfile() {
       );
 
       const result = await erc725js.fetchData("LSP3Profile");
-      // setBackgroundImage(decodedProfileMetadata.name)
-      const decodedProfileMetadata =
-        result as unknown as DecodedProfileMetadata;
+      const decodedProfileMetadata = result as unknown as DecodedProfileMetadata;
 
-      if (
-        decodedProfileMetadata.value &&
-        decodedProfileMetadata.value.LSP3Profile
-      ) {
+      if (decodedProfileMetadata.value && decodedProfileMetadata.value.LSP3Profile) {
         setProfile(decodedProfileMetadata.value.LSP3Profile);
       }
 
-      const FMTContract = new ethers.Contract(
-        FMTContractAddress,
-        FMT.abi,
-        signer
-      );
-
+      const FMTContract = new ethers.Contract(FMTContractAddress, FMT.abi, signer);
       const _balance = await FMTContract.balanceOf(address);
       setFmtBalance(hexToDecimal(_balance._hex));
 
       setIsDownloading(true);
     }
   };
+
   return !isDownloading ? (
     <div className="flex space-x-2 justify-center items-center bg-gray-200 h-screen dark:invert">
       <span className="sr-only">Loading...</span>
@@ -98,16 +87,29 @@ export default function MyProfile() {
       <h1 className="text-2xl font-bold mb-6">{address}</h1>
       <h1 className="text-2xl font-bold mb-6">{fmtBalance} FMT</h1>
       <h1 className="text-2xl font-bold mb-6">{lyxBalance} LYX</h1>
-      <div className={"relative bg-[url('" + convertIpfsUriToUrl(profile?.backgroundImage[0]['url']) + "')] bg-cover bg-center h-[400px] w-full"}>
+      <div
+        className="relative bg-cover bg-center h-[400px] w-full"
+        style={{
+          backgroundImage: profile?.backgroundImage && profile.backgroundImage[0]?.url
+            ? `url('` + convertIpfsUriToUrl(profile.backgroundImage[0].url)+ `')`
+            : undefined
+        }}
+      >
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative">
-            <img
-              src={convertIpfsUriToUrl(profile?.profileImage[0]['url'])}
-              alt="Profile Avatar"
-              width={150}
-              height={150}
-              className="rounded-full border-4 border-white"
-            />
+            {profile?.profileImage && profile.profileImage[0]?.url ? (
+              <img
+                src={convertIpfsUriToUrl(profile.profileImage[0].url)}
+                alt="Profile Avatar"
+                width={150}
+                height={150}
+                className="rounded-full border-4 border-white"
+              />
+            ) : (
+              <div className="h-[150px] w-[150px] bg-gray-200 rounded-full border-4 border-white flex items-center justify-center">
+                <span className="text-gray-500">No Image</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

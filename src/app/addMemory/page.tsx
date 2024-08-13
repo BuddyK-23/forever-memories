@@ -11,8 +11,9 @@ import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
 } from "@web3modal/ethers5/react";
-import { FMTContract } from "@/components/MasterWalletProvider";
-import { hexToDecimal } from "@/utils/format";
+// import { FMTContract } from "@/components/MasterWalletProvider";
+import { hexToDecimal, hexStringToUint8Array } from "@/utils/format";
+import { generateAESKey, decryptEncryptedEncryptionKey } from "@/utils/encryptKey";
 import "./index.css";
 
 interface TagOption {
@@ -33,7 +34,7 @@ const vaultOptions = [
   },
   {
     label: "Dear Diary",
-    contract: "0x7c56cf6d4bfd8bc6557cdef93b61899d33636e36",
+    contract: "0x9381bd9eaa222e3640e4ada251859abfb99f601b",
   },
   {
     label: "Kids Drawings",
@@ -148,7 +149,7 @@ export default function AddMemory() {
         setUploading(true);
         const formData = new FormData();
         !file ? "" : formData.append("file", file); // FormData keys are called fields
-        console.log("formData", formData);
+        formData.append("lsp7CollectionMetadata", vault.contract + tokenName + tokenSymbol + headline);
         const res = await fetch("/api/uploadAssetsToIPFS", {
           method: "POST",
           body: formData,
@@ -156,6 +157,7 @@ export default function AddMemory() {
 
         const resData = await res.json();
         const ipfsHash = resData.ipfsHash;
+        const ivAndEncryptedKeyArr = resData.ivAndEncryptedKeyArr;
 
         setCid(ipfsHash);
 
@@ -233,22 +235,30 @@ export default function AddMemory() {
               },
             },
           ]);
+          console.log("ivAndEncryptedKeyArr", ivAndEncryptedKeyArr);
 
-          console.log("tokenName", tokenName);
-          console.log("tokenSymbol", tokenSymbol);
-          console.log("address", address);
-          console.log("copies", copies);
+          // const ivAndEncryptedKey = hexStringToUint8Array(ivAndEncryptedKeyArr);
+          // console.log("ivAndEncryptedKey", ivAndEncryptedKey);
+          // // Assuming the first 12 bytes are the IV (AES-GCM standard)
+          // const iv = new Uint8Array(ivAndEncryptedKey.slice(0, 12));
+          // const encryptedKey = new Uint8Array(ivAndEncryptedKey.slice(12));
+          // const aesKey = await generateAESKey();
+          // console.log("aesKey", aesKey);
+          // const encryptionKey = decryptEncryptedEncryptionKey(aesKey, iv, encryptedKey);
+          // console.log("encryptionKey", encryptionKey);
 
           const tx = await ForeverMemoryContract.mint(
             tokenName, // tokenName
             tokenSymbol, //tokenSymbol
-            2, //token type, if 1, NFT
             true, // isNonDivisible
             copies, // totalSupplyofLSP7
             address, //receiverOfInitialTokens_
-            encodeLSP7Metadata.values[0]
+            encodeLSP7Metadata.values[0],
+            ivAndEncryptedKeyArr
           );
+
           console.log("tx", tx);
+
           //////////// send reward token logic
           // const gasLimit = 100000;
           // const rewardAmount = await ForeverMemoryContract.rewardAmount();
@@ -268,7 +278,7 @@ export default function AddMemory() {
           // );
           // console.log("tx:", txt);
           setUploading(false);
-          alert("You minted one memory successfully!");
+          alert("You minted one memory successfully! \n EncryptedEncryptionKey: " + ivAndEncryptedKeyArr);
         } else {
           alert("Minting of Each Vault only once a day!");
         }
