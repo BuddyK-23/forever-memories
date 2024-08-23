@@ -15,34 +15,50 @@ import { hexToDecimal } from "@/utils/format";
 import { generateEncryptionKey, decryptFile } from "@/utils/upload";
 
 const vaults = [
+  // {
+  //   label: "Daily Selfie",
+  //   contract: "0x8e0c1b47a9216e34267e3b2a3142057456e23a56",
+  // },
   {
-    label: "Daily Selfie",
-    contract: "0x8e0c1b47a9216e34267e3b2a3142057456e23a56",
+    label: "Dear Diary",
+    contract: "0x9381bd9eaa222e3640e4ada251859abfb99f601b",
   },
   {
     label: "Dear Diary",
-    contract: "0x7c56cf6d4bfd8bc6557cdef93b61899d33636e36",
+    contract: "0x9381bd9eaa222e3640e4ada251859abfb99f601b",
   },
   {
-    label: "Kids Drawings",
-    contract: "0xdd9e19712fc69d0c455dee0876a2649941af50d0",
+    label: "Dear Diary",
+    contract: "0x9381bd9eaa222e3640e4ada251859abfb99f601b",
   },
   {
-    label: "Life Capsule",
-    contract: "0xbfb655cb56617aeb962e2dd154e561b4a0787955",
+    label: "Dear Diary",
+    contract: "0x9381bd9eaa222e3640e4ada251859abfb99f601b",
   },
   {
-    label: "Legacy Safe",
-    contract: "0x793861c934eb4e3e280d63683ea1b47e35d61d9e",
+    label: "Dear Diary",
+    contract: "0x9381bd9eaa222e3640e4ada251859abfb99f601b",
   },
-  {
-    label: "Time Capsule",
-    contract: "0xfa5fd6e8b51cb732d67c1a79456901f8d1d39786",
-  },
-  {
-    label: "Digital Legacy",
-    contract: "0x28c7f1b2bd487be7a5f0dbff2c857b218cd32316",
-  },
+  // {
+  //   label: "Kids Drawings",
+  //   contract: "0xdd9e19712fc69d0c455dee0876a2649941af50d0",
+  // },
+  // {
+  //   label: "Life Capsule",
+  //   contract: "0xbfb655cb56617aeb962e2dd154e561b4a0787955",
+  // },
+  // {
+  //   label: "Legacy Safe",
+  //   contract: "0x793861c934eb4e3e280d63683ea1b47e35d61d9e",
+  // },
+  // {
+  //   label: "Time Capsule",
+  //   contract: "0xfa5fd6e8b51cb732d67c1a79456901f8d1d39786",
+  // },
+  // {
+  //   label: "Digital Legacy",
+  //   contract: "0x28c7f1b2bd487be7a5f0dbff2c857b218cd32316",
+  // },
 ];
 
 // Define the types you expect

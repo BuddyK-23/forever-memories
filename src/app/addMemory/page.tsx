@@ -282,6 +282,7 @@ export default function AddMemory() {
         } else {
           alert("Minting of Each Vault only once a day!");
         }
+        
       } catch (e) {
         console.log(e);
         setUploading(false);

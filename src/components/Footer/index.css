@@ -1,0 +1,11 @@
+.walletStyle{
+    border-radius: 6px;
+    background: #2a303b;
+    border: none;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    color: white;
+    padding: 14px 12px;
+    font-family: inherit;
+}

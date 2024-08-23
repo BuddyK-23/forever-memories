@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, FormEvent } from "react";
 import { ethers } from "ethers";
 import { ERC725 } from "@erc725/erc725.js";
@@ -15,7 +16,10 @@ interface FormValues {
   rewardAmount: number;
 }
 
-export default function CreateVault() {
+const vaultModeTitle = ["Public", "Private"];
+
+export default function CreateVault({ params }: { params: { slug: string } }) {
+  const vaultMode = params.slug;
   const [formValues, setFormValues] = useState<FormValues>({
     vaultName: "",
     vaultSymbol: "",
@@ -27,6 +31,7 @@ export default function CreateVault() {
   });
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [cid, setCid] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleChange = (
@@ -66,14 +71,23 @@ export default function CreateVault() {
 
       if (formValues.metadataUriImage) {
         formData.append("file", formValues.metadataUriImage);
-        const res = await fetch("/api/uploadAssetsToIPFS", {
+        const res = await fetch("/api/vaultImageToIPFS", {
           method: "POST",
           body: formData,
         });
 
         const resData = await res.json();
-        // setCid(resData.ipfsHash);
         console.log("resData.ipfsHash", resData.ipfsHash);
+
+        // const response = await fetch(
+        //   `https://ipfs.io/ipfs/${resData.ipfsHash}`
+        // );
+        // console.log("response", response);
+        // const cidData = await response.arrayBuffer();
+        // const blob = new Blob([cidData]); // Creating a blob from decrypted data
+        // const objectURL = URL.createObjectURL(blob);
+        // console.log("objectURL", objectURL);
+        // setCid(objectURL);
 
         const erc725 = new ERC725(LSP4DigitalAsset, "", "", {});
         const lsp8CollectionMetadata = {
@@ -101,14 +115,14 @@ export default function CreateVault() {
         console.log("encodeLSP8Metadata", encodeLSP8Metadata.values[0]);
       }
 
-      formData.append("vaultName", formValues.vaultName);
-      formData.append("vaultSymbol", formValues.vaultSymbol);
-      formData.append("vaultOwner", formValues.vaultOwner);
-      formData.append("rewardAmount", formValues.rewardAmount.toString());
+      // formData.append("vaultName", formValues.vaultName);
+      // formData.append("vaultSymbol", formValues.vaultSymbol);
+      // formData.append("vaultOwner", formValues.vaultOwner);
+      // formData.append("rewardAmount", formValues.rewardAmount.toString());
 
-      // Placeholder for form submission logic
+      // // Placeholder for form submission logic
 
-      console.log("Form submitted:", formValues);
+      // console.log("Form submitted:", formValues);
       // Reset form values after submission
       // setFormValues({
       //   vaultName: '',
@@ -119,7 +133,7 @@ export default function CreateVault() {
       //   metadataUriDescription: '',
       //   rewardAmount: 0,
       // });
-      // setImagePreview(null);
+      setImagePreview(null);
     } catch (err) {
       setError("An error occurred while creating the vault.");
     }
@@ -127,8 +141,16 @@ export default function CreateVault() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <h1 className="text-2xl font-bold mb-6">Create Vault</h1>
-      <form onSubmit={handleSubmit} className="w-full max-w-lg">
+      <h1 className="text-2xl font-bold mb-6">
+        Create {vaultModeTitle[parseInt(vaultMode)]} Vault
+      </h1>
+      {!cid ? (
+        ""
+      ) : (
+        <img className={`carousel-item w-full h-[584px]`} src={cid} alt="" />
+      )}
+
+      <div className="w-full max-w-lg">
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <div className="mb-4">
           <label className="block text-gray-700">Vault Name</label>
@@ -218,13 +240,22 @@ export default function CreateVault() {
             </div>
           </div>
         </div>
-        <button
-          type="submit"
-          className="w-full bg-indigo-500 text-white py-2 px-4 rounded-md shadow-sm hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        >
-          Create Vault
-        </button>
-      </form>
+        <div className="flex gap-4">
+          <Link
+            href={"/memoryVaults"}
+            className="w-full bg-red-500 text-white py-2 px-4 rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-center"
+          >
+            Back
+          </Link>
+          <button
+            type="button"
+            onClick={(e) => handleSubmit(e)}
+            className="w-full bg-indigo-500 text-white py-2 px-4 rounded-md shadow-sm hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            Create Vault
+          </button>
+        </div>
+      </div>
     </main>
   );
 }

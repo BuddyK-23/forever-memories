@@ -2,13 +2,12 @@
 import { createWeb3Modal, defaultConfig } from "@web3modal/ethers5/react";
 
 const projectId = "a1bda241f0519c5d662bd07e0705acaf";
-export const luksoProvider = luksoModule();
 
 // Setup the Metadata
 const walletConnectMetadata = {
-  name: "Example dApp",
+  name: "Ferever Memory",
   description: "dApp using Wallet Connect",
-  url: "https://my.dapp.domain",
+  url: "https://forever-memory.vercel.app/",
   icons: ["https://my.dapp.domain/icon.svg"],
 };
 
@@ -19,7 +18,6 @@ const walletConnectConfig = defaultConfig({
 
 // Define the supported networks
 const supportedChains = [
-  // https://docs.lukso.tech/networks/testnet/parameters
   {
     chainId: 4021,
     name: "LUKSO Testnet",
@@ -30,7 +28,7 @@ const supportedChains = [
   {
     chainId: 42,
     name: "LUKSO Mainnet",
-    currency: "LYXt",
+    currency: "LYX",
     explorerUrl: "https://explorer.lukso.network",
     rpcUrl: "https://42.rpc.thirdweb.com/",
   },

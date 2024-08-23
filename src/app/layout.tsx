@@ -2,6 +2,7 @@
 
 import React from "react";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 import { config } from "@/app/config";
 import "./globals.css";
@@ -26,6 +27,7 @@ export default function RootLayout({
       <body>
           <Header />
           {children}
+          <Footer />
       </body>
     </html>
   );
