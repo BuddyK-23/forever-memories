@@ -22,18 +22,18 @@ const Navbar = () => {
   const links = [
     {
       id: 1,
-      title: "Home",
-      link: "/",
+      title: "Feed",
+      link: "/feed",
     },
     {
       id: 2,
-      title: "Memory vaults",
-      link: "/memoryVaults",
+      title: "Explore",
+      link: "/explore",
     },
     {
       id: 3,
-      title: "Feed",
-      link: "/feed",
+      title: "My Vaults",
+      link: "/myVaults",
     },
     {
       id: 4,
@@ -42,13 +42,13 @@ const Navbar = () => {
     },
     {
       id: 5,
-      title: "Add memory",
-      link: "/addMemory",
+      title: "Profile",
+      link: "/profile",
     },
     {
       id: 6,
-      title: "My Profile",
-      link: "/myProfile",
+      title: "Add Moment",
+      link: "/addMoment",
     },
   ];
 
@@ -56,7 +56,7 @@ const Navbar = () => {
     <div className="flex justify-between items-center w-full h-20 px-4 text-white bg-black nav">
       <div>
         <h1 className="text-3xl font-signature ml-2">
-          <Link href={"/"}>Forever Memories</Link>
+          <Link href={"/"}>Moments</Link>
         </h1>
       </div>
 

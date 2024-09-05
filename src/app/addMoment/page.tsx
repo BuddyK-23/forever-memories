@@ -60,7 +60,7 @@ const vaultOptions = [
 
 type VaultOption = (typeof vaultOptions)[number];
 
-export default function AddMemory() {
+export default function AddMoment() {
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const [selectedTags, setSelectedTags] = useState<MultiValue<TagOption>>([]);
@@ -297,7 +297,7 @@ export default function AddMemory() {
     <div className="flex justify-center bg-gray-200 w-full">
       <div className="flex justify-center main-content gap-x-1 mt-4 mb-20 w-full">
         <div className="rounded-lg border p-5 bg-white ml-4 mr-2 shadow-lg shadow-gray-500/50 w-1/2">
-          <h4 className="text-xl mb-2 font-bold">Add Memory</h4>
+          <h4 className="text-xl mb-2 font-bold">Add Moment</h4>
           <form className="" onSubmit={handleStoreMemory}>
             <div className="mb-4">
               <div className="flex items-center justify-center w-full">
@@ -520,7 +520,7 @@ export default function AddMemory() {
                 type="submit"
                 className="mt-4 bg-blue-500 text-white py-2 px-4 rounded shadow-lg shadow-gray-500/50"
               >
-                {uploading ? "Storing..." : "Store Memory On Chain"}
+                {uploading ? "Storing..." : "Store Moment On Chain"}
               </button>
             </div>
           </form>

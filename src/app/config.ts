@@ -3,9 +3,9 @@
  */
 export const config = {
   metadata: {
-    title: "Forever Memories",
+    title: "Forever Moments",
     description: "LUKSO based dApp",
-    url: "https://forever-momories",
+    url: "https://forever-moments",
     icon: "favicon.ico",
   },
   extension: {

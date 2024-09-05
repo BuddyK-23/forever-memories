@@ -28,7 +28,7 @@ interface DecodedProfileMetadata {
   };
 }
 
-export default function MyProfile() {
+export default function Profile() {
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const [fmtBalance, setFmtBalance] = useState<number>(0);
