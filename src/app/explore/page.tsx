@@ -12,10 +12,11 @@ import {
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
 const vaultFactoryContractAddress =
   "0x8223885529af465d851772438cec41fbb9d4827d";
+import { hexToDecimal } from "@/utils/format";
 
 import "swiper/css";
-import 'swiper/css/navigation';
-import { Navigation } from 'swiper/modules';
+import "swiper/css/navigation";
+import { Navigation } from "swiper/modules";
 import "./index.css";
 
 interface CategoryOption {
@@ -59,6 +60,7 @@ interface Vault {
   moments: number;
   members: number;
   owner: string;
+  vaultAddress: string;
 }
 
 export default function Explore() {
@@ -68,8 +70,10 @@ export default function Explore() {
   const [vaultData, setVaultData] = useState<Vault[]>([]);
   const { walletProvider } = useWeb3ModalProvider();
 
-  const selectedCategoryButtonStyle = "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-blue-500 hover:bg-blue-500 text-white hover:text-white";
-  const categoryButtonStyle = "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-gray-200 hover:bg-blue-500 text-black hover:text-white";
+  const selectedCategoryButtonStyle =
+    "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-blue-500 hover:bg-blue-500 text-white hover:text-white";
+  const categoryButtonStyle =
+    "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-gray-200 hover:bg-blue-500 text-black hover:text-white";
 
   useEffect(() => {
     fetchNFT();
@@ -98,15 +102,15 @@ export default function Explore() {
         const data = await VaultFactoryContract.getVaultMetadata(
           unJoinedVaults[i]
         );
-        console.log("data", data);
 
         vaults.push({
           name: data.title,
           description: data.description,
           cid: data.imageURI,
-          moments: data.memberCount, // Dummy value
+          moments: hexToDecimal(data.memberCount._hex),
           members: 78,
           owner: data.vaultOwner,
+          vaultAddress: unJoinedVaults[i],
         });
 
         console.log(i, " =>", data.title);
@@ -121,8 +125,6 @@ export default function Explore() {
     console.log("index", index);
     setCategoryIndex(index);
 
-    setIsDownloading(false);
-
     if (walletProvider) {
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
@@ -135,32 +137,36 @@ export default function Explore() {
         VaultFactoryABI.abi,
         signer
       );
-      const categoryVaults = await VaultFactoryContract.getVaultsByCategory(
-        index, address
-      );
-      console.log("categoryVaults", categoryVaults);
-      console.log("length", categoryVaults.length);
+
+      let categoryVaults;
+      if(index === 0) {
+        categoryVaults = await VaultFactoryContract.getUnjoinedPublicVaults(
+          address
+        );
+      } else {
+        categoryVaults = await VaultFactoryContract.getVaultsByCategory(
+          index,
+          address
+        );
+      }
+      
       const vaults: Vault[] = [];
       for (let i = 0; i < categoryVaults.length; i++) {
         const data = await VaultFactoryContract.getVaultMetadata(
           categoryVaults[i]
         );
-        console.log("data", data);
-
         vaults.push({
           name: data.title,
           description: data.description,
           cid: data.imageURI,
-          moments: 15, // Dummy value
+          moments: hexToDecimal(data.memberCount._hex),
           members: 78,
           owner: data.vaultOwner,
+          vaultAddress: data[i],
         });
-
-        console.log(i, " =>", data.title);
       }
 
       setVaultData(vaults);
-      setIsDownloading(true);
     }
   };
 
@@ -193,7 +199,11 @@ export default function Explore() {
             <SwiperSlide
               key={index}
               onClick={() => handleCategory(index)}
-              className={categoryIndex === index ? selectedCategoryButtonStyle : categoryButtonStyle}
+              className={
+                categoryIndex === index
+                  ? selectedCategoryButtonStyle
+                  : categoryButtonStyle
+              }
             >
               {category.label}
             </SwiperSlide>

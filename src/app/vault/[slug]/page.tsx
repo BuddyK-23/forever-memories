@@ -45,9 +45,10 @@ export default function Page({ params }: { params: { slug: string } }) {
   const { walletProvider } = useWeb3ModalProvider();
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
-  // useEffect(() => {
-  //   fetchNFT();
-  // }, [isConnected]);
+  useEffect(() => {
+    // fetchNFT();
+    setIsDownloading(true);
+  }, [isConnected]);
 
   // const fetchNFT = async () => {
   //   if (walletProvider) {
