@@ -11,14 +11,11 @@ import {
 import { ERC725 } from "@erc725/erc725.js";
 import LSP4DigitalAsset from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
-const vaultFactoryContractAddress = "0x9bff638ef2d55fba2d56cc156b9dc8791d154381";
+const vaultFactoryContractAddress = "0x8223885529af465d851772438cec41fbb9d4827d";
 
 interface FormValues {
   vaultName: string;
-  vaultSymbol: string;
-  vaultOwner: string;
   metadataUriImage: File | null;
-  metadataUriHeadline: string;
   metadataUriDescription: string;
   rewardAmount: number;
   vaultMode: number; // 1 for Private, 0 for Public
@@ -30,7 +27,7 @@ interface CategoryOption {
   label: string;
 }
 
-const Tags: CategoryOption[] = [
+const Categories: CategoryOption[] = [
   { value: 1, label: "Art & Creativity" },
   { value: 2, label: "Celebrity & Influencer" },
   { value: 3, label: "Culture" },
@@ -63,17 +60,14 @@ export default function CreateVault() {
   const { walletProvider } = useWeb3ModalProvider();
   const [formValues, setFormValues] = useState<FormValues>({
     vaultName: "",
-    vaultSymbol: "",
-    vaultOwner: "",
     metadataUriImage: null,
-    metadataUriHeadline: "",
     metadataUriDescription: "",
     rewardAmount: 0,
     vaultMode: 1, // Default to Private
-    firstMemberAddress: "", // Default empty string
+    firstMemberAddress: "",
   });
 
-  const handleTagChange = (selectedOptions: MultiValue<CategoryOption>) => {
+  const handleCategoryChange = (selectedOptions: MultiValue<CategoryOption>) => {
     setSelectedCategories(selectedOptions);
   };
 
@@ -132,59 +126,40 @@ export default function CreateVault() {
         });
 
         const resData = await res.json();
+        const categories = selectedCategories.map(category => category.value);
         console.log("resData.ipfsHash", resData.ipfsHash);
-
-        const erc725 = new ERC725(LSP4DigitalAsset, "", "", {});
-        const lsp8CollectionMetadata = {
-          LSP4Metadata: {
-            name: formValues.vaultName,
-            headline: formValues.metadataUriHeadline,
-            description: formValues.metadataUriDescription,
-            links: [],
-            icons: [],
-            images: [],
-            assets: [],
-            attributes: [],
-          },
-        };
-        const lsp8CollectionMetadataCID = resData.ipfsHash;
-        const encodeLSP8Metadata = erc725.encodeData([
-          {
-            keyName: "LSP4Metadata",
-            value: {
-              json: lsp8CollectionMetadata,
-              url: lsp8CollectionMetadataCID,
-            },
-          },
-        ]);
-        console.log("encodeLSP8Metadata", encodeLSP8Metadata.values[0]);
+        console.log("selectedCategories", selectedCategories);
+        console.log("categories", categories);
 
         const ethersProvider = new ethers.providers.Web3Provider(
           walletProvider,
           "any"
         );
         const signer = ethersProvider.getSigner(address);
-  
+
         const VaultFactoryContract = new ethers.Contract(
           vaultFactoryContractAddress,
           VaultFactoryABI.abi,
           signer
         );
 
+        const owner = await VaultFactoryContract.owner();
+        console.log("owner", owner);
+
         const tx = await VaultFactoryContract.createVault(
-          formValues.vaultName, // tokenName
-          formValues.vaultSymbol, //tokenSymbol
-          "2", // tokenType
-          encodeLSP8Metadata.values[0], // metadataUri
-          formValues.vaultMode, //vaultMode
-          formValues.firstMemberAddress
+          formValues.vaultName,
+          formValues.metadataUriDescription,
+          resData.ipfsHash,
+          formValues.rewardAmount,
+          formValues.vaultMode,
+          formValues.vaultMode == 1 ? formValues.firstMemberAddress : address,
+          categories
         );
 
         console.log("tx", tx);
       }
 
-      // Handle additional form submission logic here
-
+      alert("Vault is created successfully!");
       setImagePreview(null);
     } catch (err) {
       setError("An error occurred while creating the vault.");
@@ -203,33 +178,27 @@ export default function CreateVault() {
       <div className="w-full max-w-lg">
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <div className="mb-4">
+          <label className="block text-gray-700">Metadata URI Image</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+          />
+          {imagePreview && (
+            <img
+              src={imagePreview}
+              alt="Image preview"
+              className="mt-2 h-40 w-full object-cover rounded-md"
+            />
+          )}
+        </div>
+        <div className="mb-4">
           <label className="block text-gray-700">Vault Name</label>
           <input
             type="text"
             name="vaultName"
             value={formValues.vaultName}
-            onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Vault Symbol</label>
-          <input
-            type="text"
-            name="vaultSymbol"
-            value={formValues.vaultSymbol}
-            onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Vault Owner</label>
-          <input
-            type="text"
-            name="vaultOwner"
-            value={formValues.vaultOwner}
             onChange={handleChange}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             required
@@ -304,34 +273,7 @@ export default function CreateVault() {
           </div>
         )}
 
-        <div className="mb-4">
-          <label className="block text-gray-700">Metadata URI Image</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            className="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
-          />
-          {imagePreview && (
-            <img
-              src={imagePreview}
-              alt="Image preview"
-              className="mt-2 h-40 w-full object-cover rounded-md"
-            />
-          )}
-        </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700">Metadata URI Headline</label>
-          <input
-            type="text"
-            name="metadataUriHeadline"
-            value={formValues.metadataUriHeadline}
-            onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            required
-          />
-        </div>
 
         <div className="mb-4">
           <label className="block text-gray-700">
@@ -351,8 +293,8 @@ export default function CreateVault() {
             Select Categories
           </label>
           <Select
-            options={Tags}
-            onChange={handleTagChange}
+            options={Categories}
+            onChange={handleCategoryChange}
             isMulti
             value={selectedCategories}
           />

@@ -5,8 +5,10 @@ import Link from "next/link";
 
 interface Vault {
   name: string;
-  mements: number;
-  memebers: number;
+  description: string;
+  cid: string;
+  moments: number;
+  members: number;
   owner: string;
 }
 
@@ -20,13 +22,13 @@ const VaultCard: React.FC<VaultCardProps> = ({ vault }) => {
       <div className="w-full h-auto">
         <img
           className="rounded-lg"
-          src="https://img-cdn.pixlr.com/image-generator/history/65bb506dcb310754719cf81f/ede935de-1138-4f66-8ed7-44bd16efc709/medium.webp"
+          src={"https://ipfs.io/ipfs/" + vault.cid}
         />
       </div>
       <div className="font-bold pt-2">{vault.name}</div>
       <div className="flex gap-2 text-xs">
-        <div>Mements: {vault.mements}</div>
-        <div>Members: {vault.memebers}</div>
+        <div>Mements: {vault.moments}</div>
+        <div>Members: {vault.members}</div>
       </div>
       <div className="flex gap-2 pt-1">
         <img
