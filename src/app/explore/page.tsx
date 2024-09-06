@@ -117,9 +117,51 @@ export default function Explore() {
     }
   };
 
-  const handleCategory = (index: number) => {
+  const handleCategory = async (index: number) => {
     console.log("index", index);
     setCategoryIndex(index);
+
+    setIsDownloading(false);
+
+    if (walletProvider) {
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
+
+      const VaultFactoryContract = new ethers.Contract(
+        vaultFactoryContractAddress,
+        VaultFactoryABI.abi,
+        signer
+      );
+      const categoryVaults = await VaultFactoryContract.getVaultsByCategory(
+        index, address
+      );
+      console.log("categoryVaults", categoryVaults);
+      console.log("length", categoryVaults.length);
+      const vaults: Vault[] = [];
+      for (let i = 0; i < categoryVaults.length; i++) {
+        const data = await VaultFactoryContract.getVaultMetadata(
+          categoryVaults[i]
+        );
+        console.log("data", data);
+
+        vaults.push({
+          name: data.title,
+          description: data.description,
+          cid: data.imageURI,
+          moments: 15, // Dummy value
+          members: 78,
+          owner: data.vaultOwner,
+        });
+
+        console.log(i, " =>", data.title);
+      }
+
+      setVaultData(vaults);
+      setIsDownloading(true);
+    }
   };
 
   return !isDownloading ? (
