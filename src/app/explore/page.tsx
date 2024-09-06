@@ -104,7 +104,7 @@ export default function Explore() {
           name: data.title,
           description: data.description,
           cid: data.imageURI,
-          moments: 15, // Dummy value
+          moments: data.memberCount, // Dummy value
           members: 78,
           owner: data.vaultOwner,
         });

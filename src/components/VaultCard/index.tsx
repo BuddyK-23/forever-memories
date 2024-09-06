@@ -27,7 +27,7 @@ const VaultCard: React.FC<VaultCardProps> = ({ vault }) => {
       </div>
       <div className="font-bold pt-2">{vault.name}</div>
       <div className="flex gap-2 text-xs">
-        <div>Mements: {vault.moments}</div>
+        <div>Moments: {vault.moments}</div>
         <div>Members: {vault.members}</div>
       </div>
       <div className="flex gap-2 pt-1">
@@ -35,7 +35,7 @@ const VaultCard: React.FC<VaultCardProps> = ({ vault }) => {
           className="rounded-lg h-[25px] w-[25px]"
           src="https://img-cdn.pixlr.com/image-generator/history/65bb506dcb310754719cf81f/ede935de-1138-4f66-8ed7-44bd16efc709/medium.webp"
         />
-        {vault.owner}
+         <div className="text-sm">{vault.owner}</div>
       </div>
     </div>
   );
