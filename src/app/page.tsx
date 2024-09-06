@@ -24,10 +24,6 @@ export default function Home() {
   return (
     <main className="flex min-h-[768px] flex-col items-center justify-between h-[768px] bg-black">
       <Swiper
-        pagination={{
-          dynamicBullets: true,
-        }}
-        modules={[Pagination]}
         className="dashboardSwiper"
       >
         <SwiperSlide>

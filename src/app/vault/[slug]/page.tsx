@@ -45,139 +45,139 @@ export default function Page({ params }: { params: { slug: string } }) {
   const { walletProvider } = useWeb3ModalProvider();
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
-  useEffect(() => {
-    fetchNFT();
-  }, [isConnected]);
+  // useEffect(() => {
+  //   fetchNFT();
+  // }, [isConnected]);
 
-  const fetchNFT = async () => {
-    if (walletProvider) {
-      const encryptionKey = await generateEncryptionKey(
-        process.env.NEXT_PUBLIC_ENCRYPTION_KEY!
-      );
+  // const fetchNFT = async () => {
+  //   if (walletProvider) {
+  //     const encryptionKey = await generateEncryptionKey(
+  //       process.env.NEXT_PUBLIC_ENCRYPTION_KEY!
+  //     );
 
-      const ethersProvider = new ethers.providers.Web3Provider(
-        walletProvider,
-        "any"
-      );
-      const signer = ethersProvider.getSigner(address);
+  //     const ethersProvider = new ethers.providers.Web3Provider(
+  //       walletProvider,
+  //       "any"
+  //     );
+  //     const signer = ethersProvider.getSigner(address);
 
-      const VaultContract = new ethers.Contract(
-        vaultAddress,
-        ForeverMemoryCollection.abi,
-        signer
-      );
+  //     const VaultContract = new ethers.Contract(
+  //       vaultAddress,
+  //       ForeverMemoryCollection.abi,
+  //       signer
+  //     );
 
-      const vaultAsset = new ERC725(
-        lsp4Schema,
-        vaultAddress,
-        process.env.NEXT_PUBLIC_DEVELOPMENT_ENVIRONMENT_TYPE == "1"
-          ? process.env.NEXT_PUBLIC_MAINNET_URL
-          : process.env.NEXT_PUBLIC_TESTNET_URL,
-        {
-          ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
-        }
-      );
+  //     const vaultAsset = new ERC725(
+  //       lsp4Schema,
+  //       vaultAddress,
+  //       process.env.NEXT_PUBLIC_DEVELOPMENT_ENVIRONMENT_TYPE == "1"
+  //         ? process.env.NEXT_PUBLIC_MAINNET_URL
+  //         : process.env.NEXT_PUBLIC_TESTNET_URL,
+  //       {
+  //         ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
+  //       }
+  //     );
 
-      const name = await vaultAsset.getData("LSP4TokenName");
-      const symbol = await vaultAsset.getData("LSP4TokenSymbol");
+  //     const name = await vaultAsset.getData("LSP4TokenName");
+  //     const symbol = await vaultAsset.getData("LSP4TokenSymbol");
 
-      setVaultName(name.value as string);
-      setVaultSymbol(symbol.value as string);
-      const vault = await vaultAsset.getData("LSP4Metadata");
+  //     setVaultName(name.value as string);
+  //     setVaultSymbol(symbol.value as string);
+  //     const vault = await vaultAsset.getData("LSP4Metadata");
 
-      let vault_ipfsHash;
-      if (hasUrlProperty(vault?.value)) {
-        vault_ipfsHash = vault.value.url;
-      } else {
-        // Handle the case where vault?.value does not have a 'url' property
-        console.log("The value does not have a 'url' property.");
-      }
-      const fetchUrl = "https://ipfs.io/ipfs/" + vault_ipfsHash;
-      const response = await fetch(fetchUrl);
+  //     let vault_ipfsHash;
+  //     if (hasUrlProperty(vault?.value)) {
+  //       vault_ipfsHash = vault.value.url;
+  //     } else {
+  //       // Handle the case where vault?.value does not have a 'url' property
+  //       console.log("The value does not have a 'url' property.");
+  //     }
+  //     const fetchUrl = "https://ipfs.io/ipfs/" + vault_ipfsHash;
+  //     const response = await fetch(fetchUrl);
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch image from IPFS");
-      }
-      const encryptedData = await response.arrayBuffer();
-      const decryptedData = await decryptFile(
-        new Uint8Array(encryptedData),
-        encryptionKey
-      );
-      const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
-      const _vaultCid = URL.createObjectURL(blob);
-      setVaultCid(_vaultCid);
+  //     if (!response.ok) {
+  //       throw new Error("Failed to fetch image from IPFS");
+  //     }
+  //     const encryptedData = await response.arrayBuffer();
+  //     const decryptedData = await decryptFile(
+  //       new Uint8Array(encryptedData),
+  //       encryptionKey
+  //     );
+  //     const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
+  //     const _vaultCid = URL.createObjectURL(blob);
+  //     setVaultCid(_vaultCid);
 
-      const result = await VaultContract.tokenIdsOf(vaultAddress);
+  //     const result = await VaultContract.tokenIdsOf(vaultAddress);
 
-      // NFT info
-      if (result.length > 0) {
-        for (let i = 0; i < result.length; i++) {
-          let lsp7Contract = new ethers.Contract(
-            bytes32ToAddress(result[i]),
-            ForeverMemoryCollection.abi,
-            signer
-          );
-          const balance = await lsp7Contract.balanceOf(address);
+  //     // NFT info
+  //     if (result.length > 0) {
+  //       for (let i = 0; i < result.length; i++) {
+  //         let lsp7Contract = new ethers.Contract(
+  //           bytes32ToAddress(result[i]),
+  //           ForeverMemoryCollection.abi,
+  //           signer
+  //         );
+  //         const balance = await lsp7Contract.balanceOf(address);
 
-          if (hexToDecimal(balance._hex) == 0) continue;
-          const tokenIdMetadata = await VaultContract.getDataForTokenId(
-            result[i],
-            ERC725YDataKeys.LSP4["LSP4Metadata"]
-          );
-          const erc725js = new ERC725(lsp4Schema);
-          const decodedMetadata = erc725js.decodeData([
-            {
-              keyName: "LSP4Metadata",
-              value: tokenIdMetadata,
-            },
-          ]);
-          const ipfsHash = decodedMetadata[0].value.url;
+  //         if (hexToDecimal(balance._hex) == 0) continue;
+  //         const tokenIdMetadata = await VaultContract.getDataForTokenId(
+  //           result[i],
+  //           ERC725YDataKeys.LSP4["LSP4Metadata"]
+  //         );
+  //         const erc725js = new ERC725(lsp4Schema);
+  //         const decodedMetadata = erc725js.decodeData([
+  //           {
+  //             keyName: "LSP4Metadata",
+  //             value: tokenIdMetadata,
+  //           },
+  //         ]);
+  //         const ipfsHash = decodedMetadata[0].value.url;
 
-          if (ipfsHash == "") continue;
-          const fetchUrl = "https://ipfs.io/ipfs/" + ipfsHash;
-          const response = await fetch(fetchUrl);
-          if (!response.ok) {
-            throw new Error("Failed to fetch image from IPFS");
-          }
-          const encryptedData = await response.arrayBuffer();
-          const decryptedData = await decryptFile(
-            new Uint8Array(encryptedData),
-            encryptionKey
-          );
-          const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
-          const objectURL = URL.createObjectURL(blob);
+  //         if (ipfsHash == "") continue;
+  //         const fetchUrl = "https://ipfs.io/ipfs/" + ipfsHash;
+  //         const response = await fetch(fetchUrl);
+  //         if (!response.ok) {
+  //           throw new Error("Failed to fetch image from IPFS");
+  //         }
+  //         const encryptedData = await response.arrayBuffer();
+  //         const decryptedData = await decryptFile(
+  //           new Uint8Array(encryptedData),
+  //           encryptionKey
+  //         );
+  //         const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
+  //         const objectURL = URL.createObjectURL(blob);
 
-          // const encryptedData = await decryptFile(cid, encryptionKey);
-          const lspContractAddress = bytes32ToAddress(result[i]);
+  //         // const encryptedData = await decryptFile(cid, encryptionKey);
+  //         const lspContractAddress = bytes32ToAddress(result[i]);
 
-          const myAsset = new ERC725(
-            lsp4Schema,
-            lspContractAddress,
-            process.env.NEXT_PUBLIC_DEVELOPMENT_ENVIRONMENT_TYPE == "1"
-              ? process.env.NEXT_PUBLIC_MAINNET_URL
-              : process.env.NEXT_PUBLIC_TESTNET_URL,
-            {
-              ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
-            }
-          );
-          const tokenSymbol = await myAsset.getData("LSP4TokenSymbol");
-          const tokenName = await myAsset.getData("LSP4TokenName");
+  //         const myAsset = new ERC725(
+  //           lsp4Schema,
+  //           lspContractAddress,
+  //           process.env.NEXT_PUBLIC_DEVELOPMENT_ENVIRONMENT_TYPE == "1"
+  //             ? process.env.NEXT_PUBLIC_MAINNET_URL
+  //             : process.env.NEXT_PUBLIC_TESTNET_URL,
+  //           {
+  //             ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
+  //           }
+  //         );
+  //         const tokenSymbol = await myAsset.getData("LSP4TokenSymbol");
+  //         const tokenName = await myAsset.getData("LSP4TokenName");
 
-          // Extracting value from DecodeDataOutput and updating state with new token data
-          setTokenDataArray((prevTokenDataArray) => [
-            ...prevTokenDataArray,
-            {
-              cid: objectURL,
-              tokenSymbol: tokenSymbol.value as string,
-              tokenName: tokenName.value as string,
-              tokenId: result[i],
-            },
-          ]);
-        }
-      }
-      setIsDownloading(true);
-    }
-  };
+  //         // Extracting value from DecodeDataOutput and updating state with new token data
+  //         setTokenDataArray((prevTokenDataArray) => [
+  //           ...prevTokenDataArray,
+  //           {
+  //             cid: objectURL,
+  //             tokenSymbol: tokenSymbol.value as string,
+  //             tokenName: tokenName.value as string,
+  //             tokenId: result[i],
+  //           },
+  //         ]);
+  //       }
+  //     }
+  //     setIsDownloading(true);
+  //   }
+  // };
 
   return !isDownloading ? (
     <div className="flex space-x-2 justify-center items-center bg-gray-200 h-screen dark:invert">
@@ -189,13 +189,6 @@ export default function Page({ params }: { params: { slug: string } }) {
   ) : (
     <div className="px-6 bg-gray-200 pt-10 h-[800px]">
       <div className="TopPanel p-2 shadow-lg shadow-gray-500/50 rounded bg-white flex">
-        <div className="w-1/2">
-          <img
-            className={`carousel-item w-full h-[200px]`}
-            src={vaultCid}
-            alt=""
-          />
-        </div>
         <div className="w-1/2 px-3 py-1">
           <div className="font-bold text-5xl">{vaultName}</div>
           <div className="pt-3">headline</div>
@@ -208,7 +201,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         </div>
       </div>
 
-      <div className="List grid grid-cols-4 gap-4 pt-5">
+      {/* <div className="List grid grid-cols-4 gap-4 pt-5">
         {tokenDataArray.map((item, idx) => (
           <Link
             href={`/nft/` + item.tokenId}
@@ -230,7 +223,7 @@ export default function Page({ params }: { params: { slug: string } }) {
             </div>
           </Link>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 }
