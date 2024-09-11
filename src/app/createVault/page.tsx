@@ -11,7 +11,6 @@ import {
 import { ERC725 } from "@erc725/erc725.js";
 import LSP4DigitalAsset from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
-const vaultFactoryContractAddress = "0x8223885529af465d851772438cec41fbb9d4827d";
 
 interface FormValues {
   vaultName: string;
@@ -127,9 +126,6 @@ export default function CreateVault() {
 
         const resData = await res.json();
         const categories = selectedCategories.map(category => category.value);
-        console.log("resData.ipfsHash", resData.ipfsHash);
-        console.log("selectedCategories", selectedCategories);
-        console.log("categories", categories);
 
         const ethersProvider = new ethers.providers.Web3Provider(
           walletProvider,
@@ -138,13 +134,10 @@ export default function CreateVault() {
         const signer = ethersProvider.getSigner(address);
 
         const VaultFactoryContract = new ethers.Contract(
-          vaultFactoryContractAddress,
+          process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
           VaultFactoryABI.abi,
           signer
         );
-
-        const owner = await VaultFactoryContract.owner();
-        console.log("owner", owner);
 
         const tx = await VaultFactoryContract.createVault(
           formValues.vaultName,

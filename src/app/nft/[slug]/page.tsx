@@ -73,9 +73,7 @@ export default function Page({ params }: { params: { slug: string } }) {
       const nftAsset = new ERC725(
         lsp4Schema,
         bytes32ToAddress(tokenId),
-        process.env.NEXT_PUBLIC_DEVELOPMENT_ENVIRONMENT_TYPE == "1"
-          ? process.env.NEXT_PUBLIC_MAINNET_URL
-          : process.env.NEXT_PUBLIC_TESTNET_URL,
+        process.env.NEXT_PUBLIC_MAINNET_URL,
         {
           ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
         }

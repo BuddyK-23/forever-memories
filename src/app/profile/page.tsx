@@ -32,7 +32,7 @@ export default function Profile() {
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const [fmtBalance, setFmtBalance] = useState<number>(0);
-  const [lyxBalance, setLyxBalance] = useState<string>('');
+  const [lyxBalance, setLyxBalance] = useState<string>("");
   const [profile, setProfile] = useState<LSP3Profile | null>(null);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
@@ -42,7 +42,10 @@ export default function Profile() {
 
   const fetchNFT = async () => {
     if (walletProvider) {
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider, "any");
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
       const signer = ethersProvider.getSigner(address);
       const _lyxBalance = await ethersProvider.getBalance(address as string);
       const lyxBalance = ethers.utils.formatEther(_lyxBalance);
@@ -51,22 +54,29 @@ export default function Profile() {
       const erc725js = new ERC725(
         LSP3Schema,
         address,
-        process.env.NEXT_PUBLIC_DEVELOPMENT_ENVIRONMENT_TYPE == "1"
-          ? process.env.NEXT_PUBLIC_MAINNET_URL
-          : process.env.NEXT_PUBLIC_TESTNET_URL,
+        process.env.NEXT_PUBLIC_MAINNET_URL,
         {
           ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
         }
       );
 
       const result = await erc725js.fetchData("LSP3Profile");
-      const decodedProfileMetadata = result as unknown as DecodedProfileMetadata;
+      const decodedProfileMetadata =
+        result as unknown as DecodedProfileMetadata;
+      console.log("result", decodedProfileMetadata.value.LSP3Profile.name); 
 
-      if (decodedProfileMetadata.value && decodedProfileMetadata.value.LSP3Profile) {
+      if (
+        decodedProfileMetadata.value &&
+        decodedProfileMetadata.value.LSP3Profile
+      ) {
         setProfile(decodedProfileMetadata.value.LSP3Profile);
       }
 
-      const FMTContract = new ethers.Contract(FMTContractAddress, FMT.abi, signer);
+      const FMTContract = new ethers.Contract(
+        FMTContractAddress,
+        FMT.abi,
+        signer
+      );
       const _balance = await FMTContract.balanceOf(address);
       setFmtBalance(hexToDecimal(_balance._hex));
 
@@ -90,9 +100,12 @@ export default function Profile() {
       <div
         className="relative bg-cover bg-center h-[400px] w-full"
         style={{
-          backgroundImage: profile?.backgroundImage && profile.backgroundImage[0]?.url
-            ? `url('` + convertIpfsUriToUrl(profile.backgroundImage[0].url)+ `')`
-            : undefined
+          backgroundImage:
+            profile?.backgroundImage && profile.backgroundImage[0]?.url
+              ? `url('` +
+                convertIpfsUriToUrl(profile.backgroundImage[0].url) +
+                `')`
+              : undefined,
         }}
       >
         <div className="absolute inset-0 flex items-center justify-center">

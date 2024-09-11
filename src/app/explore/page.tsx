@@ -10,8 +10,6 @@ import {
   useWeb3ModalProvider,
 } from "@web3modal/ethers5/react";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
-const vaultFactoryContractAddress =
-  "0x8223885529af465d851772438cec41fbb9d4827d";
 import { hexToDecimal } from "@/utils/format";
 
 import "swiper/css";
@@ -61,6 +59,7 @@ interface Vault {
   members: number;
   owner: string;
   vaultAddress: string;
+  vaultMode: number;
 }
 
 export default function Explore() {
@@ -88,7 +87,7 @@ export default function Explore() {
       const signer = ethersProvider.getSigner(address);
 
       const VaultFactoryContract = new ethers.Contract(
-        vaultFactoryContractAddress,
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
         VaultFactoryABI.abi,
         signer
       );
@@ -111,6 +110,7 @@ export default function Explore() {
           members: 78,
           owner: data.vaultOwner,
           vaultAddress: unJoinedVaults[i],
+          vaultMode: data.vaultMode,
         });
 
         console.log(i, " =>", data.title);
@@ -122,7 +122,6 @@ export default function Explore() {
   };
 
   const handleCategory = async (index: number) => {
-    console.log("index", index);
     setCategoryIndex(index);
 
     if (walletProvider) {
@@ -133,13 +132,13 @@ export default function Explore() {
       const signer = ethersProvider.getSigner(address);
 
       const VaultFactoryContract = new ethers.Contract(
-        vaultFactoryContractAddress,
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
         VaultFactoryABI.abi,
         signer
       );
 
       let categoryVaults;
-      if(index === 0) {
+      if (index === 0) {
         categoryVaults = await VaultFactoryContract.getUnjoinedPublicVaults(
           address
         );
@@ -149,7 +148,7 @@ export default function Explore() {
           address
         );
       }
-      
+
       const vaults: Vault[] = [];
       for (let i = 0; i < categoryVaults.length; i++) {
         const data = await VaultFactoryContract.getVaultMetadata(
@@ -163,6 +162,7 @@ export default function Explore() {
           members: 78,
           owner: data.vaultOwner,
           vaultAddress: data[i],
+          vaultMode: data.vaultMode,
         });
       }
 
@@ -214,7 +214,7 @@ export default function Explore() {
       <div className="py-10 grid grid-cols-5 gap-4">
         {vaultData.map((vault, index) => (
           <div key={index}>
-            <VaultCard vault={vault} />
+            <VaultCard vault={vault} href="explore" />
           </div>
         ))}
       </div>
