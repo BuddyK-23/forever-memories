@@ -8,6 +8,7 @@ import { ethers } from "ethers";
 import { ERC725 } from "@erc725/erc725.js";
 import LSP4DigitalAsset from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
 import ForeverMemoryCollection from "@/artifacts/Vault.json";
+import VaultFactoryABI from "@/artifacts/VaultFactory.json";
 import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
@@ -75,6 +76,51 @@ export default function AddMoment() {
   const [cid, setCid] = useState("");
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchVault = async () => {
+      if (walletProvider && address) {
+        // Ensuring both are available
+        const ethersProvider = new ethers.providers.Web3Provider(
+          walletProvider,
+          "any"
+        );
+        const signer = ethersProvider.getSigner(address);
+
+        const VaultFactoryContract = new ethers.Contract(
+          process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+          VaultFactoryABI.abi,
+          signer
+        );
+        const unJoinedVaults =
+          await VaultFactoryContract.getUnjoinedPublicVaults(address);
+        // const vaults: Vault[] = [];
+        // for (let i = 0; i < unJoinedVaults.length; i++) {
+        //   const data = await VaultFactoryContract.getVaultMetadata(
+        //     unJoinedVaults[i]
+        //   );
+
+        //   vaults.push({
+        //     name: data.title,
+        //     description: data.description,
+        //     cid: data.imageURI,
+        //     moments: hexToDecimal(data.memberCount._hex),
+        //     members: 78,
+        //     owner: data.vaultOwner,
+        //     vaultAddress: unJoinedVaults[i],
+        //     vaultMode: data.vaultMode,
+        //   });
+        // }
+
+        // setVaultData(vaults);
+        setIsDownloading(true);
+      }
+    };
+
+    fetchVault();
+  }, [isConnected, address, walletProvider]); // Added address and walletProvider to dependencies
+
 
   const handleTagChange = (selectedOptions: MultiValue<TagOption>) => {
     setSelectedTags(selectedOptions);
@@ -307,7 +353,7 @@ export default function AddMoment() {
                   className="flex flex-col items-center justify-center w-full h-[500px] border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600 shadow-lg shadow-gray-500/50"
                 >
                   {imagePreview && (
-                    <Image
+                    <img
                       src={imagePreview}
                       alt="Preview"
                       className="w-full h-[500px] rounded-lg"

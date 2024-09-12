@@ -43,7 +43,7 @@ const MomentCard: React.FC<MomentCardProps> = ({ moment }) => {
   return (
     <Link className="w-full h-[300px]" href={`/nft/` + moment.momentAddress}>
       <div className="w-full">
-        <Image className="w-full rounded-lg" src={"https://ipfs.io/ipfs/" + moment.cid} alt="Moment Image" />
+        <img className="w-full rounded-lg" src={"https://ipfs.io/ipfs/" + moment.cid} alt="Moment Image" />
       </div>
       <div className="flex gap-2 text-xs pt-2">
         <div>Likes: {moment.likes}</div>
@@ -53,7 +53,7 @@ const MomentCard: React.FC<MomentCardProps> = ({ moment }) => {
       <div className="">{moment.description}</div>
       
       <div className="flex gap-2 pt-1 items-center">
-        <Image
+        <img
           className="rounded-lg h-[25px] w-[25px]"
           src={profileCid}
           alt="moment.name"

@@ -239,9 +239,9 @@ export default function Page({ params }: { params: { slug: string } }) {
       <div className="w-3/4 mx-auto">
         <div className="flex gap-4">
           <div className="w-2/3 h-[600px] rounded border-8 border-indigo-100 shadow-lg shadow-gray-500/50">
-            <Image
+            <img
               className="carousel-item w-full h-[584px]"
-              src={cid as string}
+              src={cid}
               alt="moment image"
             />
           </div>

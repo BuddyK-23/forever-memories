@@ -166,7 +166,7 @@ export default function CreateVault() {
       {!cid ? (
         ""
       ) : (
-        <Image className={`carousel-item w-full h-[584px]`} src={cid} alt="" />
+        <img className={`carousel-item w-full h-[584px]`} src={cid} alt="" />
       )}
 
       <div className="w-full max-w-lg">
@@ -180,7 +180,7 @@ export default function CreateVault() {
             className="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
           />
           {imagePreview && (
-            <Image
+            <img
               src={imagePreview}
               alt="Image preview"
               className="mt-2 h-40 w-full object-cover rounded-md"
