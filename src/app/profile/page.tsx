@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { ERC725 } from "@erc725/erc725.js";
@@ -37,52 +38,52 @@ export default function Profile() {
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   useEffect(() => {
-    fetchNFT();
-  }, [address]);
+    const fetchProfileMetadata = async () => {
+      if (walletProvider) {
+        const ethersProvider = new ethers.providers.Web3Provider(
+          walletProvider,
+          "any"
+        );
+        const signer = ethersProvider.getSigner(address);
+        const _lyxBalance = await ethersProvider.getBalance(address as string);
+        const lyxBalance = ethers.utils.formatEther(_lyxBalance);
+        setLyxBalance(lyxBalance);
 
-  const fetchNFT = async () => {
-    if (walletProvider) {
-      const ethersProvider = new ethers.providers.Web3Provider(
-        walletProvider,
-        "any"
-      );
-      const signer = ethersProvider.getSigner(address);
-      const _lyxBalance = await ethersProvider.getBalance(address as string);
-      const lyxBalance = ethers.utils.formatEther(_lyxBalance);
-      setLyxBalance(lyxBalance);
+        const erc725js = new ERC725(
+          LSP3Schema,
+          address,
+          process.env.NEXT_PUBLIC_MAINNET_URL,
+          {
+            ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
+          }
+        );
 
-      const erc725js = new ERC725(
-        LSP3Schema,
-        address,
-        process.env.NEXT_PUBLIC_MAINNET_URL,
-        {
-          ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
+        const result = await erc725js.fetchData("LSP3Profile");
+        const decodedProfileMetadata =
+          result as unknown as DecodedProfileMetadata;
+        console.log("result", decodedProfileMetadata.value.LSP3Profile.name);
+
+        if (
+          decodedProfileMetadata.value &&
+          decodedProfileMetadata.value.LSP3Profile
+        ) {
+          setProfile(decodedProfileMetadata.value.LSP3Profile);
         }
-      );
 
-      const result = await erc725js.fetchData("LSP3Profile");
-      const decodedProfileMetadata =
-        result as unknown as DecodedProfileMetadata;
-      console.log("result", decodedProfileMetadata.value.LSP3Profile.name); 
+        const FMTContract = new ethers.Contract(
+          FMTContractAddress,
+          FMT.abi,
+          signer
+        );
+        const _balance = await FMTContract.balanceOf(address);
+        setFmtBalance(hexToDecimal(_balance._hex));
 
-      if (
-        decodedProfileMetadata.value &&
-        decodedProfileMetadata.value.LSP3Profile
-      ) {
-        setProfile(decodedProfileMetadata.value.LSP3Profile);
+        setIsDownloading(true);
       }
+    };
 
-      const FMTContract = new ethers.Contract(
-        FMTContractAddress,
-        FMT.abi,
-        signer
-      );
-      const _balance = await FMTContract.balanceOf(address);
-      setFmtBalance(hexToDecimal(_balance._hex));
-
-      setIsDownloading(true);
-    }
-  };
+    fetchProfileMetadata();
+  }, [address, walletProvider]);
 
   return !isDownloading ? (
     <div className="flex space-x-2 justify-center items-center bg-gray-200 h-screen dark:invert">
@@ -111,7 +112,7 @@ export default function Profile() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative">
             {profile?.profileImage && profile.profileImage[0]?.url ? (
-              <img
+              <Image
                 src={convertIpfsUriToUrl(profile.profileImage[0].url)}
                 alt="Profile Avatar"
                 width={150}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from 'next/image'
 import { useState, FormEvent } from "react";
 import Select, { MultiValue } from "react-select";
 import { ethers } from "ethers";
@@ -165,7 +166,7 @@ export default function CreateVault() {
       {!cid ? (
         ""
       ) : (
-        <img className={`carousel-item w-full h-[584px]`} src={cid} alt="" />
+        <Image className={`carousel-item w-full h-[584px]`} src={cid} alt="" />
       )}
 
       <div className="w-full max-w-lg">
@@ -179,7 +180,7 @@ export default function CreateVault() {
             className="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
           />
           {imagePreview && (
-            <img
+            <Image
               src={imagePreview}
               alt="Image preview"
               className="mt-2 h-40 w-full object-cover rounded-md"

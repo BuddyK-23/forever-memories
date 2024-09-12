@@ -75,51 +75,47 @@ export default function Explore() {
     "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-gray-200 hover:bg-blue-500 text-black hover:text-white";
 
   useEffect(() => {
-    fetchNFT();
-  }, [isConnected]);
-
-  const fetchNFT = async () => {
-    if (walletProvider) {
-      const ethersProvider = new ethers.providers.Web3Provider(
-        walletProvider,
-        "any"
-      );
-      const signer = ethersProvider.getSigner(address);
-
-      const VaultFactoryContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-        VaultFactoryABI.abi,
-        signer
-      );
-      const unJoinedVaults = await VaultFactoryContract.getUnjoinedPublicVaults(
-        address
-      );
-      console.log("unJoinedVaults", unJoinedVaults);
-      console.log("length", unJoinedVaults.length);
-      const vaults: Vault[] = [];
-      for (let i = 0; i < unJoinedVaults.length; i++) {
-        const data = await VaultFactoryContract.getVaultMetadata(
-          unJoinedVaults[i]
+    const fetchVault = async () => {
+      if (walletProvider && address) {
+        // Ensuring both are available
+        const ethersProvider = new ethers.providers.Web3Provider(
+          walletProvider,
+          "any"
         );
+        const signer = ethersProvider.getSigner(address);
 
-        vaults.push({
-          name: data.title,
-          description: data.description,
-          cid: data.imageURI,
-          moments: hexToDecimal(data.memberCount._hex),
-          members: 78,
-          owner: data.vaultOwner,
-          vaultAddress: unJoinedVaults[i],
-          vaultMode: data.vaultMode,
-        });
+        const VaultFactoryContract = new ethers.Contract(
+          process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+          VaultFactoryABI.abi,
+          signer
+        );
+        const unJoinedVaults =
+          await VaultFactoryContract.getUnjoinedPublicVaults(address);
+        const vaults: Vault[] = [];
+        for (let i = 0; i < unJoinedVaults.length; i++) {
+          const data = await VaultFactoryContract.getVaultMetadata(
+            unJoinedVaults[i]
+          );
 
-        console.log(i, " =>", data.title);
+          vaults.push({
+            name: data.title,
+            description: data.description,
+            cid: data.imageURI,
+            moments: hexToDecimal(data.memberCount._hex),
+            members: 78,
+            owner: data.vaultOwner,
+            vaultAddress: unJoinedVaults[i],
+            vaultMode: data.vaultMode,
+          });
+        }
+
+        setVaultData(vaults);
+        setIsDownloading(true);
       }
+    };
 
-      setVaultData(vaults);
-      setIsDownloading(true);
-    }
-  };
+    fetchVault();
+  }, [isConnected, address, walletProvider]); // Added address and walletProvider to dependencies
 
   const handleCategory = async (index: number) => {
     setCategoryIndex(index);

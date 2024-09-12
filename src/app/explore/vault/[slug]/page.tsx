@@ -3,7 +3,7 @@
 import { Button, Modal } from "flowbite-react";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
-import ForeverMemoryCollection from "@/artifacts/ForeverMemoryCollection.json";
+import ForeverMemoryCollection from "@/artifacts/Vault.json";
 import { ethers } from "ethers";
 import {
   useWeb3ModalAccount,
@@ -334,7 +334,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                 className="bg-red-500"
                 onClick={() => setOpenModal(false)}
               >
-                Yes, I'm sure
+                Yes, I&#39;m sure
               </Button>
               <Button
                 className="bg-white text-black"

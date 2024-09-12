@@ -37,51 +37,50 @@ export default function Profile() {
   const { walletProvider } = useWeb3ModalProvider();
 
   useEffect(() => {
-    fetchVault();
-  }, [isConnected]);
-
-  const fetchVault = async () => {
-    if (walletProvider) {
-      const ethersProvider = new ethers.providers.Web3Provider(
-        walletProvider,
-        "any"
-      );
-      const signer = ethersProvider.getSigner(address);
-
-      const VaultFactoryContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-        VaultFactoryABI.abi,
-        signer
-      );
-      const unJoinedVaults = await VaultFactoryContract.getUnjoinedPublicVaults(
-        address
-      );
-      console.log("unJoinedVaults---", unJoinedVaults);
-
-      const vaults: Vault[] = [];
-      for (let i = 0; i < unJoinedVaults.length; i++) {
-        const data = await VaultFactoryContract.getVaultMetadata(
-          unJoinedVaults[i]
+    const fetchVault = async () => {
+      if (walletProvider) {
+        const ethersProvider = new ethers.providers.Web3Provider(
+          walletProvider,
+          "any"
         );
+        const signer = ethersProvider.getSigner(address);
 
-        vaults.push({
-          name: data.title,
-          description: data.description,
-          cid: data.imageURI,
-          moments: hexToDecimal(data.memberCount._hex),
-          members: 78,
-          owner: data.vaultOwner,
-          vaultAddress: unJoinedVaults[i],
-          vaultMode: data.vaultMode,
-        });
+        const VaultFactoryContract = new ethers.Contract(
+          process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+          VaultFactoryABI.abi,
+          signer
+        );
+        const unJoinedVaults =
+          await VaultFactoryContract.getUnjoinedPublicVaults(address);
+        console.log("unJoinedVaults---", unJoinedVaults);
 
-        console.log(i, " =>", data.title);
+        const vaults: Vault[] = [];
+        for (let i = 0; i < unJoinedVaults.length; i++) {
+          const data = await VaultFactoryContract.getVaultMetadata(
+            unJoinedVaults[i]
+          );
+
+          vaults.push({
+            name: data.title,
+            description: data.description,
+            cid: data.imageURI,
+            moments: hexToDecimal(data.memberCount._hex),
+            members: 78,
+            owner: data.vaultOwner,
+            vaultAddress: unJoinedVaults[i],
+            vaultMode: data.vaultMode,
+          });
+
+          console.log(i, " =>", data.title);
+        }
+        console.log("vaults", vaults);
+        setVaultData(vaults);
+        setIsDownloading(false);
       }
-      console.log("vaults", vaults);
-      setVaultData(vaults);
-      setIsDownloading(false);
-    }
-  };
+    };
+
+    fetchVault();
+  }, [isConnected, address, walletProvider]);
 
   // Handle fetching vaults based on index or "show only my vaults" toggle
   const handleGetVaultsByPermissionFlag = async (index: number) => {
@@ -247,7 +246,7 @@ export default function Profile() {
                 className="bg-red-500"
                 onClick={() => setOpenModal(false)}
               >
-                Yes, I'm sure
+                Yes, I&#39;m sure
               </Button>
               <Button
                 className="bg-white text-black"

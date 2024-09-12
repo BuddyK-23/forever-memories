@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import { FaHeart } from "react-icons/fa6";
 import { BsChatLeftTextFill, BsFillShareFill } from "react-icons/bs";
-import ForeverMemoryCollection from "@/artifacts/ForeverMemoryCollection.json";
+import ForeverMemoryCollection from "@/artifacts/Vault.json";
 import FMT from "@/artifacts/FMT.json";
 import {
   useWeb3ModalAccount,
@@ -49,89 +50,88 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   useEffect(() => {
-    fetchNFT();
-  }, [isConnected]);
+    const fetchNFT = async () => {
+      if (walletProvider) {
+        const ethersProvider = new ethers.providers.Web3Provider(
+          walletProvider,
+          "any"
+        );
+        const signer = ethersProvider.getSigner(address);
 
-  const fetchNFT = async () => {
-    if (walletProvider) {
-      const ethersProvider = new ethers.providers.Web3Provider(
-        walletProvider,
-        "any"
-      );
-      const signer = ethersProvider.getSigner(address);
+        const lsp7Contract = new ethers.Contract(
+          bytes32ToAddress(tokenId),
+          ForeverMemoryCollection.abi,
+          signer
+        );
 
-      const lsp7Contract = new ethers.Contract(
-        bytes32ToAddress(tokenId),
-        ForeverMemoryCollection.abi,
-        signer
-      );
+        const _balance = await lsp7Contract.balanceOf(address);
+        setMyBalance(hexToDecimal(_balance._hex));
+        const _totalSuppy = await lsp7Contract.totalSupply();
+        setTotalSupply(hexToDecimal(_totalSuppy._hex));
+        const nftAsset = new ERC725(
+          lsp4Schema,
+          bytes32ToAddress(tokenId),
+          process.env.NEXT_PUBLIC_MAINNET_URL,
+          {
+            ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
+          }
+        );
 
-      const _balance = await lsp7Contract.balanceOf(address);
-      setMyBalance(hexToDecimal(_balance._hex));
-      const _totalSuppy = await lsp7Contract.totalSupply();
-      setTotalSupply(hexToDecimal(_totalSuppy._hex));
-      const nftAsset = new ERC725(
-        lsp4Schema,
-        bytes32ToAddress(tokenId),
-        process.env.NEXT_PUBLIC_MAINNET_URL,
-        {
-          ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
+        const _vaultName = await nftAsset.getData("LSP4TokenName");
+        setNftName(_vaultName.value as string);
+        const _vaultSymbol = await nftAsset.getData("LSP4TokenSymbol");
+        setNftSymbol(_vaultSymbol.value as string);
+        const nft = await nftAsset.getData("LSP4Metadata");
+        let ipfsHash;
+        if (hasUrlProperty(nft?.value)) {
+          ipfsHash = nft.value.url;
+        } else {
+          // Handle the case where vault?.value does not have a 'url' property
+          console.log("The value does not have a 'url' property.");
         }
-      );
+        const encryptionKey = await generateEncryptionKey(
+          process.env.NEXT_PUBLIC_ENCRYPTION_KEY!
+        );
+        const response = await fetch(`https://ipfs.io/ipfs/${ipfsHash}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch image from IPFS");
+        }
+        const encryptedData = await response.arrayBuffer();
+        const decryptedData = await decryptFile(
+          new Uint8Array(encryptedData),
+          encryptionKey
+        );
+        const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
+        const objectURL = URL.createObjectURL(blob);
+        setCid(objectURL);
 
-      const _vaultName = await nftAsset.getData("LSP4TokenName");
-      setNftName(_vaultName.value as string);
-      const _vaultSymbol = await nftAsset.getData("LSP4TokenSymbol");
-      setNftSymbol(_vaultSymbol.value as string);
-      const nft = await nftAsset.getData("LSP4Metadata");
-      let ipfsHash;
-      if (hasUrlProperty(nft?.value)) {
-        ipfsHash = nft.value.url;
-      } else {
-        // Handle the case where vault?.value does not have a 'url' property
-        console.log("The value does not have a 'url' property.");
+        const creator = await lsp7Contract.owner();
+        setVaultAddress(creator);
+
+        setNftAddress(bytes32ToAddress(tokenId));
+
+        const VaultContract = new ethers.Contract(
+          creator,
+          ForeverMemoryCollection.abi,
+          signer
+        );
+        const unixMintedDates = await VaultContract.mintingDates(
+          bytes32ToAddress(tokenId)
+        );
+        const md = convertUnixTimestampToCustomDate(
+          unixMintedDates,
+          "yyyy-MM-dd HH:mm"
+        );
+        setMintedDate(md);
+
+        const likes = await VaultContract.getLikes(tokenId);
+        setNftLike(likes.length);
+
+        setIsDownloading(true);
       }
-      const encryptionKey = await generateEncryptionKey(
-        process.env.NEXT_PUBLIC_ENCRYPTION_KEY!
-      );
-      const response = await fetch(`https://ipfs.io/ipfs/${ipfsHash}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch image from IPFS");
-      }
-      const encryptedData = await response.arrayBuffer();
-      const decryptedData = await decryptFile(
-        new Uint8Array(encryptedData),
-        encryptionKey
-      );
-      const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
-      const objectURL = URL.createObjectURL(blob);
-      setCid(objectURL);
-
-      const creator = await lsp7Contract.owner();
-      setVaultAddress(creator);
-
-      setNftAddress(bytes32ToAddress(tokenId));
-
-      const VaultContract = new ethers.Contract(
-        creator,
-        ForeverMemoryCollection.abi,
-        signer
-      );
-      const unixMintedDates = await VaultContract.mintingDates(
-        bytes32ToAddress(tokenId)
-      );
-      const md = convertUnixTimestampToCustomDate(
-        unixMintedDates,
-        "yyyy-MM-dd HH:mm"
-      );
-      setMintedDate(md);
-
-      const likes = await VaultContract.getLikes(tokenId);
-      setNftLike(likes.length);
-
-      setIsDownloading(true);
-    }
-  };
+    };
+    fetchNFT();
+  }, [isConnected, address, walletProvider]);
 
   const handleLike = async () => {
     if (walletProvider) {
@@ -239,10 +239,10 @@ export default function Page({ params }: { params: { slug: string } }) {
       <div className="w-3/4 mx-auto">
         <div className="flex gap-4">
           <div className="w-2/3 h-[600px] rounded border-8 border-indigo-100 shadow-lg shadow-gray-500/50">
-            <img
-              className={`carousel-item w-full h-[584px]`}
-              src={cid}
-              alt=""
+            <Image
+              className="carousel-item w-full h-[584px]"
+              src={cid as string}
+              alt="moment image"
             />
           </div>
           <div className="w-1/3">

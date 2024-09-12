@@ -3,7 +3,6 @@
 import { Button, Modal, TextInput } from "flowbite-react";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
-import ForeverMemoryCollection from "@/artifacts/ForeverMemoryCollection.json";
 import { ethers } from "ethers";
 import {
   useWeb3ModalAccount,
@@ -29,30 +28,9 @@ interface Moment {
   momentAddress: string;
 }
 
-interface TokenData {
-  cid: string;
-  tokenSymbol: string;
-  tokenName: string;
-  tokenId: string;
-}
-
-// Define the types you expect
-type URLDataWithHash = {
-  url: string;
-  hash: string;
-};
-
-type Data = string | number | boolean | URLDataWithHash | Data[];
-
-// Type guard to check if the value has a 'url' property
-function hasUrlProperty(value: any): value is URLDataWithHash {
-  return value && typeof value === "object" && "url" in value;
-}
-
 export default function Page({ params }: { params: { slug: string } }) {
   const vaultAddress = params.slug;
 
-  const [tokenDataArray, setTokenDataArray] = useState<TokenData[]>([]);
   const [vaultTitle, setVaultTitle] = useState<string>();
   const [vaultDescription, setVaultDescription] = useState<string>();
   const [vaultMembers, setVaultMembers] = useState<string>();
@@ -345,7 +323,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                 className="bg-red-500"
                 onClick={() => setOpenModal(false)}
               >
-                Yes, I'm sure
+                Yes, I&#39;m sure
               </Button>
               <Button
                 className="bg-white text-black"

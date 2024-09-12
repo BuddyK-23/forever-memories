@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useCallback, useRef, useState, useEffect } from "react";
+import Image from 'next/image'
 import Select, { MultiValue } from "react-select";
 import { generateEncryptionKey, decryptFile } from "@/utils/upload";
 import { ethers } from "ethers";
 import { ERC725 } from "@erc725/erc725.js";
 import LSP4DigitalAsset from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
-import ForeverMemoryCollection from "@/artifacts/ForeverMemoryCollection.json";
+import ForeverMemoryCollection from "@/artifacts/Vault.json";
 import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
@@ -306,7 +307,7 @@ export default function AddMoment() {
                   className="flex flex-col items-center justify-center w-full h-[500px] border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600 shadow-lg shadow-gray-500/50"
                 >
                   {imagePreview && (
-                    <img
+                    <Image
                       src={imagePreview}
                       alt="Preview"
                       className="w-full h-[500px] rounded-lg"
