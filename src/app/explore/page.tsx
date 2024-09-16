@@ -10,6 +10,7 @@ import {
   useWeb3ModalProvider,
 } from "@web3modal/ethers5/react";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
+import VaultABI from "@/artifacts/Vault.json";
 import { hexToDecimal } from "@/utils/format";
 
 import "swiper/css";
@@ -84,16 +85,26 @@ export default function Explore() {
         );
         const signer = ethersProvider.getSigner(address);
 
+        const VaultContract = new ethers.Contract(
+          process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+          VaultABI.abi,
+          signer
+        );
+
         const VaultFactoryContract = new ethers.Contract(
           process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
           VaultFactoryABI.abi,
           signer
         );
+        
         const unJoinedVaults =
           await VaultFactoryContract.getUnjoinedPublicVaults(address);
         const vaults: Vault[] = [];
         for (let i = 0; i < unJoinedVaults.length; i++) {
           const data = await VaultFactoryContract.getVaultMetadata(
+            unJoinedVaults[i]
+          );
+          const memberCount = VaultContract.getNFTcounts(
             unJoinedVaults[i]
           );
 
@@ -102,7 +113,7 @@ export default function Explore() {
             description: data.description,
             cid: data.imageURI,
             moments: hexToDecimal(data.memberCount._hex),
-            members: 78,
+            members: memberCount,
             owner: data.vaultOwner,
             vaultAddress: unJoinedVaults[i],
             vaultMode: data.vaultMode,

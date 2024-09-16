@@ -11,6 +11,7 @@ import {
 } from "@web3modal/ethers5/react";
 import VaultCard from "@/components/VaultCard";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
+import VaultABI from "@/artifacts/Vault.json";
 import { hexToDecimal } from "@/utils/format";
 
 interface Vault {
@@ -37,58 +38,92 @@ export default function Profile() {
   const { walletProvider } = useWeb3ModalProvider();
 
   useEffect(() => {
-    const fetchVault = async () => {
-      if (walletProvider) {
-        const ethersProvider = new ethers.providers.Web3Provider(
-          walletProvider,
-          "any"
-        );
-        const signer = ethersProvider.getSigner(address);
-
-        const VaultFactoryContract = new ethers.Contract(
-          process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-          VaultFactoryABI.abi,
-          signer
-        );
-        const unJoinedVaults =
-          await VaultFactoryContract.getUnjoinedPublicVaults(address);
-        console.log("unJoinedVaults---", unJoinedVaults);
-
-        const vaults: Vault[] = [];
-        for (let i = 0; i < unJoinedVaults.length; i++) {
-          const data = await VaultFactoryContract.getVaultMetadata(
-            unJoinedVaults[i]
-          );
-
-          vaults.push({
-            name: data.title,
-            description: data.description,
-            cid: data.imageURI,
-            moments: hexToDecimal(data.memberCount._hex),
-            members: 78,
-            owner: data.vaultOwner,
-            vaultAddress: unJoinedVaults[i],
-            vaultMode: data.vaultMode,
-          });
-
-          console.log(i, " =>", data.title);
-        }
-        console.log("vaults", vaults);
-        setVaultData(vaults);
-        setIsDownloading(false);
-      }
-    };
-
-    fetchVault();
+    fetchVault(permissionFlag, ownerFlag);
   }, [isConnected, address, walletProvider]);
 
-  // Handle fetching vaults based on index or "show only my vaults" toggle
-  const handleGetVaultsByPermissionFlag = async (index: number) => {
-    index === 0 ? setPermissionFlag(false) : setPermissionFlag(true);
+  const fetchVault = async (permissionflag: boolean, ownerflag: boolean) => {
+    if (walletProvider) {
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
+
+      const VaultContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+        VaultABI.abi,
+        signer
+      );
+
+      const VaultFactoryContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+        VaultFactoryABI.abi,
+        signer
+      );
+
+      let vaultList;
+      // private, owner
+      if (permissionflag && ownerflag) {
+        vaultList = await VaultFactoryContract.getPrivateVaultsOwnedByUser(
+          address
+        );
+        // private, no-onwer
+      } else if (permissionflag && !ownerflag) {
+        vaultList = await VaultFactoryContract.getPrivateVaultsByUser(address);
+        // public, owner
+      } else if (!permissionflag && ownerflag) {
+        vaultList = await VaultFactoryContract.getPublicVaultsOwnedByUser(
+          address
+        );
+        // public, no-owner
+      } else if (!permissionflag && !ownerflag) {
+        vaultList = await VaultFactoryContract.getPublicVaultsByUser(address);
+      }
+
+      const vaults: Vault[] = [];
+      for (let i = 0; i < vaultList.length; i++) {
+        const data = await VaultFactoryContract.getVaultMetadata(vaultList[i]);
+
+        const memberCount = VaultContract.getNFTcounts(vaultList[i]);
+
+        vaults.push({
+          name: data.title,
+          description: data.description,
+          cid: data.imageURI,
+          moments: hexToDecimal(data.memberCount._hex),
+          members: memberCount,
+          owner: data.vaultOwner,
+          vaultAddress: vaultList[i],
+          vaultMode: data.vaultMode,
+        });
+      }
+      setVaultData(vaults);
+      setIsDownloading(false);
+    }
   };
 
+  // public and private 0/1 false:  public, true:  private
+  const handleGetVaultsByPermissionFlag = async (index: number) => {
+    // public
+    if (index === 0) {
+      setPermissionFlag(false);
+      fetchVault(false, ownerFlag);
+      // private
+    } else {
+      setPermissionFlag(true);
+      fetchVault(true, ownerFlag);
+    }
+  };
+
+  // onwer true: owner
   const handleGetVaultsByOwnerFlag = () => {
-    setOwnerFlag((prevState) => !prevState);
+    if(ownerFlag) {
+      setOwnerFlag(false);
+      fetchVault(permissionFlag, false);
+    } else {
+      setOwnerFlag(true);
+      fetchVault(permissionFlag, true);
+    }
   };
 
   return isDownloading ? (

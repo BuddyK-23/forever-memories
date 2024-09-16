@@ -61,7 +61,6 @@ export default function Profile() {
         const result = await erc725js.fetchData("LSP3Profile");
         const decodedProfileMetadata =
           result as unknown as DecodedProfileMetadata;
-        console.log("result", decodedProfileMetadata.value.LSP3Profile.name);
 
         if (
           decodedProfileMetadata.value &&

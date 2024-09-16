@@ -15,6 +15,7 @@ import lsp4Schema from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
 import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
 import { generateEncryptionKey, decryptFile } from "@/utils/upload";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
+import VaultABI from "@/artifacts/Vault.json";
 import MomentCard from "@/components/MomentCard";
 import toast, { Toaster } from "react-hot-toast";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
@@ -118,7 +119,14 @@ export default function Page({ params }: { params: { slug: string } }) {
         signer
       );
 
+      const VaultContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+        VaultABI.abi,
+        signer
+      );
+
       const data = await VaultFactoryContract.getVaultMetadata(vaultAddress);
+      const moments = await VaultContract.getAllMoments(vaultAddress);
 
       // setVaultName(data.titme as string);
       //     setVaultSymbol(symbol.value as string);
@@ -199,18 +207,18 @@ export default function Page({ params }: { params: { slug: string } }) {
 
   const handleJoinVault = async () => {
     if (walletProvider) {
-      // const ethersProvider = new ethers.providers.Web3Provider(
-      //   walletProvider,
-      //   "any"
-      // );
-      // const signer = ethersProvider.getSigner(address);
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
 
-      // const VaultFactoryContract = new ethers.Contract(
-      //   process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-      //   VaultFactoryABI.abi,
-      //   signer
-      // );
-      // const tx = await VaultFactoryContract.joinVault(vaultAddress);
+      const VaultFactoryContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+        VaultFactoryABI.abi,
+        signer
+      );
+      const tx = await VaultFactoryContract.joinVault(vaultAddress);
 
       toast.success("Joint to vault successfully.");
     } else {

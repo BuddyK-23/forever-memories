@@ -1,10 +1,15 @@
 "use client";
 
 import Image from "next/image";
+import { Button } from "flowbite-react";
 import React, { useState, useEffect } from "react";
 import { FaHeart } from "react-icons/fa6";
 import { BsChatLeftTextFill, BsFillShareFill } from "react-icons/bs";
-import ForeverMemoryCollection from "@/artifacts/Vault.json";
+import { AiOutlineLike } from "react-icons/ai";
+import { BsChatRightTextFill } from "react-icons/bs";
+import { MdInsertComment } from "react-icons/md";
+import { MdClose } from "react-icons/md";
+import VaultContractABI from "@/artifacts/Vault.json";
 import FMT from "@/artifacts/FMT.json";
 import {
   useWeb3ModalAccount,
@@ -18,8 +23,12 @@ import {
   convertUnixTimestampToCustomDate,
   hexToDecimal,
   bytes32ToAddress,
+  getUniversalProfileCustomName,
+  convertIpfsUriToUrl,
 } from "@/utils/format";
+import CommentComponent from "@/components/CommentComponent";
 
+const addr: string = "0xDCAaff67152D85BFbC8ABD1e649f9C515a417398";
 // Define the types you expect
 type URLDataWithHash = {
   url: string;
@@ -47,91 +56,108 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [nftAddress, setNftAddress] = useState<string>();
   const [nftSymbol, setNftSymbol] = useState<string>();
   const [nftLike, setNftLike] = useState<string>("0");
-  const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const [isDownloading, setIsDownloading] = useState<boolean>(true);
+  const [profileName, setProfileName] = useState<string>("");
+  const [profileCid, setProfileCid] = useState<string>("");
 
   useEffect(() => {
-    const fetchNFT = async () => {
-      if (walletProvider) {
-        const ethersProvider = new ethers.providers.Web3Provider(
-          walletProvider,
-          "any"
-        );
-        const signer = ethersProvider.getSigner(address);
-
-        const lsp7Contract = new ethers.Contract(
-          bytes32ToAddress(tokenId),
-          ForeverMemoryCollection.abi,
-          signer
-        );
-
-        const _balance = await lsp7Contract.balanceOf(address);
-        setMyBalance(hexToDecimal(_balance._hex));
-        const _totalSuppy = await lsp7Contract.totalSupply();
-        setTotalSupply(hexToDecimal(_totalSuppy._hex));
-        const nftAsset = new ERC725(
-          lsp4Schema,
-          bytes32ToAddress(tokenId),
-          process.env.NEXT_PUBLIC_MAINNET_URL,
-          {
-            ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
-          }
-        );
-
-        const _vaultName = await nftAsset.getData("LSP4TokenName");
-        setNftName(_vaultName.value as string);
-        const _vaultSymbol = await nftAsset.getData("LSP4TokenSymbol");
-        setNftSymbol(_vaultSymbol.value as string);
-        const nft = await nftAsset.getData("LSP4Metadata");
-        let ipfsHash;
-        if (hasUrlProperty(nft?.value)) {
-          ipfsHash = nft.value.url;
-        } else {
-          // Handle the case where vault?.value does not have a 'url' property
-          console.log("The value does not have a 'url' property.");
-        }
-        const encryptionKey = await generateEncryptionKey(
-          process.env.NEXT_PUBLIC_ENCRYPTION_KEY!
-        );
-        const response = await fetch(`https://ipfs.io/ipfs/${ipfsHash}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch image from IPFS");
-        }
-        const encryptedData = await response.arrayBuffer();
-        const decryptedData = await decryptFile(
-          new Uint8Array(encryptedData),
-          encryptionKey
-        );
-        const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
-        const objectURL = URL.createObjectURL(blob);
-        setCid(objectURL);
-
-        const creator = await lsp7Contract.owner();
-        setVaultAddress(creator);
-
-        setNftAddress(bytes32ToAddress(tokenId));
-
-        const VaultContract = new ethers.Contract(
-          creator,
-          ForeverMemoryCollection.abi,
-          signer
-        );
-        const unixMintedDates = await VaultContract.mintingDates(
-          bytes32ToAddress(tokenId)
-        );
-        const md = convertUnixTimestampToCustomDate(
-          unixMintedDates,
-          "yyyy-MM-dd HH:mm"
-        );
-        setMintedDate(md);
-
-        const likes = await VaultContract.getLikes(tokenId);
-        setNftLike(likes.length);
-
-        setIsDownloading(true);
+    const fetchProfileName = async () => {
+      try {
+        const profile = await getUniversalProfileCustomName(addr);
+        setProfileName(profile.profileName);
+        setProfileCid(convertIpfsUriToUrl(profile.cid));
+      } catch (error) {
+        console.error("Error fetching profile name:", error);
+        setProfileName("Unknown");
       }
     };
-    fetchNFT();
-  }, [isConnected, address, walletProvider]);
+
+    fetchProfileName();
+  }, []);
+
+  // useEffect(() => {
+  //   const fetchNFT = async () => {
+  //     if (walletProvider) {
+  //       const ethersProvider = new ethers.providers.Web3Provider(
+  //         walletProvider,
+  //         "any"
+  //       );
+  //       const signer = ethersProvider.getSigner(address);
+
+  //       const lsp7Contract = new ethers.Contract(
+  //         bytes32ToAddress(tokenId),
+  //         VaultContractABI.abi,
+  //         signer
+  //       );
+
+  //       const _balance = await lsp7Contract.balanceOf(address);
+  //       setMyBalance(hexToDecimal(_balance._hex));
+  //       const _totalSuppy = await lsp7Contract.totalSupply();
+  //       setTotalSupply(hexToDecimal(_totalSuppy._hex));
+  //       const nftAsset = new ERC725(
+  //         lsp4Schema,
+  //         bytes32ToAddress(tokenId),
+  //         process.env.NEXT_PUBLIC_MAINNET_URL,
+  //         {
+  //           ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
+  //         }
+  //       );
+
+  //       const _vaultName = await nftAsset.getData("LSP4TokenName");
+  //       setNftName(_vaultName.value as string);
+  //       const _vaultSymbol = await nftAsset.getData("LSP4TokenSymbol");
+  //       setNftSymbol(_vaultSymbol.value as string);
+  //       const nft = await nftAsset.getData("LSP4Metadata");
+  //       let ipfsHash;
+  //       if (hasUrlProperty(nft?.value)) {
+  //         ipfsHash = nft.value.url;
+  //       } else {
+  //         // Handle the case where vault?.value does not have a 'url' property
+  //         console.log("The value does not have a 'url' property.");
+  //       }
+  //       const encryptionKey = await generateEncryptionKey(
+  //         process.env.NEXT_PUBLIC_ENCRYPTION_KEY!
+  //       );
+  //       const response = await fetch(`https://ipfs.io/ipfs/${ipfsHash}`);
+  //       if (!response.ok) {
+  //         throw new Error("Failed to fetch image from IPFS");
+  //       }
+  //       const encryptedData = await response.arrayBuffer();
+  //       const decryptedData = await decryptFile(
+  //         new Uint8Array(encryptedData),
+  //         encryptionKey
+  //       );
+  //       const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
+  //       const objectURL = URL.createObjectURL(blob);
+  //       setCid(objectURL);
+
+  //       const creator = await lsp7Contract.owner();
+  //       setVaultAddress(creator);
+
+  //       setNftAddress(bytes32ToAddress(tokenId));
+
+  //       const VaultContract = new ethers.Contract(
+  //         creator,
+  //         VaultContractABI.abi,
+  //         signer
+  //       );
+  //       const unixMintedDates = await VaultContract.mintingDates(
+  //         bytes32ToAddress(tokenId)
+  //       );
+  //       const md = convertUnixTimestampToCustomDate(
+  //         unixMintedDates,
+  //         "yyyy-MM-dd HH:mm"
+  //       );
+  //       setMintedDate(md);
+
+  //       const likes = await VaultContract.getLikes(tokenId);
+  //       setNftLike(likes.length);
+
+  //       setIsDownloading(true);
+  //     }
+  //   };
+  //   fetchNFT();
+  // }, [isConnected, address, walletProvider]);
 
   const handleLike = async () => {
     if (walletProvider) {
@@ -143,14 +169,14 @@ export default function Page({ params }: { params: { slug: string } }) {
 
       const lsp7Contract = new ethers.Contract(
         bytes32ToAddress(tokenId),
-        ForeverMemoryCollection.abi,
+        VaultContractABI.abi,
         signer
       );
       const creator = await lsp7Contract.owner();
 
       const VaultContract = new ethers.Contract(
         creator,
-        ForeverMemoryCollection.abi,
+        VaultContractABI.abi,
         signer
       );
 
@@ -204,14 +230,12 @@ export default function Page({ params }: { params: { slug: string } }) {
 
       const lsp7Contract = new ethers.Contract(
         bytes32ToAddress(tokenId),
-        ForeverMemoryCollection.abi,
+        VaultContractABI.abi,
         signer
       );
 
       const tokenOwner = await lsp7Contract.owner();
       const tokenIds = await lsp7Contract.tokenIdsOf(tokenOwner);
-      console.log("tokenIds", tokenIds);
-
       // const tx = await lsp7Contract
       //   .transfer(
       //     owner, // sender address
@@ -236,107 +260,114 @@ export default function Page({ params }: { params: { slug: string } }) {
     </div>
   ) : (
     <div className="w-full bg-gray-200 py-10">
-      <div className="w-3/4 mx-auto">
-        <div className="flex gap-4">
-          <div className="w-2/3 h-[600px] rounded border-8 border-indigo-100 shadow-lg shadow-gray-500/50">
-            <img
-              className="carousel-item w-full h-[584px]"
-              src={cid}
-              alt="moment image"
-            />
+      <div className="w-3/4 mx-auto bg-white">
+        <div className="px-2 flex justify-between py-4">
+          <div className="flex gap-2">
+            <div>
+              <Button color="gray" className="text-blue-500">
+                <MdClose />
+              </Button>
+            </div>
+            <div className="text-sm">
+              <div className="font-bold">Moment Title</div>
+              <div>02 July 2024 -21:32:15 GMT</div>
+            </div>
           </div>
-          <div className="w-1/3">
-            <div className="datePanel rounded flex bg-gray-300 p-3 mb-6 flex justify-between shadow-lg shadow-gray-500/50">
-              <div className="font-bold text-xl">Memory Upload</div>
-              <div className="w-[150px] h-[30px] flex items-center justify-end">
-                {mintedDate}
-              </div>
+          <div className="flex gap-2">
+            <div>
+              <Button color="gray" className="text-blue-500">
+                Mint Moment
+              </Button>
             </div>
-            <div className="p-3 rounded bg-white shadow-lg shadow-gray-500/50 rounded">
-              <div className="flex gap-4">
-                <div className="p-1 bg-indigo-500 rounded sm text-white justify-center flex w-[55px] h-[30px]">
-                  <button
-                    onClick={handleLike}
-                    className="flex items-center justify-center h-full gap-1"
-                  >
-                    <FaHeart />
-                    {nftLike}
-                  </button>
-                </div>
-                <div className="p-1 bg-indigo-500 rounded sm text-white justify-center flex w-[55px] h-[30px]">
-                  <div className="flex items-center justify-center h-full gap-1">
-                    <BsChatLeftTextFill />
-                    25
-                  </div>
-                </div>
-                <div className="p-1 bg-emerald-500 rounded sm text-white font-normal">
-                  $FMT 245
-                </div>
-              </div>
-              <div className="pt-6 text-xl font-normal">Section Title</div>
-              <div className="pt-2 pb-6 h-[100px]">some text here</div>
-              <div className="btnGroup flex justify-between">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowModal(true)}
-                    className="p-1 bg-blue-500 text-white text-center w-[100px] shadow-lg shadow-gray-500/50 rounded"
-                  >
-                    Send Asset
-                  </button>
-                  <button className="border-2 border-blue-500 text-center text-blue-500 p-1 w-[100px] shadow-lg shadow-gray-500/50 rounded">
-                    Auction
-                  </button>
-                </div>
-
-                <div className="border-gray-200 border-2 h-[40px] w-[40px] rounded-full cursor-pointer hover:bg-gray-200">
-                  <div className="flex items-center justify-center h-full">
-                    <BsFillShareFill />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded shadow-lg shadow-gray-500/50 rounded mt-10 p-3">
-              <div className="flex justify-between">
-                <div className="text-xl font-bold">Blockchain Secured</div>
-                <div className="bg-pink-500 w-[50px] h-[30px] rounded text-white">
-                  <div className="flex items-center justify-center h-full">
-                    LSP7
-                  </div>
-                </div>
-              </div>
-              <div className="py-1">
-                <span className="font-bold">{myBalance}</span> Collection of{" "}
-                <span className="font-bold">{totalSupply}</span>
-              </div>
-              <div className="py-1">
-                <div>Contract Address</div>
-                <div className="text-sm">{nftAddress}</div>
-              </div>
-              <div className="py-1">
-                <div>Creator</div>
-                <div className="text-sm">{vaultAddress}</div>
-              </div>
+            <div>
+              <Button color="gray" className="text-blue-500">
+                ...
+              </Button>
             </div>
           </div>
         </div>
+        <div className="px-10 pb-4">
+          <div className="flex gap-4">
+            <div className="w-full h-[600px] rounded border-8 border-indigo-100 shadow-lg shadow-gray-500/50">
+              <img
+                className="carousel-item w-full h-[584px]"
+                // src={cid}
+                src={
+                  "https://ipfs.io/ipfs/QmUFdzhf91QBpkwksC1eZA3WF9PaL1dPhZ5morxq11B9c3"
+                }
+                alt="moment image"
+              />
+            </div>
+          </div>
 
-        <div className="rounded bg-white mt-10 p-3 rounded shadow-lg shadow-gray-500/50">
-          <div className="text-3xl font-bold">
-            Headline description Day 1 Selfie
+          <div className="flex justify-between pt-4">
+            <div className="flex gap-2">
+              <div className="flex items-center gap-2  py-1  px-2 rounded-lg bg-pink-200 text-pink-400 font-semibold">
+                <div>
+                  <AiOutlineLike />
+                </div>
+                <div className="">Public</div>
+              </div>
+              <div className="flex items-center gap-2 bg-gray-300  py-1  px-2 rounded-lg font-semibold">
+                Daily Selfie
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <div className="flex items-center gap-2 bg-gray-300  py-1  px-2 rounded-lg">
+                <div>
+                  <AiOutlineLike />
+                </div>
+                <div>8</div>
+              </div>
+              <div className="flex items-center gap-2 bg-gray-300 py-1  px-2 rounded-lg">
+                <div>
+                  <BsChatRightTextFill />
+                </div>
+                <div>123</div>
+              </div>
+            </div>
           </div>
-          <div className="">
-            My first selfie on the blockchain, time to log my journey for
-            asdflsadkjflk
-          </div>
-          <div className="flex gap-2 pt-5">
-            <div className="p-1 bg-indigo-200 rounded sm">Shared</div>
-            <div className="p-1 bg-gray-200 rounded sm">Personal</div>
-            <div className="p-1 bg-pink-200 rounded sm">Selfie</div>
-          </div>
-        </div>
 
-        <div className="comments rounded bg-white h-[400px] mt-10 rounded shadow-lg shadow-gray-500/50 mb-6 p-3">
-          <div className="text-3xl font-bold">Comments</div>
+          <div className="mt-10 p-3">
+            <div className="text-3xl font-bold">Daddy day care!</div>
+            <div className="">
+              My first selfie on the blockchain, time to log my journey for
+              asdflsadkjflk
+            </div>
+            <div className="flex gap-2 pt-1 items-center">
+              <img
+                className="rounded-lg h-[25px] w-[25px]"
+                src={profileCid}
+                alt="Profile"
+              />
+              <div className="text-sm justify-center item-center">
+                {profileName || "Loading..."}
+              </div>
+            </div>
+            <div className="flex gap-2 pt-5">
+              <div className="px-2 py-1 bg-gray-200 rounded sm">Selfie</div>
+              <div className="px-2 py-1 bg-gray-200 rounded sm">Daily Log</div>
+              <div className="px-2 py-1 bg-gray-200 rounded sm">Baby</div>
+            </div>
+          </div>
+
+          <div className="comments h-[auto] p-3">
+            <div>
+              <div className="text-xl font-bold">Notepad</div>
+              <div>
+                LUKSO is a new layer-1 EVM blockchain built for social, culture
+                and creators. It is the foundation to unify your digital life
+                through a smart profile and is an open, permissionless
+                playground for decentralized applications to flourish. LUKSO
+                offers an innovative approach to form the basis for managing
+                your online presence while enabling unexplored ways to connect
+                and co-create the next era of the internet.
+              </div>
+            </div>
+            <div>
+              <CommentComponent />
+            </div>
+          </div>
         </div>
 
         {showModal ? (
