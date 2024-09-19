@@ -312,7 +312,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         </div>
       </div>
 
-      <div className="py-10 grid grid-cols-3 gap-4">
+      <div className="py-10 grid grid-cols-5 gap-4">
         {moments &&
           moments.map((moment, index) => (
             <div key={index}>

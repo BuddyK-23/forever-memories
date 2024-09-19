@@ -46,7 +46,7 @@ const MomentCard: React.FC<MomentCardProps> = ({ moment }) => {
     <Link className="w-full h-[300px]" href={`/nft/` + moment.momentAddress}>
       <div className="w-full">
         <img
-          className="w-full rounded-lg"
+          className="w-full rounded-lg h-[300px]"
           src={moment.cid}
           alt="Moment Image"
         />

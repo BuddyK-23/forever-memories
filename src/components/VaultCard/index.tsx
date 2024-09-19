@@ -47,7 +47,7 @@ const VaultCard: React.FC<VaultCardProps> = ({ vault, href }) => {
     <Link className="w-full" href={`/` + href + `/vault/` + vault.vaultAddress}>
       <div className="w-full h-auto">
         <img
-          className="rounded-lg"
+          className="rounded-lg h-[300px] w-full"
           src={"https://ipfs.io/ipfs/" + vault.cid}
           onError={(e) => (e.currentTarget.src = "/fallback-image.jpg")}
           alt={vault.name}

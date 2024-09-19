@@ -41,8 +41,32 @@ export default function Profile() {
   const { walletProvider } = useWeb3ModalProvider();
 
   useEffect(() => {
+    getPrivateVaultCount();
     fetchVault(permissionFlag, ownerFlag);
   }, [isConnected, address, walletProvider]);
+  const getPrivateVaultCount = async () => {
+    if (walletProvider) {
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
+
+      const VaultFactoryContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+        VaultFactoryABI.abi,
+        signer
+      );
+
+      const privateVaultsByUser =
+        await VaultFactoryContract.getPrivateVaultsByUser(address);
+      const privateVaultsOwnedByUser =
+        await await VaultFactoryContract.getPrivateVaultsOwnedByUser(address);
+      setPrivateVaultCount(
+        privateVaultsByUser.length + privateVaultsOwnedByUser.length
+      );
+    }
+  };
 
   const fetchVault = async (permissionflag: boolean, ownerflag: boolean) => {
     if (walletProvider) {
@@ -270,7 +294,7 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="py-10 grid grid-cols-3 gap-4">
+      <div className="py-10 grid grid-cols-5 gap-4">
         {vaultData.map((vault, index) => (
           <div key={index}>
             <VaultCard vault={vault} href="myVaults" />

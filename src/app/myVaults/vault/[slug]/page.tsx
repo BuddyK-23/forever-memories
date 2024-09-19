@@ -188,12 +188,6 @@ export default function Page({ params }: { params: { slug: string } }) {
           const tokenName = await myAsset.getData("LSP4TokenName");
           const likes = await await VaultContract.getLikes(allMoments[i]);
 
-          console.log("tokenSymbol", tokenSymbol);
-          console.log("tokenName", tokenName);
-          console.log("likes", likes);
-          console.log("creator", creator);
-          console.log("objectURL", objectURL);
-
           moments_.push({
             name: tokenName.value as string,
             symbol: tokenSymbol.value as string,
@@ -201,7 +195,7 @@ export default function Page({ params }: { params: { slug: string } }) {
               "Feeling joyful and full of life! This moment is everything. #happyvibes #bestlife #2024",
             cid: objectURL,
             likes: likes.length,
-            comments: 78,
+            comments: 0,
             owner: creator,
             momentAddress: allMoments[i],
           });
@@ -349,7 +343,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         </div>
       </div>
 
-      <div className="py-10 grid grid-cols-3 gap-4">
+      <div className="py-10 grid grid-cols-5 gap-4">
         {moments &&
           moments.map((moment, index) => (
             <div key={index}>
