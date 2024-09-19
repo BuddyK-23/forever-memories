@@ -51,8 +51,6 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [moments, setMoments] = useState<Moment[]>([]);
   const [openModal, setOpenModal] = useState(false);
-  const [openInvitationModal, setOpenInvitationModal] = useState(false);
-  // const [openInvitationModal, setInvitationModal] = useState(false);
 
   useEffect(() => {
     fetchNFT();
@@ -212,44 +210,22 @@ export default function Page({ params }: { params: { slug: string } }) {
     }
   };
 
-  const handleInvitationMember = async () => {
+  const handleJoinVault = async () => {
     if (walletProvider) {
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
         "any"
       );
       const signer = ethersProvider.getSigner(address);
+
       const VaultFactoryContract = new ethers.Contract(
         process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
         VaultFactoryABI.abi,
         signer
       );
       const tx = await VaultFactoryContract.joinVault(vaultAddress);
+
       toast.success("Joint to vault successfully.");
-      setOpenInvitationModal(false);
-    } else {
-      toast.error("Please connect the wallet.");
-    }
-  };
-
-  const handleLeaveVault = async () => {
-    if (walletProvider) {
-      const ethersProvider = new ethers.providers.Web3Provider(
-        walletProvider,
-        "any"
-      );
-      const signer = ethersProvider.getSigner(address);
-
-      const VaultFactoryContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-        VaultFactoryABI.abi,
-        signer
-      );
-
-      const tx = await VaultFactoryContract.leaveVault(vaultAddress);
-      console.log("tx", tx);
-      toast.success("Left to vault successfully!");
-      setOpenModal(false);
     } else {
       toast.error("Please connect the wallet.");
     }
@@ -324,25 +300,13 @@ export default function Page({ params }: { params: { slug: string } }) {
           <div className="max-w-md">{vaultMembers} members</div>
         </div>
         <div>
-          {vaultMode === 1 ? (
-            <button
-              type="button"
-              onClick={() => setOpenInvitationModal(true)}
-              className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-            >
-              Invite member
-            </button>
-          ) : (
-            ""
-          )}
-          <Link href={"/addMoment"}>
-            <button className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
-              Join Vault
-            </button>
-          </Link>
           <button
+            onClick={() => handleJoinVault()}
             className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
           >
+            Join Vault
+          </button>
+          <button className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
             ...
           </button>
         </div>
@@ -383,41 +347,6 @@ export default function Page({ params }: { params: { slug: string } }) {
                 onClick={() => setOpenModal(false)}
               >
                 No, cancel
-              </Button>
-            </div>
-          </div>
-        </Modal.Body>
-      </Modal>
-      <Modal
-        show={openInvitationModal}
-        size="md"
-        onClose={() => setOpenInvitationModal(false)}
-        popup
-      >
-        {/* <Modal.Header /> */}
-        <Modal.Body>
-          <div className="text-center">
-            <HiOutlineUserAdd className="mx-auto mt-8 mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
-            <TextInput
-              id="invitationAddress"
-              type="text"
-              // rightIcon={HiOutlineUserAdd}
-              placeholder="Input the address"
-              className="pt-2 pb-8"
-              required
-            />
-            <div className="flex justify-center gap-4">
-              <Button
-                className="bg-blue-400"
-                onClick={() => handleInvitationMember()}
-              >
-                Invite
-              </Button>
-              <Button
-                className="bg-red-400 text-white"
-                onClick={() => setOpenInvitationModal(false)}
-              >
-                Cancel
               </Button>
             </div>
           </div>
