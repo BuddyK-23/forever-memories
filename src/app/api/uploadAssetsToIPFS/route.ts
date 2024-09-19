@@ -1,6 +1,10 @@
 import { NextResponse, NextRequest } from "next/server";
-import { generateEncryptionKey, encryptFile } from "@/utils/upload";
-import { generateEncryptedEncryptionKey, generateAESKey } from "@/utils/encryptKey";
+import { generateEncryptionKey, encryptFile, decryptFile } from "@/utils/upload";
+import {
+  generateEncryptedEncryptionKey,
+  generateAESKey,
+  decryptEncryptedEncryptionKey,
+} from "@/utils/encryptKey";
 import { hexToDecimal, uint8ArrayToHexString } from "@/utils/format";
 
 export const dynamic = "auto";
@@ -51,22 +55,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const ipfsHash = await uploadToPinata(encryptedData);
     console.log("Uploaded encrypted data to Pinata. IPFS Hash:", ipfsHash);
 
-    // Encrypt the encryption key using a secret
+    //////////////
     const aesKey = await generateAESKey();
-    console.log("aesKey", aesKey);
+    console.log("aesKey:", aesKey);
 
-    const { iv, encryptedKey } = await generateEncryptedEncryptionKey(aesKey, encryptionKey);
+    const combinedEncryptedData_ = await generateEncryptedEncryptionKey(
+      encryptionKey
+    );
+    const combinedEncryptedData = uint8ArrayToHexString(combinedEncryptedData_);
+    console.log("Combined Encrypted Data:", combinedEncryptedData);
 
-    // Combine iv and encrypted key into one Uint8Array
-    const ivAndEncryptedKey = new Uint8Array(iv.length + encryptedKey.length);
-    ivAndEncryptedKey.set(iv, 0);
-    ivAndEncryptedKey.set(encryptedKey, iv.length);
-    const ivAndEncryptedKeyArr = uint8ArrayToHexString(ivAndEncryptedKey);
-
-    return new NextResponse(JSON.stringify({ ipfsHash, ivAndEncryptedKeyArr }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new NextResponse(
+      JSON.stringify({ ipfsHash, combinedEncryptedData }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
     console.error(error);
     return new NextResponse(

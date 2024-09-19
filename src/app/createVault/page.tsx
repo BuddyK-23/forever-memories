@@ -12,6 +12,7 @@ import {
 import { ERC725 } from "@erc725/erc725.js";
 import LSP4DigitalAsset from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
+import toast, { Toaster } from "react-hot-toast";
 
 interface FormValues {
   vaultName: string;
@@ -119,49 +120,44 @@ export default function CreateVault() {
     e.preventDefault();
     setError(null);
 
-    // try {
-    //   const formData = new FormData();
+    try {
+      const formData = new FormData();
 
-    //   if (formValues.metadataUriImage && walletProvider) {
-    //     formData.append("file", formValues.metadataUriImage);
-    //     const res = await fetch("/api/vaultImageToIPFS", {
-    //       method: "POST",
-    //       body: formData,
-    //     });
+      if (formValues.metadataUriImage && walletProvider) {
+        formData.append("file", formValues.metadataUriImage);
+        const res = await fetch("/api/vaultImageToIPFS", {
+          method: "POST",
+          body: formData,
+        });
+        const resData = await res.json();
+        const categories = selectedCategories.map((category) => category.value);
+        const ethersProvider = new ethers.providers.Web3Provider(
+          walletProvider,
+          "any"
+        );
+        const signer = ethersProvider.getSigner(address);
+        const VaultFactoryContract = new ethers.Contract(
+          process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+          VaultFactoryABI.abi,
+          signer
+        );
+        const tx = await VaultFactoryContract.createVault(
+          formValues.vaultName,
+          formValues.metadataUriDescription,
+          resData.ipfsHash,
+          formValues.rewardAmount,
+          formValues.vaultMode,
+          formValues.vaultMode == 1 ? formValues.firstMemberAddress : address,
+          categories
+        );
+        console.log("tx", tx);
+      }
 
-    //     const resData = await res.json();
-    //     const categories = selectedCategories.map((category) => category.value);
-
-    //     const ethersProvider = new ethers.providers.Web3Provider(
-    //       walletProvider,
-    //       "any"
-    //     );
-    //     const signer = ethersProvider.getSigner(address);
-
-    //     const VaultFactoryContract = new ethers.Contract(
-    //       process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-    //       VaultFactoryABI.abi,
-    //       signer
-    //     );
-
-    //     const tx = await VaultFactoryContract.createVault(
-    //       formValues.vaultName,
-    //       formValues.metadataUriDescription,
-    //       resData.ipfsHash,
-    //       formValues.rewardAmount,
-    //       formValues.vaultMode,
-    //       formValues.vaultMode == 1 ? formValues.firstMemberAddress : address,
-    //       categories
-    //     );
-
-    //     console.log("tx", tx);
-    //   }
-
-    //   alert("Vault is created successfully!");
-    //   setImagePreview(null);
-    // } catch (err) {
-    //   setError("An error occurred while creating the vault.");
-    // }
+      toast.success("Vault is created successfully!");
+      setImagePreview(null);
+    } catch (err) {
+      toast.error("An error occurred while creating the vault.");
+    }
   };
 
   return (
@@ -348,6 +344,7 @@ export default function CreateVault() {
           </button>
         </div>
       </div>
+      <Toaster />
     </div>
   );
 }

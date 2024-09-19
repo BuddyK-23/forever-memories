@@ -25,6 +25,8 @@ import {
   generateAESKey,
   decryptEncryptedEncryptionKey,
 } from "@/utils/encryptKey";
+import toast, { Toaster } from "react-hot-toast";
+
 import "./index.css";
 
 interface TagOption {
@@ -49,7 +51,8 @@ interface Vault {
   vaultMode: number;
 }
 
-export default function AddMoment() {
+export default function AddMoment({ params }: { params: { slug: string } }) {
+  const vaultAddress = params.slug;
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const [selectedTags, setSelectedTags] = useState<MultiValue<TagOption>>([]);
@@ -87,10 +90,9 @@ export default function AddMoment() {
           VaultFactoryABI.abi,
           signer
         );
-        const publicVaults =
-          await VaultFactoryContract.getPublicVaultsJoinedByUser(
-            "0x86CF877CfcAe561d58A62257Bb8359139072311B"
-          );
+        const publicVaults = await VaultFactoryContract.getPublicVaultsByUser(
+          address
+        );
 
         console.log("publicVaults", publicVaults);
 
@@ -100,12 +102,14 @@ export default function AddMoment() {
             publicVaults[i]
           );
 
+          const momentCount = await VaultContract.getNFTcounts(publicVaults[i]);
+
           vaults.push({
             name: data.title,
             description: data.description,
             cid: data.imageURI,
-            moments: hexToDecimal(data.memberCount._hex),
-            members: VaultContract.getNFTcounts(publicVaults[i]),
+            moments: hexToDecimal(momentCount._hex),
+            members: hexToDecimal(data.memberCount._hex),
             owner: data.vaultOwner,
             vaultAddress: publicVaults[i],
             vaultMode: data.vaultMode,
@@ -113,21 +117,21 @@ export default function AddMoment() {
         }
 
         const privateBVaults =
-          await VaultFactoryContract.getPrivateVaultsJoinedByUser(
-            "0x86CF877CfcAe561d58A62257Bb8359139072311B"
-          );
+          await VaultFactoryContract.getPrivateVaultsByUser(address);
 
         for (let i = 0; i < privateBVaults.length; i++) {
           const data = await VaultFactoryContract.getVaultMetadata(
             privateBVaults[i]
           );
 
+          const momentCount = await VaultContract.getNFTcounts(publicVaults[i]);
+
           vaults.push({
             name: data.title,
             description: data.description,
             cid: data.imageURI,
-            moments: hexToDecimal(data.memberCount._hex),
-            members: VaultContract.getNFTcounts(privateBVaults[i]),
+            moments: hexToDecimal(momentCount._hex),
+            members: hexToDecimal(data.memberCount._hex),
             owner: data.vaultOwner,
             vaultAddress: publicVaults[i],
             vaultMode: data.vaultMode,
@@ -168,6 +172,7 @@ export default function AddMoment() {
     setVault(selectedOption);
   };
 
+
   const handleMintMoment = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -194,8 +199,8 @@ export default function AddMoment() {
 
         const resData = await res.json();
         const ipfsHash = resData.ipfsHash;
-        const ivAndEncryptedKeyArr = resData.ivAndEncryptedKeyArr;
-
+        const combinedEncryptedData = resData.combinedEncryptedData;
+        
         setCid(ipfsHash);
 
         const ethersProvider = new ethers.providers.Web3Provider(
@@ -214,122 +219,107 @@ export default function AddMoment() {
         const lastClaimed = hexToDecimal(_lastClaimed._hex);
         const timestamp: number = Date.now();
         // first mint or over 24 hours
-        if (lastClaimed == 0 || timestamp / 1000 - lastClaimed > 86400) {
-          ///////////// mint function logic
-          const lsp7SubCollectionMetadata = {
-            LSP4Metadata: {
-              // name: 'Daily Selfie',
-              headline,
-              description,
-              links: [],
-              tags: [],
-              icons: [
+        // if (lastClaimed == 0 || timestamp / 1000 - lastClaimed > 86400) {
+        ///////////// mint function logic
+        const lsp7SubCollectionMetadata = {
+          LSP4Metadata: {
+            // name: 'Daily Selfie',
+            headline,
+            description,
+            links: [],
+            tags: [],
+            icons: [
+              {
+                width: 256,
+                height: 256,
+                url: "ipfs://" + cid,
+                verification: {
+                  method: "keccak256(bytes)",
+                  data: "0xdd6b5fb6dc984fda0222fb6f6e96b471c0667b12f03b1e804f7b5e6ab62acdb0",
+                },
+              },
+            ],
+            images: [
+              [
                 {
-                  width: 256,
-                  height: 256,
+                  width: 1024,
+                  height: 974,
                   url: "ipfs://" + cid,
                   verification: {
                     method: "keccak256(bytes)",
-                    data: "0xdd6b5fb6dc984fda0222fb6f6e96b471c0667b12f03b1e804f7b5e6ab62acdb0",
+                    data: "0x951bf983a4b7bcebc5c0b00a5e783630dcb788e95ee9e44b0b7d4bde4a0b4d81",
                   },
                 },
               ],
-              images: [
-                [
-                  {
-                    width: 1024,
-                    height: 974,
-                    url: "ipfs://" + cid,
-                    verification: {
-                      method: "keccak256(bytes)",
-                      data: "0x951bf983a4b7bcebc5c0b00a5e783630dcb788e95ee9e44b0b7d4bde4a0b4d81",
-                    },
-                  },
-                ],
-              ],
-              assets: [
-                {
-                  verification: {
-                    method: "keccak256(bytes)",
-                    data: "0x88f3d704f3d534267c564019ce2b70a5733d070e71bf2c1f85b5fc487f47a46f",
-                  },
-                  url: "ifps://" + ipfsHash,
-                  fileType: "jpg",
+            ],
+            assets: [
+              {
+                verification: {
+                  method: "keccak256(bytes)",
+                  data: "0x88f3d704f3d534267c564019ce2b70a5733d070e71bf2c1f85b5fc487f47a46f",
                 },
-              ],
-              attributes: [],
-            },
-          };
-          const lsp7SubCollectionMetadataCID = ipfsHash;
-          const erc725 = new ERC725(LSP4DigitalAsset, "", "", {});
-          const encodeLSP7Metadata = erc725.encodeData([
-            {
-              keyName: "LSP4Metadata",
-              value: {
-                json: lsp7SubCollectionMetadata,
-                url: lsp7SubCollectionMetadataCID,
+                url: "ifps://" + ipfsHash,
+                fileType: "jpg",
               },
+            ],
+            attributes: [],
+          },
+        };
+        const lsp7SubCollectionMetadataCID = ipfsHash;
+        const erc725 = new ERC725(LSP4DigitalAsset, "", "", {});
+        const encodeLSP7Metadata = erc725.encodeData([
+          {
+            keyName: "LSP4Metadata",
+            value: {
+              json: lsp7SubCollectionMetadata,
+              url: lsp7SubCollectionMetadataCID,
             },
-          ]);
+          },
+        ]);
 
-          console.log("ivAndEncryptedKeyArr", ivAndEncryptedKeyArr);
-          console.log("encodeLSP7Metadata", encodeLSP7Metadata.values[0]);
-          // const ivAndEncryptedKey = hexStringToUint8Array(ivAndEncryptedKeyArr);
-          // console.log("ivAndEncryptedKey", ivAndEncryptedKey);
-          // // Assuming the first 12 bytes are the IV (AES-GCM standard)
-          // const iv = new Uint8Array(ivAndEncryptedKey.slice(0, 12));
-          // const encryptedKey = new Uint8Array(ivAndEncryptedKey.slice(12));
-          // const aesKey = await generateAESKey();
-          // console.log("aesKey", aesKey);
-          // const encryptionKey = decryptEncryptedEncryptionKey(aesKey, iv, encryptedKey);
-          // console.log("encryptionKey", encryptionKey);
+        // const encryptionKey = decryptEncryptedEncryptionKey(aesKey, iv, encryptedKey);
+        // console.log("encryptionKey+++", encryptionKey);
 
-          // const tx = await VaultContract.mint(
-          //   tokenName, // tokenName
-          //   tokenSymbol, //tokenSymbol
-          //   true, // isNonDivisible
-          //   copies, // totalSupplyofLSP7
-          //   address, //receiverOfInitialTokens_
-          //   encodeLSP7Metadata.values[0],
-          //   ivAndEncryptedKeyArr,
-          //   vaultAddress
-          // );
+        const tx = await VaultContract.mint(
+          tokenName, // tokenName
+          tokenSymbol, //tokenSymbol
+          true, // isNonDivisible
+          copies, // totalSupplyofLSP7
+          address, //receiverOfInitialTokens_
+          encodeLSP7Metadata.values[0],
+          combinedEncryptedData,
+          vaultAddress
+        );
 
-          // console.log("tx", tx);
+        console.log("tx", tx);
 
-          //////////// send reward token logic
-          // const gasLimit = 100000;
-          // const rewardAmount = await ForeverMemoryContract.rewardAmount();
-          // const mWalletOwner = await FMTContract.owner();
-          // console.log("mWalletOwner:", mWalletOwner);
-          // const decimals = await FMTContract.balanceOf(mWalletOwner);
-          // console.log("decimals:", decimals);
-          // const amount = ethers.utils.parseUnits(rewardAmount, 18);
-          // console.log("amount:", amount);
-          // const txt = await FMTContract.transfer(
-          //   mWalletOwner,
-          //   owner,
-          //   amount,
-          //   false,
-          //   "0x",
-          //   { gasLimit: gasLimit }
-          // );
-          // console.log("tx:", txt);
-          setUploading(false);
-          alert(
-            "You minted one memory successfully! \n EncryptedEncryptionKey: " +
-              ivAndEncryptedKeyArr
-          );
-        } else {
-          alert("Minting of Each Vault only once a day!");
-        }
+        //////////// send reward token logic
+        // const gasLimit = 100000;
+        // const rewardAmount = await ForeverMemoryContract.rewardAmount();
+        // const mWalletOwner = await FMTContract.owner();
+        // console.log("mWalletOwner:", mWalletOwner);
+        // const decimals = await FMTContract.balanceOf(mWalletOwner);
+        // console.log("decimals:", decimals);
+        // const amount = ethers.utils.parseUnits(rewardAmount, 18);
+        // console.log("amount:", amount);
+        // const txt = await FMTContract.transfer(
+        //   mWalletOwner,
+        //   owner,
+        //   amount,
+        //   false,
+        //   "0x",
+        //   { gasLimit: gasLimit }
+        // );
+        // console.log("tx:", txt);
+        setUploading(false);
+        toast.success("You minted one memory successfully!");
       } catch (e) {
         console.log(e);
         setUploading(false);
-        alert("Trouble uploading file");
+        toast.error("Trouble uploading file");
       }
     } else {
-      alert("Connect your wallet");
+      toast.error("Connect your wallet");
     }
   };
 
@@ -581,6 +571,7 @@ export default function AddMoment() {
           </div>
         </div>
       </div>
+      <Toaster />
     </div>
   );
 }

@@ -96,29 +96,31 @@ export default function Explore() {
           VaultFactoryABI.abi,
           signer
         );
-        
+
         const unJoinedVaults =
           await VaultFactoryContract.getUnjoinedPublicVaults(address);
         const vaults: Vault[] = [];
-        for (let i = 0; i < unJoinedVaults.length; i++) {
-          const data = await VaultFactoryContract.getVaultMetadata(
-            unJoinedVaults[i]
-          );
-          const memberCount = VaultContract.getNFTcounts(
-            unJoinedVaults[i]
-          );
+        if (unJoinedVaults)
+          for (let i = 0; i < unJoinedVaults.length; i++) {
+            const data = await VaultFactoryContract.getVaultMetadata(
+              unJoinedVaults[i]
+            );
 
-          vaults.push({
-            name: data.title,
-            description: data.description,
-            cid: data.imageURI,
-            moments: hexToDecimal(data.memberCount._hex),
-            members: memberCount,
-            owner: data.vaultOwner,
-            vaultAddress: unJoinedVaults[i],
-            vaultMode: data.vaultMode,
-          });
-        }
+            const momentCount = await VaultContract.getNFTcounts(
+              unJoinedVaults[i]
+            );
+
+            vaults.push({
+              name: data.title,
+              description: data.description,
+              cid: data.imageURI,
+              moments: hexToDecimal(momentCount._hex),
+              members: hexToDecimal(data.memberCount._hex),
+              owner: data.vaultOwner,
+              vaultAddress: unJoinedVaults[i],
+              vaultMode: data.vaultMode,
+            });
+          }
 
         setVaultData(vaults);
         setIsDownloading(true);
@@ -144,6 +146,12 @@ export default function Explore() {
         signer
       );
 
+      const VaultContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+        VaultABI.abi,
+        signer
+      );
+
       let categoryVaults;
       if (index === 0) {
         categoryVaults = await VaultFactoryContract.getUnjoinedPublicVaults(
@@ -161,14 +169,17 @@ export default function Explore() {
         const data = await VaultFactoryContract.getVaultMetadata(
           categoryVaults[i]
         );
+
+        const momentCount = await VaultContract.getNFTcounts(categoryVaults[i]);
+
         vaults.push({
           name: data.title,
           description: data.description,
           cid: data.imageURI,
-          moments: hexToDecimal(data.memberCount._hex),
-          members: 78,
+          moments: hexToDecimal(momentCount._hex),
+          members: hexToDecimal(data.memberCount._hex),
           owner: data.vaultOwner,
-          vaultAddress: data[i],
+          vaultAddress: categoryVaults[i],
           vaultMode: data.vaultMode,
         });
       }
@@ -187,11 +198,11 @@ export default function Explore() {
   ) : (
     <div className="px-6 min-h-screen">
       <div className="pt-10">
-        <div className="h-[40px] w-[80px] shadow-lg shadow-gray-500/50 rounded-md cursor-pointer flex items-center justify-center  bg-blue-500 hover:bg-blue-500 text-white">
-          <Link href={"/createVault"}>
+        <Link href={"/createVault"}>
+          <div className="h-[40px] w-[80px] shadow-lg shadow-gray-500/50 rounded-md cursor-pointer flex items-center justify-center  bg-blue-500 hover:bg-blue-500 text-white">
             <div className="flex items-center justify-center gap-2">New</div>
-          </Link>
-        </div>
+          </div>
+        </Link>
       </div>
 
       <div className="pt-6 flex gap-2">

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Button } from "flowbite-react";
 import React, { useState, useEffect } from "react";
 import { FaHeart } from "react-icons/fa6";
@@ -9,8 +8,10 @@ import { AiOutlineLike } from "react-icons/ai";
 import { BsChatRightTextFill } from "react-icons/bs";
 import { MdInsertComment } from "react-icons/md";
 import { MdClose } from "react-icons/md";
-import VaultContractABI from "@/artifacts/Vault.json";
+import VaultFactoryABI from "@/artifacts/VaultFactory.json";
+import VaultABI from "@/artifacts/Vault.json";
 import FMT from "@/artifacts/FMT.json";
+import Link from "next/link";
 import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
@@ -22,20 +23,19 @@ import { generateEncryptionKey, decryptFile } from "@/utils/upload";
 import {
   convertUnixTimestampToCustomDate,
   hexToDecimal,
+  hexStringToUint8Array,
   bytes32ToAddress,
   getUniversalProfileCustomName,
   convertIpfsUriToUrl,
 } from "@/utils/format";
 import CommentComponent from "@/components/CommentComponent";
+import toast, { Toaster } from "react-hot-toast";
 
-const addr: string = "0xDCAaff67152D85BFbC8ABD1e649f9C515a417398";
 // Define the types you expect
 type URLDataWithHash = {
   url: string;
   hash: string;
 };
-
-type Data = string | number | boolean | URLDataWithHash | Data[];
 
 // Type guard to check if the value has a 'url' property
 function hasUrlProperty(value: any): value is URLDataWithHash {
@@ -51,115 +51,57 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [mintedDate, setMintedDate] = useState<string>();
   const [totalSupply, setTotalSupply] = useState<number>();
   const [myBalance, setMyBalance] = useState<number>();
-  const [nftName, setNftName] = useState<string>();
+  const [momentName, setMomentName] = useState<string>();
+  const [vaultMode, setVaultMode] = useState<string>();
+  const [vaultName, setVaultName] = useState<string>();
+  const [momentOwner, setMomentOwner] = useState<string>();
   const [vaultAddress, setVaultAddress] = useState<string>();
   const [nftAddress, setNftAddress] = useState<string>();
   const [nftSymbol, setNftSymbol] = useState<string>();
-  const [nftLike, setNftLike] = useState<string>("0");
-  const [isDownloading, setIsDownloading] = useState<boolean>(true);
+  const [momentLike, setMomentLike] = useState<string>("0");
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [profileName, setProfileName] = useState<string>("");
   const [profileCid, setProfileCid] = useState<string>("");
 
-  useEffect(() => {
-    const fetchProfileName = async () => {
-      try {
-        const profile = await getUniversalProfileCustomName(addr);
-        setProfileName(profile.profileName);
-        setProfileCid(convertIpfsUriToUrl(profile.cid));
-      } catch (error) {
-        console.error("Error fetching profile name:", error);
-        setProfileName("Unknown");
-      }
-    };
+  // Arrow function to call the API route and get the decrypted key
+  const fetchDecryptedKey = async (
+    combinedData: Uint8Array
+  ): Promise<Uint8Array> => {
+    try {
+      const response = await fetch("/api/decryptKey", {
+        method: "POST",
+        body: JSON.stringify(combinedData), // Send as JSON
+      });
 
-    fetchProfileName();
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const { decryptedKey } = await response.json();
+
+      return new Uint8Array(decryptedKey); // Convert back to Uint8Array
+    } catch (error) {
+      console.error("Error fetching decrypted key:", error);
+      throw error;
+    }
+  };
+
+  useEffect(() => {
+    fetchNFT();
   }, []);
 
-  // useEffect(() => {
-  //   const fetchNFT = async () => {
-  //     if (walletProvider) {
-  //       const ethersProvider = new ethers.providers.Web3Provider(
-  //         walletProvider,
-  //         "any"
-  //       );
-  //       const signer = ethersProvider.getSigner(address);
+  const fetchProfileName = async (mmtOwner: string) => {
+    try {
+      const profile = await getUniversalProfileCustomName(mmtOwner);
+      setProfileName(profile.profileName);
+      setProfileCid(convertIpfsUriToUrl(profile.cid));
+    } catch (error) {
+      console.error("Error fetching profile name:", error);
+      setProfileName("Unknown");
+    }
+  };
 
-  //       const lsp7Contract = new ethers.Contract(
-  //         bytes32ToAddress(tokenId),
-  //         VaultContractABI.abi,
-  //         signer
-  //       );
-
-  //       const _balance = await lsp7Contract.balanceOf(address);
-  //       setMyBalance(hexToDecimal(_balance._hex));
-  //       const _totalSuppy = await lsp7Contract.totalSupply();
-  //       setTotalSupply(hexToDecimal(_totalSuppy._hex));
-  //       const nftAsset = new ERC725(
-  //         lsp4Schema,
-  //         bytes32ToAddress(tokenId),
-  //         process.env.NEXT_PUBLIC_MAINNET_URL,
-  //         {
-  //           ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
-  //         }
-  //       );
-
-  //       const _vaultName = await nftAsset.getData("LSP4TokenName");
-  //       setNftName(_vaultName.value as string);
-  //       const _vaultSymbol = await nftAsset.getData("LSP4TokenSymbol");
-  //       setNftSymbol(_vaultSymbol.value as string);
-  //       const nft = await nftAsset.getData("LSP4Metadata");
-  //       let ipfsHash;
-  //       if (hasUrlProperty(nft?.value)) {
-  //         ipfsHash = nft.value.url;
-  //       } else {
-  //         // Handle the case where vault?.value does not have a 'url' property
-  //         console.log("The value does not have a 'url' property.");
-  //       }
-  //       const encryptionKey = await generateEncryptionKey(
-  //         process.env.NEXT_PUBLIC_ENCRYPTION_KEY!
-  //       );
-  //       const response = await fetch(`https://ipfs.io/ipfs/${ipfsHash}`);
-  //       if (!response.ok) {
-  //         throw new Error("Failed to fetch image from IPFS");
-  //       }
-  //       const encryptedData = await response.arrayBuffer();
-  //       const decryptedData = await decryptFile(
-  //         new Uint8Array(encryptedData),
-  //         encryptionKey
-  //       );
-  //       const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
-  //       const objectURL = URL.createObjectURL(blob);
-  //       setCid(objectURL);
-
-  //       const creator = await lsp7Contract.owner();
-  //       setVaultAddress(creator);
-
-  //       setNftAddress(bytes32ToAddress(tokenId));
-
-  //       const VaultContract = new ethers.Contract(
-  //         creator,
-  //         VaultContractABI.abi,
-  //         signer
-  //       );
-  //       const unixMintedDates = await VaultContract.mintingDates(
-  //         bytes32ToAddress(tokenId)
-  //       );
-  //       const md = convertUnixTimestampToCustomDate(
-  //         unixMintedDates,
-  //         "yyyy-MM-dd HH:mm"
-  //       );
-  //       setMintedDate(md);
-
-  //       const likes = await VaultContract.getLikes(tokenId);
-  //       setNftLike(likes.length);
-
-  //       setIsDownloading(true);
-  //     }
-  //   };
-  //   fetchNFT();
-  // }, [isConnected, address, walletProvider]);
-
-  const handleLike = async () => {
+  const fetchNFT = async () => {
     if (walletProvider) {
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
@@ -167,27 +109,133 @@ export default function Page({ params }: { params: { slug: string } }) {
       );
       const signer = ethersProvider.getSigner(address);
 
-      const lsp7Contract = new ethers.Contract(
-        bytes32ToAddress(tokenId),
-        VaultContractABI.abi,
+      const VaultFactoryContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+        VaultFactoryABI.abi,
         signer
       );
-      const creator = await lsp7Contract.owner();
 
       const VaultContract = new ethers.Contract(
-        creator,
-        VaultContractABI.abi,
+        process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+        VaultABI.abi,
+        signer
+      );
+
+      const combinedEncryptedData_ = await VaultContract.getEncryptedKey(
+        bytes32ToAddress(tokenId)
+      );
+      const combinedEncryptedData = hexStringToUint8Array(
+        combinedEncryptedData_
+      );
+      console.log("combinedEncryptedData", combinedEncryptedData);
+      const creator = await VaultContract.momentOwners(tokenId);
+      setMomentOwner(creator);
+      fetchProfileName(creator);
+
+      const decryptedKey_ = await fetchDecryptedKey(combinedEncryptedData);
+      const decryptedKey = Buffer.from(decryptedKey_);
+      console.log("decryptedKey", decryptedKey);
+
+      const lsp7Contract = new ethers.Contract(
+        bytes32ToAddress(tokenId),
+        VaultABI.abi,
+        signer
+      );
+
+      const nftAsset = new ERC725(
+        lsp4Schema,
+        bytes32ToAddress(tokenId),
+        process.env.NEXT_PUBLIC_MAINNET_URL,
+        {
+          ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
+        }
+      );
+
+      const _momentName = await nftAsset.getData("LSP4TokenName");
+      console.log("_momentName", _momentName.value);
+      setMomentName(_momentName.value as string);
+
+      const vaultAddress = await VaultContract.tokenOwnerOf(tokenId);
+
+      const vaultData = await VaultFactoryContract.getVaultMetadata(
+        vaultAddress
+      );
+
+      setVaultMode(vaultData.vaultMode);
+      setVaultName(vaultData.title);
+
+      // const _momentSymbol = await nftAsset.getData("LSP4TokenSymbol");
+      // setNftSymbol(_momentSymbol.value as string);
+      const nft = await nftAsset.getData("LSP4Metadata");
+      let ipfsHash;
+      if (hasUrlProperty(nft?.value)) {
+        ipfsHash = nft.value.url;
+      } else {
+        // Handle the case where vault?.value does not have a 'url' property
+        console.log("The value does not have a 'url' property.");
+      }
+      // const encryptionKey = await generateEncryptionKey(
+      //   process.env.NEXT_PUBLIC_ENCRYPTION_KEY!
+      // );
+      const fetchUrl =
+        "https://plum-certain-marten-441.mypinata.cloud/ipfs/" + ipfsHash;
+      const response = await fetch(fetchUrl);
+      if (!response.ok) {
+        throw new Error("Failed to fetch image from IPFS");
+      }
+      const encryptedData = await response.arrayBuffer();
+      const decryptedData = await decryptFile(
+        new Uint8Array(encryptedData),
+        decryptedKey
+      );
+      const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
+      const objectURL = URL.createObjectURL(blob);
+      console.log("objectURL", objectURL);
+      setCid(objectURL);
+
+      // setVaultAddress(creator);
+
+      // setNftAddress(bytes32ToAddress(tokenId));
+
+      // const unixMintedDates = await VaultContract.mintingDates(
+      //   bytes32ToAddress(tokenId)
+      // );
+      // const md = convertUnixTimestampToCustomDate(
+      //   unixMintedDates,
+      //   "yyyy-MM-dd HH:mm"
+      // );
+      // setMintedDate(md);
+
+      const likes = await VaultContract.getLikes(tokenId);
+      setMomentLike(likes.length);
+
+      setIsDownloading(true);
+    }
+  };
+
+  const handleLike = async () => {
+    if (walletProvider) {
+      console.log("handle like");
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
+
+      const VaultContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+        VaultABI.abi,
         signer
       );
 
       const likesA = await VaultContract.getLikes(tokenId);
       if (likesA.includes(address)) {
-        alert("Already liked");
+        toast.success("Already liked!");
       } else {
         await VaultContract.like(tokenId);
         const likesB = await VaultContract.getLikes(tokenId);
-        setNftLike(likesB.length);
-        alert("Like Success");
+        setMomentLike(likesB.length);
+        toast.success("Like Success");
       }
     } else {
       alert("Connect the wallet");
@@ -230,7 +278,7 @@ export default function Page({ params }: { params: { slug: string } }) {
 
       const lsp7Contract = new ethers.Contract(
         bytes32ToAddress(tokenId),
-        VaultContractABI.abi,
+        VaultABI.abi,
         signer
       );
 
@@ -269,15 +317,17 @@ export default function Page({ params }: { params: { slug: string } }) {
               </Button>
             </div>
             <div className="text-sm">
-              <div className="font-bold">Moment Title</div>
+              <div className="font-bold">{momentName}</div>
               <div>02 July 2024 -21:32:15 GMT</div>
             </div>
           </div>
           <div className="flex gap-2">
             <div>
-              <Button color="gray" className="text-blue-500">
-                Mint Moment
-              </Button>
+              <Link href={"/addMoment"}>
+                <Button color="gray" className="text-blue-500">
+                  Mint Moment
+                </Button>
+              </Link>
             </div>
             <div>
               <Button color="gray" className="text-blue-500">
@@ -291,10 +341,7 @@ export default function Page({ params }: { params: { slug: string } }) {
             <div className="w-full h-[600px] rounded border-8 border-indigo-100 shadow-lg shadow-gray-500/50">
               <img
                 className="carousel-item w-full h-[584px]"
-                // src={cid}
-                src={
-                  "https://ipfs.io/ipfs/QmUFdzhf91QBpkwksC1eZA3WF9PaL1dPhZ5morxq11B9c3"
-                }
+                src={cid}
                 alt="moment image"
               />
             </div>
@@ -306,30 +353,33 @@ export default function Page({ params }: { params: { slug: string } }) {
                 <div>
                   <AiOutlineLike />
                 </div>
-                <div className="">Public</div>
+                <div className="">{!vaultMode ? "Public" : "Private"}</div>
               </div>
               <div className="flex items-center gap-2 bg-gray-300  py-1  px-2 rounded-lg font-semibold">
-                Daily Selfie
+                {vaultName}
               </div>
             </div>
             <div className="flex gap-2">
-              <div className="flex items-center gap-2 bg-gray-300  py-1  px-2 rounded-lg">
+              <div
+                onClick={() => handleLike()}
+                className="flex items-center gap-2 bg-gray-300  py-1  px-2 rounded-lg cursor-pointer"
+              >
                 <div>
                   <AiOutlineLike />
                 </div>
-                <div>8</div>
+                <div>{momentLike}</div>
               </div>
               <div className="flex items-center gap-2 bg-gray-300 py-1  px-2 rounded-lg">
                 <div>
                   <BsChatRightTextFill />
                 </div>
-                <div>123</div>
+                <div>0</div>
               </div>
             </div>
           </div>
 
           <div className="mt-10 p-3">
-            <div className="text-3xl font-bold">Daddy day care!</div>
+            <div className="text-3xl font-bold">{momentName}</div>
             <div className="">
               My first selfie on the blockchain, time to log my journey for
               asdflsadkjflk
@@ -435,6 +485,7 @@ export default function Page({ params }: { params: { slug: string } }) {
           </>
         ) : null}
       </div>
+      <Toaster />
     </div>
   );
 }

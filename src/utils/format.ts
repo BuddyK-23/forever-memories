@@ -126,3 +126,15 @@ export function hexStringToUint8Array(hexString: string): Uint8Array {
   }
   return bytes;
 }
+
+export function jsonToUint8Array(json: { [key: string]: number }): Uint8Array {
+  const keys = Object.keys(json);            // Get keys as strings
+  const length = keys.length;                // Determine the length of the array
+  const arr = new Uint8Array(length);        // Create a new Uint8Array of that length
+
+  for (let i = 0; i < length; i++) {
+    arr[i] = json[i];                        // Assign each value from the JSON object
+  }
+
+  return arr;                                // Return the constructed Uint8Array
+}

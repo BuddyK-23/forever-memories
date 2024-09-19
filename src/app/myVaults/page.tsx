@@ -13,6 +13,7 @@ import VaultCard from "@/components/VaultCard";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
 import VaultABI from "@/artifacts/Vault.json";
 import { hexToDecimal } from "@/utils/format";
+import toast, { Toaster } from "react-hot-toast";
 
 interface Vault {
   name: string;
@@ -33,6 +34,8 @@ export default function Profile() {
   const [openModal, setOpenModal] = useState(false);
   const [vaultData, setVaultData] = useState<Vault[]>([]);
   const [ownerFlag, setOwnerFlag] = useState<boolean>(false);
+  const [publicVaultCount, setPublicVaultCount] = useState<number>(0);
+  const [privateVaultCount, setPrivateVaultCount] = useState<number>(0);
   const [permissionFlag, setPermissionFlag] = useState<boolean>(false);
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
@@ -67,31 +70,45 @@ export default function Profile() {
         vaultList = await VaultFactoryContract.getPrivateVaultsOwnedByUser(
           address
         );
+        const s_vaultList = await VaultFactoryContract.getPrivateVaultsByUser(
+          address
+        );
+        setPrivateVaultCount(vaultList.length + s_vaultList.length);
         // private, no-onwer
       } else if (permissionflag && !ownerflag) {
         vaultList = await VaultFactoryContract.getPrivateVaultsByUser(address);
+        const s_vaultList =
+          await await VaultFactoryContract.getPrivateVaultsOwnedByUser(address);
+        setPrivateVaultCount(vaultList.length + s_vaultList.length);
         // public, owner
       } else if (!permissionflag && ownerflag) {
         vaultList = await VaultFactoryContract.getPublicVaultsOwnedByUser(
           address
         );
+        const s_vaultList = await VaultFactoryContract.getPublicVaultsByUser(
+          address
+        );
+        setPublicVaultCount(vaultList.length + s_vaultList.length);
         // public, no-owner
       } else if (!permissionflag && !ownerflag) {
         vaultList = await VaultFactoryContract.getPublicVaultsByUser(address);
+        const s_vaultList =
+          await VaultFactoryContract.getPublicVaultsOwnedByUser(address);
+        setPublicVaultCount(vaultList.length + s_vaultList.length);
       }
 
       const vaults: Vault[] = [];
       for (let i = 0; i < vaultList.length; i++) {
         const data = await VaultFactoryContract.getVaultMetadata(vaultList[i]);
 
-        const memberCount = VaultContract.getNFTcounts(vaultList[i]);
+        const momentCount = await VaultContract.getNFTcounts(vaultList[i]);
 
         vaults.push({
           name: data.title,
           description: data.description,
           cid: data.imageURI,
-          moments: hexToDecimal(data.memberCount._hex),
-          members: memberCount,
+          moments: hexToDecimal(momentCount._hex),
+          members: hexToDecimal(data.memberCount._hex),
           owner: data.vaultOwner,
           vaultAddress: vaultList[i],
           vaultMode: data.vaultMode,
@@ -117,7 +134,7 @@ export default function Profile() {
 
   // onwer true: owner
   const handleGetVaultsByOwnerFlag = () => {
-    if(ownerFlag) {
+    if (ownerFlag) {
       setOwnerFlag(false);
       fetchVault(permissionFlag, false);
     } else {
@@ -146,7 +163,7 @@ export default function Profile() {
           }
         >
           <div>Private vaults</div>
-          <div className="bg-gray-100 rounded-lg px-2">3</div>
+          <div className="bg-gray-100 rounded-lg px-2">{privateVaultCount}</div>
         </div>
         <div
           onClick={() => handleGetVaultsByPermissionFlag(0)}
@@ -157,7 +174,7 @@ export default function Profile() {
           }
         >
           <div>Public vaults</div>
-          <div className="bg-gray-100 rounded-lg px-2">443</div>
+          <div className="bg-gray-100 rounded-lg px-2">{publicVaultCount}</div>
         </div>
       </div>
 
@@ -245,10 +262,9 @@ export default function Profile() {
           <div>
             <button
               type="button"
-              onClick={() => setOpenModal(true)}
               className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
             >
-              Leave vault
+              ...
             </button>
           </div>
         </div>
@@ -261,38 +277,7 @@ export default function Profile() {
           </div>
         ))}
       </div>
-
-      <Modal
-        show={openModal}
-        size="md"
-        onClose={() => setOpenModal(false)}
-        popup
-      >
-        <Modal.Header />
-        <Modal.Body>
-          <div className="text-center">
-            <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
-            <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-              Are you sure you want to leave this vault? You will no longer have
-              access to the moments in this vault.
-            </h3>
-            <div className="flex justify-center gap-4">
-              <Button
-                className="bg-red-500"
-                onClick={() => setOpenModal(false)}
-              >
-                Yes, I&#39;m sure
-              </Button>
-              <Button
-                className="bg-white text-black"
-                onClick={() => setOpenModal(false)}
-              >
-                No, cancel
-              </Button>
-            </div>
-          </div>
-        </Modal.Body>
-      </Modal>
+      <Toaster />
     </main>
   );
 }

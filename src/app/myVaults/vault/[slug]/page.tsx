@@ -8,18 +8,28 @@ import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
 } from "@web3modal/ethers5/react";
-import { bytes32ToAddress, hexToDecimal } from "@/utils/format"; // Adjust the import path as necessary
+import {
+  bytes32ToAddress,
+  hexToDecimal,
+  hexStringToUint8Array,
+} from "@/utils/format"; // Adjust the import path as necessary
 import { ERC725 } from "@erc725/erc725.js";
 import lsp4Schema from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
 import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
 import { generateEncryptionKey, decryptFile } from "@/utils/upload";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
+import VaultABI from "@/artifacts/Vault.json";
 import MomentCard from "@/components/MomentCard";
 import toast, { Toaster } from "react-hot-toast";
 import { HiOutlineExclamationCircle, HiOutlineUserAdd } from "react-icons/hi";
+import {
+  generateAESKey,
+  decryptEncryptedEncryptionKey,
+} from "@/utils/encryptKey";
 
 interface Moment {
   name: string;
+  symbol: string;
   description: string;
   cid: string;
   likes: number;
@@ -33,8 +43,8 @@ export default function Page({ params }: { params: { slug: string } }) {
 
   const [vaultTitle, setVaultTitle] = useState<string>();
   const [vaultDescription, setVaultDescription] = useState<string>();
-  const [vaultMembers, setVaultMembers] = useState<string>();
-  const [vaultMoments, setVaultMoments] = useState<string>();
+  const [vaultMembers, setVaultMembers] = useState<number>();
+  const [vaultMoments, setVaultMoments] = useState<number>();
   const [vaultMode, setVaultMode] = useState<number>(0);
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
@@ -45,48 +55,35 @@ export default function Page({ params }: { params: { slug: string } }) {
   // const [openInvitationModal, setInvitationModal] = useState(false);
 
   useEffect(() => {
-    // fetchNFT();
-    const moments_: Moment[] = [];
-    moments_.push({
-      name: "Living my best life",
-      description:
-        "Feeling joyful and full of life! This moment is everything. #happyvibes #bestlife #2024",
-      cid: "Qme3CmGpot61Rr2YVWVhFU6e23hZMiXziof5g8quUnMGcq",
-      likes: 24,
-      comments: 78,
-      owner: "0xDCAaff67152D85BFbC8ABD1e649f9C515a417398",
-      momentAddress: "0x87B7f2A55b427e326C01f40bD070DAc219D0963C",
-    });
-    moments_.push({
-      name: "Living my best life",
-      description:
-        "Feeling joyful and full of life! This moment is everything. #happyvibes #bestlife #2024",
-      cid: "Qme3CmGpot61Rr2YVWVhFU6e23hZMiXziof5g8quUnMGcq",
-      likes: 24,
-      comments: 78,
-      owner: "0xDCAaff67152D85BFbC8ABD1e649f9C515a417398",
-      momentAddress: "0x87B7f2A55b427e326C01f40bD070DAc219D0963C",
-    });
-    moments_.push({
-      name: "Living my best life",
-      description:
-        "Feeling joyful and full of life! This moment is everything. #happyvibes #bestlife #2024",
-      cid: "Qme3CmGpot61Rr2YVWVhFU6e23hZMiXziof5g8quUnMGcq",
-      likes: 24,
-      comments: 78,
-      owner: "0xDCAaff67152D85BFbC8ABD1e649f9C515a417398",
-      momentAddress: "0x87B7f2A55b427e326C01f40bD070DAc219D0963C",
-    });
-    setMoments(moments_);
+    fetchNFT();
     setIsDownloading(true);
-  }, [isConnected]);
+  }, [isConnected, address, walletProvider]);
+
+  // Arrow function to call the API route and get the decrypted key
+  const fetchDecryptedKey = async (
+    combinedData: Uint8Array
+  ): Promise<Uint8Array> => {
+    try {
+      const response = await fetch("/api/decryptKey", {
+        method: "POST",
+        body: JSON.stringify(combinedData), // Send as JSON
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const { decryptedKey } = await response.json();
+
+      return new Uint8Array(decryptedKey); // Convert back to Uint8Array
+    } catch (error) {
+      console.error("Error fetching decrypted key:", error);
+      throw error;
+    }
+  };
 
   const fetchNFT = async () => {
     if (walletProvider) {
-      const encryptionKey = await generateEncryptionKey(
-        process.env.NEXT_PUBLIC_ENCRYPTION_KEY!
-      );
-
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
         "any"
@@ -99,102 +96,162 @@ export default function Page({ params }: { params: { slug: string } }) {
         signer
       );
 
+      const VaultContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+        VaultABI.abi,
+        signer
+      );
+
       const data = await VaultFactoryContract.getVaultMetadata(vaultAddress);
       setVaultMode(data.vaultMode);
-      // setVaultName(data.titme as string);
-      //     setVaultSymbol(symbol.value as string);
+      console.log("data", data);
 
-      //     setVaultCid(_vaultCid);
+      const allMoments = await VaultContract.getAllMoments(vaultAddress);
+      console.log("allMoments", allMoments);
+      setVaultTitle(data.title as string);
+      setVaultDescription(data.description as string);
+      setVaultMoments(allMoments.length);
+      setVaultMembers(hexToDecimal(data.memberCount));
 
-      //     const result = await VaultContract.tokenIdsOf(vaultAddress);
+      let moments_: Moment[] = [];
 
-      //     // NFT info
-      //     if (result.length > 0) {
-      //       for (let i = 0; i < result.length; i++) {
-      //         let lsp7Contract = new ethers.Contract(
-      //           bytes32ToAddress(result[i]),
-      //           ForeverMemoryCollection.abi,
-      //           signer
-      //         );
-      //         const balance = await lsp7Contract.balanceOf(address);
+      // NFT info
+      if (allMoments.length > 0) {
+        for (let i = 0; i < allMoments.length; i++) {
+          // get the encryption key from encryptedEncryptionKey of Vault Contract
+          const combinedEncryptedData_ = await VaultContract.getEncryptedKey(
+            bytes32ToAddress(allMoments[i])
+          );
+          const combinedEncryptedData = hexStringToUint8Array(
+            combinedEncryptedData_
+          );
+          console.log("combinedEncryptedData", combinedEncryptedData);
+          const creator = await VaultContract.momentOwners(allMoments[i]);
 
-      //         if (hexToDecimal(balance._hex) == 0) continue;
-      //         const tokenIdMetadata = await VaultContract.getDataForTokenId(
-      //           result[i],
-      //           ERC725YDataKeys.LSP4["LSP4Metadata"]
-      //         );
-      //         const erc725js = new ERC725(lsp4Schema);
-      //         const decodedMetadata = erc725js.decodeData([
-      //           {
-      //             keyName: "LSP4Metadata",
-      //             value: tokenIdMetadata,
-      //           },
-      //         ]);
-      //         const ipfsHash = decodedMetadata[0].value.url;
+          const decryptedKey_ = await fetchDecryptedKey(combinedEncryptedData);
+          const decryptedKey = Buffer.from(decryptedKey_);
+          console.log("decryptedKey", decryptedKey);
 
-      //         if (ipfsHash == "") continue;
-      //         const fetchUrl = "https://ipfs.io/ipfs/" + ipfsHash;
-      //         const response = await fetch(fetchUrl);
-      //         if (!response.ok) {
-      //           throw new Error("Failed to fetch image from IPFS");
-      //         }
-      //         const encryptedData = await response.arrayBuffer();
-      //         const decryptedData = await decryptFile(
-      //           new Uint8Array(encryptedData),
-      //           encryptionKey
-      //         );
-      //         const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
-      //         const objectURL = URL.createObjectURL(blob);
+          let lsp7Contract = new ethers.Contract(
+            bytes32ToAddress(allMoments[i]),
+            VaultABI.abi,
+            signer
+          );
+          // const balance = await lsp7Contract.balanceOf(address);
 
-      //         // const encryptedData = await decryptFile(cid, encryptionKey);
-      //         const lspContractAddress = bytes32ToAddress(result[i]);
+          // if (hexToDecimal(balance._hex) == 0) continue;
+          const tokenIdMetadata = await VaultContract.getDataForTokenId(
+            allMoments[i],
+            ERC725YDataKeys.LSP4["LSP4Metadata"]
+          );
+          const erc725js = new ERC725(lsp4Schema);
+          const decodedMetadata = erc725js.decodeData([
+            {
+              keyName: "LSP4Metadata",
+              value: tokenIdMetadata,
+            },
+          ]);
+          console.log("decodedMetadata", decodedMetadata);
+          const ipfsHash = decodedMetadata[0].value.url;
 
-      //         const myAsset = new ERC725(
-      //           lsp4Schema,
-      //           lspContractAddress,
-      //           process.env.NEXT_PUBLIC_DEVELOPMENT_ENVIRONMENT_TYPE == "1"
-      //             ? process.env.NEXT_PUBLIC_MAINNET_URL
-      //             : process.env.NEXT_PUBLIC_TESTNET_URL,
-      //           {
-      //             ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
-      //           }
-      //         );
-      //         const tokenSymbol = await myAsset.getData("LSP4TokenSymbol");
-      //         const tokenName = await myAsset.getData("LSP4TokenName");
+          if (ipfsHash == "") continue;
+          const fetchUrl =
+            "https://plum-certain-marten-441.mypinata.cloud/ipfs/" + ipfsHash;
+          console.log("ipfsHash", ipfsHash);
+          const response = await fetch(fetchUrl);
+          if (!response.ok) {
+            throw new Error("Failed to fetch image from IPFS");
+          }
+          const encryptedData = await response.arrayBuffer();
+          const decryptedData = await decryptFile(
+            new Uint8Array(encryptedData),
+            decryptedKey
+          );
 
-      //         // Extracting value from DecodeDataOutput and updating state with new token data
-      //         setTokenDataArray((prevTokenDataArray) => [
-      //           ...prevTokenDataArray,
-      //           {
-      //             cid: objectURL,
-      //             tokenSymbol: tokenSymbol.value as string,
-      //             tokenName: tokenName.value as string,
-      //             tokenId: result[i],
-      //           },
-      //         ]);
-      //       }
-      //     }
-      //     setIsDownloading(true);
+          console.log("decryptedData__", decryptedData);
+          const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
+          const objectURL = URL.createObjectURL(blob);
+          console.log("objectURL__", objectURL);
+
+          // const encryptedData = await decryptFile(cid, encryptionKey);
+          const lspContractAddress = bytes32ToAddress(allMoments[i]);
+
+          const myAsset = new ERC725(
+            lsp4Schema,
+            lspContractAddress,
+            process.env.NEXT_PUBLIC_MAINNET_URL,
+            {
+              ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
+            }
+          );
+          const tokenSymbol = await myAsset.getData("LSP4TokenSymbol");
+          const tokenName = await myAsset.getData("LSP4TokenName");
+          const likes = await await VaultContract.getLikes(allMoments[i]);
+
+          console.log("tokenSymbol", tokenSymbol);
+          console.log("tokenName", tokenName);
+          console.log("likes", likes);
+          console.log("creator", creator);
+          console.log("objectURL", objectURL);
+
+          moments_.push({
+            name: tokenName.value as string,
+            symbol: tokenSymbol.value as string,
+            description:
+              "Feeling joyful and full of life! This moment is everything. #happyvibes #bestlife #2024",
+            cid: objectURL,
+            likes: likes.length,
+            comments: 78,
+            owner: creator,
+            momentAddress: allMoments[i],
+          });
+        }
+      }
+      setMoments(moments_);
+      setIsDownloading(true);
     }
   };
 
   const handleInvitationMember = async () => {
-    setOpenInvitationModal(false);
     if (walletProvider) {
-      // const ethersProvider = new ethers.providers.Web3Provider(
-      //   walletProvider,
-      //   "any"
-      // );
-      // const signer = ethersProvider.getSigner(address);
-      // const VaultFactoryContract = new ethers.Contract(
-      //   process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-      //   VaultFactoryABI.abi,
-      //   signer
-      // );
-      // const tx = await VaultFactoryContract.joinVault(vaultAddress);
-      // toast.success("Joint to vault successfully.");
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
+      const VaultFactoryContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+        VaultFactoryABI.abi,
+        signer
+      );
+      const tx = await VaultFactoryContract.joinVault(vaultAddress);
+      toast.success("Joint to vault successfully.");
+      setOpenInvitationModal(false);
     } else {
-      // toast.error("Please connect the wallet.");
+      toast.error("Please connect the wallet.");
+    }
+  };
+
+  const handleLeaveVault = async () => {
+    if (walletProvider) {
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
+
+      const VaultFactoryContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+        VaultFactoryABI.abi,
+        signer
+      );
+
+      const tx = await VaultFactoryContract.leaveVault(vaultAddress);
+      console.log("tx", tx);
+      toast.success("Left to vault successfully!");
+      setOpenModal(false);
+    } else {
+      toast.error("Please connect the wallet.");
     }
   };
 
@@ -207,12 +264,8 @@ export default function Page({ params }: { params: { slug: string } }) {
     </div>
   ) : (
     <div className="px-6 bg-white pt-10 h-[800px]">
-      <div className="font-bold text-3xl">Daily Selfie</div>
-      <div className="pt-3 h-[50px]">
-        A public collection of daily selfies and moments shared by the
-        community. More info
-      </div>
-
+      <div className="font-bold text-3xl">{vaultTitle}</div>
+      <div className="pt-3 h-[50px]">{vaultDescription}</div>
       <div className="flex justify-between">
         <div className="flex justify-between gap-4 items-center">
           <div className="flex items-center max-w-sm mx-auto">
@@ -230,9 +283,9 @@ export default function Page({ params }: { params: { slug: string } }) {
                 >
                   <path
                     stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
                     d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
                   />
                 </svg>
@@ -241,7 +294,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                 type="text"
                 id="simple-search"
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                placeholder="Search 740 moments"
+                placeholder={`Search ` + vaultMoments + ` moments`}
                 required
               />
             </div>
@@ -258,9 +311,9 @@ export default function Page({ params }: { params: { slug: string } }) {
               >
                 <path
                   stroke="currentColor"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
                   d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
                 />
               </svg>
@@ -268,10 +321,10 @@ export default function Page({ params }: { params: { slug: string } }) {
             </button>
           </div>
 
-          <div className="max-w-md">224 members</div>
+          <div className="max-w-md">{vaultMembers} members</div>
         </div>
         <div>
-          {vaultMode === 0 ? (
+          {vaultMode === 1 ? (
             <button
               type="button"
               onClick={() => setOpenInvitationModal(true)}
@@ -288,7 +341,7 @@ export default function Page({ params }: { params: { slug: string } }) {
             </button>
           </Link>
           <button
-            onClick={() => setOpenModal(true)}
+            onClick={() => handleLeaveVault()}
             className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
           >
             Leave vault
@@ -297,11 +350,12 @@ export default function Page({ params }: { params: { slug: string } }) {
       </div>
 
       <div className="py-10 grid grid-cols-3 gap-4">
-        {moments.map((moment, index) => (
-          <div key={index}>
-            <MomentCard moment={moment} />
-          </div>
-        ))}
+        {moments &&
+          moments.map((moment, index) => (
+            <div key={index}>
+              <MomentCard moment={moment} />
+            </div>
+          ))}
       </div>
       <Toaster />
       <Modal

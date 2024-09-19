@@ -8,8 +8,6 @@ import {
   convertIpfsUriToUrl,
 } from "@/utils/format";
 
-const addr: string = "0xDCAaff67152D85BFbC8ABD1e649f9C515a417398";
-
 interface Vault {
   name: string;
   description: string;
@@ -32,7 +30,8 @@ const VaultCard: React.FC<VaultCardProps> = ({ vault, href }) => {
   useEffect(() => {
     const fetchProfileName = async () => {
       try {
-        const profile = await getUniversalProfileCustomName(addr);
+        const profile = await getUniversalProfileCustomName(vault.owner);
+        console.log("profile.cid", profile.cid);
         setProfileName(profile.profileName);
         setProfileCid(convertIpfsUriToUrl(profile.cid));
       } catch (error) {

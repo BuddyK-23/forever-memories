@@ -13,6 +13,10 @@ const Navbar = () => {
   const [nav, setNav] = useState(false);
   const { address, isConnected } = useWeb3ModalAccount();
   const [selectedIndex, setSeletedIndex] = useState<number>(0);
+
+  const connectBtn = "Connect";
+  const disconnectBtn = "Disconnect";
+
   const handleConnect = async () => {
     await walletConnectInstance.open();
   };
@@ -104,10 +108,9 @@ const Navbar = () => {
       )}
       <button
         className="walletStyle"
-        // disabled={connecting}
         onClick={() => (isConnected ? handleDisconnect() : handleConnect())}
       >
-        {isConnected ? "Disconnect" : "Connect"}
+        {isConnected ? disconnectBtn : connectBtn}
       </button>
     </div>
   );

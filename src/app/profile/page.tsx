@@ -111,12 +111,10 @@ export default function Profile() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative">
             {profile?.profileImage && profile.profileImage[0]?.url ? (
-              <Image
+              <img
                 src={convertIpfsUriToUrl(profile.profileImage[0].url)}
                 alt="Profile Avatar"
-                width={150}
-                height={150}
-                className="rounded-full border-4 border-white"
+                className="rounded-full border-4 border-white w-[150px] h-[150px]"
               />
             ) : (
               <div className="h-[150px] w-[150px] bg-gray-200 rounded-full border-4 border-white flex items-center justify-center">
