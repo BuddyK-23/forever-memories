@@ -199,7 +199,7 @@ export default function Page({ params }: { params: { slug: string } }) {
               "Feeling joyful and full of life! This moment is everything. #happyvibes #bestlife #2024",
             cid: objectURL,
             likes: likes.length,
-            comments: 78,
+            comments: 0,
             owner: creator,
             momentAddress: allMoments[i],
           });

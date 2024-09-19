@@ -116,16 +116,17 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
           });
         }
 
-        const privateBVaults =
-          await VaultFactoryContract.getPrivateVaultsByUser(address);
+        const privateVaults = await VaultFactoryContract.getPrivateVaultsByUser(
+          address
+        );
+        console.log("privateVaults", privateVaults);
 
-        for (let i = 0; i < privateBVaults.length; i++) {
+        for (let i = 0; i < privateVaults.length; i++) {
           const data = await VaultFactoryContract.getVaultMetadata(
-            privateBVaults[i]
+            privateVaults[i]
           );
 
-          const momentCount = await VaultContract.getNFTcounts(publicVaults[i]);
-
+          const momentCount = await VaultContract.getNFTcounts(privateVaults[i]);
           vaults.push({
             name: data.title,
             description: data.description,
@@ -133,7 +134,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
             moments: hexToDecimal(momentCount._hex),
             members: hexToDecimal(data.memberCount._hex),
             owner: data.vaultOwner,
-            vaultAddress: publicVaults[i],
+            vaultAddress: privateVaults[i],
             vaultMode: data.vaultMode,
           });
         }
@@ -172,7 +173,6 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
     setVault(selectedOption);
   };
 
-
   const handleMintMoment = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -200,7 +200,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         const resData = await res.json();
         const ipfsHash = resData.ipfsHash;
         const combinedEncryptedData = resData.combinedEncryptedData;
-        
+
         setCid(ipfsHash);
 
         const ethersProvider = new ethers.providers.Web3Provider(
