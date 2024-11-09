@@ -299,14 +299,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         const LSP4MetadataKey = ERC725YDataKeys.LSP4['LSP4Metadata'];
         console.log("LSP4MetadataKey", LSP4MetadataKey);
 
-        // const tx2 = await VaultContract.setDataForTokenId(
-        //   tokenId,
-        //   ERC725YDataKeys.LSP4["LSP4Metadata"],
-        //   encodedMetadataURI.values[0]
-        // );
-        // console.log("tx2", tx2);
-
-        const tx1 = await VaultContract.mintMoment(
+        const vaultTx = await VaultContract.mintMoment(
           momentAddress,
           vaultAddress,
           LSP4MetadataKey,
@@ -314,18 +307,18 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
           combinedEncryptedData
         );
 
-        console.log("tx1", tx1);
+        console.log("vaultTx", vaultTx);
 
         const VaultAssistContract = new ethers.Contract(
           process.env.NEXT_PUBLIC_VAULT_ASSIST_ADDRESS as string,
           VaultAssistABI.abi,
           signer
         );
-        const tx3 = await VaultAssistContract.setLongDescription(
+        const vaultAssistTx = await VaultAssistContract.setLongDescription(
           tokenId,
           notes
         );
-        console.log("tx3", tx3);
+        console.log("vaultAssistTx", vaultAssistTx);
 
         // const OrchestratorContract = new ethers.Contract(
         //   process.env.NEXT_PUBLIC_ORCHESTRATOR_ADDRESS as string,
