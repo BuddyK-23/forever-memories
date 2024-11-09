@@ -124,7 +124,6 @@ export default function Profile() {
       const vaults: Vault[] = [];
       for (let i = 0; i < vaultList.length; i++) {
         const data = await VaultFactoryContract.getVaultMetadata(vaultList[i]);
-        console.log("datatatatatatat", data);
 
         const momentCount = await VaultContract.getNFTcounts(vaultList[i]);
 

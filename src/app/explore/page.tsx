@@ -99,6 +99,7 @@ export default function Explore() {
 
         const unJoinedVaults =
           await VaultFactoryContract.getUnjoinedPublicVaults(address);
+
         const vaults: Vault[] = [];
         if (unJoinedVaults)
           for (let i = 0; i < unJoinedVaults.length; i++) {
