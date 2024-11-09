@@ -19,6 +19,8 @@ import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
 import { generateEncryptionKey, decryptFile } from "@/utils/upload";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
 import VaultABI from "@/artifacts/Vault.json";
+import VaultAssistABI from "@/artifacts/VaultAssist.json";
+
 import MomentCard from "@/components/MomentCard";
 import toast, { Toaster } from "react-hot-toast";
 import { HiOutlineExclamationCircle, HiOutlineUserAdd } from "react-icons/hi";
@@ -28,8 +30,7 @@ import {
 } from "@/utils/encryptKey";
 
 interface Moment {
-  name: string;
-  symbol: string;
+  headline: string;
   description: string;
   cid: string;
   likes: number;
@@ -50,6 +51,7 @@ export default function Page({ params }: { params: { slug: string } }) {
   const { walletProvider } = useWeb3ModalProvider();
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [moments, setMoments] = useState<Moment[]>([]);
+
   const [openModal, setOpenModal] = useState(false);
   const [openInvitationModal, setOpenInvitationModal] = useState(false);
   // const [openInvitationModal, setInvitationModal] = useState(false);
@@ -102,12 +104,16 @@ export default function Page({ params }: { params: { slug: string } }) {
         signer
       );
 
+      const VaultAssist = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_ASSIST_ADDRESS as string,
+        VaultAssistABI.abi,
+        signer
+      );
+
       const data = await VaultFactoryContract.getVaultMetadata(vaultAddress);
       setVaultMode(data.vaultMode);
-      console.log("data", data);
 
       const allMoments = await VaultContract.getAllMoments(vaultAddress);
-      console.log("allMoments", allMoments);
       setVaultTitle(data.title as string);
       setVaultDescription(data.description as string);
       setVaultMoments(allMoments.length);
@@ -118,6 +124,9 @@ export default function Page({ params }: { params: { slug: string } }) {
       // NFT info
       if (allMoments.length > 0) {
         for (let i = 0; i < allMoments.length; i++) {
+          // Get the total number of comments
+          const _commentCnt = await VaultAssist.getCommentCount(allMoments[i]);
+          const commentCnt = parseInt(_commentCnt.toString(), 10); // Convert BigNumber to number
           // get the encryption key from encryptedEncryptionKey of Vault Contract
           const combinedEncryptedData_ = await VaultContract.getEncryptedKey(
             bytes32ToAddress(allMoments[i])
@@ -125,19 +134,10 @@ export default function Page({ params }: { params: { slug: string } }) {
           const combinedEncryptedData = hexStringToUint8Array(
             combinedEncryptedData_
           );
-          console.log("combinedEncryptedData", combinedEncryptedData);
           const creator = await VaultContract.momentOwners(allMoments[i]);
 
           const decryptedKey_ = await fetchDecryptedKey(combinedEncryptedData);
           const decryptedKey = Buffer.from(decryptedKey_);
-          console.log("decryptedKey", decryptedKey);
-
-          let lsp7Contract = new ethers.Contract(
-            bytes32ToAddress(allMoments[i]),
-            VaultABI.abi,
-            signer
-          );
-          // const balance = await lsp7Contract.balanceOf(address);
 
           // if (hexToDecimal(balance._hex) == 0) continue;
           const tokenIdMetadata = await VaultContract.getDataForTokenId(
@@ -151,13 +151,18 @@ export default function Page({ params }: { params: { slug: string } }) {
               value: tokenIdMetadata,
             },
           ]);
-          console.log("decodedMetadata", decodedMetadata);
-          const ipfsHash = decodedMetadata[0].value.url;
+          const metadataHash = decodedMetadata[0].value.url;
+
+          const metadataJsonLink =
+            process.env.NEXT_PUBLIC_IPFS_GATEWAY + "/" + metadataHash;
+
+          const resMetadata = await fetch(metadataJsonLink);
+          const jsonMetadata = await resMetadata.json();
+          const ipfsHash = jsonMetadata.LSP4Metadata.ipfsHash;
+          const metadata = jsonMetadata.LSP4Metadata;
 
           if (ipfsHash == "") continue;
-          const fetchUrl =
-            "https://plum-certain-marten-441.mypinata.cloud/ipfs/" + ipfsHash;
-          console.log("ipfsHash", ipfsHash);
+          const fetchUrl = process.env.NEXT_PUBLIC_FETCH_URL + ipfsHash;
           const response = await fetch(fetchUrl);
           if (!response.ok) {
             throw new Error("Failed to fetch image from IPFS");
@@ -168,34 +173,15 @@ export default function Page({ params }: { params: { slug: string } }) {
             decryptedKey
           );
 
-          console.log("decryptedData__", decryptedData);
           const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
           const objectURL = URL.createObjectURL(blob);
-          console.log("objectURL__", objectURL);
-
-          // const encryptedData = await decryptFile(cid, encryptionKey);
-          const lspContractAddress = bytes32ToAddress(allMoments[i]);
-
-          const myAsset = new ERC725(
-            lsp4Schema,
-            lspContractAddress,
-            process.env.NEXT_PUBLIC_MAINNET_URL,
-            {
-              ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
-            }
-          );
-          const tokenSymbol = await myAsset.getData("LSP4TokenSymbol");
-          const tokenName = await myAsset.getData("LSP4TokenName");
-          const likes = await await VaultContract.getLikes(allMoments[i]);
-
+          const likes_ = await await VaultContract.getLikes(allMoments[i]);
           moments_.push({
-            name: tokenName.value as string,
-            symbol: tokenSymbol.value as string,
-            description:
-              "Feeling joyful and full of life! This moment is everything. #happyvibes #bestlife #2024",
+            headline: metadata.headline, //tokenSymbol.value as string,
+            description: metadata.description,
             cid: objectURL,
-            likes: likes.length,
-            comments: 0,
+            likes: likes_.length,
+            comments: commentCnt,
             owner: creator,
             momentAddress: allMoments[i],
           });

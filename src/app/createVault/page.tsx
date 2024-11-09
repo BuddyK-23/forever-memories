@@ -20,7 +20,6 @@ interface FormValues {
   metadataUriDescription: string;
   rewardAmount: number;
   vaultMode: number; // 1 for Private, 0 for Public
-  firstMemberAddress: string; // New field for the first member address
 }
 
 interface CategoryOption {
@@ -67,7 +66,6 @@ export default function CreateVault() {
     metadataUriDescription: "",
     rewardAmount: 0,
     vaultMode: 1, // Default to Private
-    firstMemberAddress: "",
   });
 
   const handleCategoryChange = (
@@ -147,7 +145,6 @@ export default function CreateVault() {
           resData.ipfsHash,
           formValues.rewardAmount,
           formValues.vaultMode,
-          formValues.vaultMode == 1 ? formValues.firstMemberAddress : address,
           categories
         );
         console.log("tx", tx);
@@ -284,30 +281,6 @@ export default function CreateVault() {
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700">
-              Invite Address{!formValues.vaultMode ? " (Disabled)" : ""}
-            </label>
-            {formValues.vaultMode ? (
-              <input
-                type="text"
-                name="firstMemberAddress"
-                value={formValues.firstMemberAddress}
-                onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            ) : (
-              <input
-                disabled
-                type="text"
-                name="firstMemberAddress"
-                value={formValues.firstMemberAddress}
-                onChange={handleChange}
-                className="cursor-not-allowed bg-gray-200 mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            )}
           </div>
 
           <div className="mb-4">

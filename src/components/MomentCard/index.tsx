@@ -9,7 +9,7 @@ import {
 } from "@/utils/format";
 
 interface Moment {
-  name: string;
+  headline: string;
   description: string;
   cid: string;
   likes: number;
@@ -55,7 +55,7 @@ const MomentCard: React.FC<MomentCardProps> = ({ moment }) => {
         <div>Likes: {moment.likes}</div>
         <div>Comments: {moment.comments}</div>
       </div>
-      <div className="font-bold">{moment.name}</div>
+      <div className="font-bold">{moment.headline}</div>
       <div className="">{moment.description}</div>
 
       <div className="flex gap-2 pt-1 items-center">

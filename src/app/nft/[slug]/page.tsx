@@ -9,6 +9,7 @@ import { BsChatRightTextFill } from "react-icons/bs";
 import { MdInsertComment } from "react-icons/md";
 import { MdClose } from "react-icons/md";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
+import VaultAssistABI from "@/artifacts/VaultAssist.json";
 import VaultABI from "@/artifacts/Vault.json";
 import FMT from "@/artifacts/FMT.json";
 import Link from "next/link";
@@ -30,6 +31,7 @@ import {
 } from "@/utils/format";
 import CommentComponent from "@/components/CommentComponent";
 import toast, { Toaster } from "react-hot-toast";
+import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
 
 // Define the types you expect
 type URLDataWithHash = {
@@ -51,7 +53,10 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [mintedDate, setMintedDate] = useState<string>();
   const [totalSupply, setTotalSupply] = useState<number>();
   const [myBalance, setMyBalance] = useState<number>();
-  const [momentName, setMomentName] = useState<string>();
+  const [commentCnt, setCommentCnt] = useState<number>();
+  const [momentHeadline, setMomentHeadline] = useState<string>();
+  const [momentDescription, setMomentDescription] = useState<string>();
+  const [momentNotes, setMomentNotes] = useState<string>();
   const [vaultMode, setVaultMode] = useState<string>();
   const [vaultName, setVaultName] = useState<string>();
   const [momentOwner, setMomentOwner] = useState<string>();
@@ -121,20 +126,28 @@ export default function Page({ params }: { params: { slug: string } }) {
         signer
       );
 
+      const VaultAssist = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_ASSIST_ADDRESS as string,
+        VaultAssistABI.abi,
+        signer
+      );
+
+      // Get the total number of comments
+      const _commentCnt = await VaultAssist.getCommentCount(tokenId);
+      setCommentCnt(parseInt(_commentCnt.toString(), 10)); // Convert BigNumber to number
+
       const combinedEncryptedData_ = await VaultContract.getEncryptedKey(
         bytes32ToAddress(tokenId)
       );
       const combinedEncryptedData = hexStringToUint8Array(
         combinedEncryptedData_
       );
-      console.log("combinedEncryptedData", combinedEncryptedData);
       const creator = await VaultContract.momentOwners(tokenId);
       setMomentOwner(creator);
       fetchProfileName(creator);
 
       const decryptedKey_ = await fetchDecryptedKey(combinedEncryptedData);
       const decryptedKey = Buffer.from(decryptedKey_);
-      console.log("decryptedKey", decryptedKey);
 
       const lsp7Contract = new ethers.Contract(
         bytes32ToAddress(tokenId),
@@ -142,43 +155,44 @@ export default function Page({ params }: { params: { slug: string } }) {
         signer
       );
 
-      const nftAsset = new ERC725(
-        lsp4Schema,
-        bytes32ToAddress(tokenId),
-        process.env.NEXT_PUBLIC_MAINNET_URL,
-        {
-          ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
-        }
+      const tokenIdMetadata = await VaultContract.getDataForTokenId(
+        tokenId,
+        ERC725YDataKeys.LSP4["LSP4Metadata"]
       );
+      const erc725js = new ERC725(lsp4Schema);
+      const decodedMetadata = erc725js.decodeData([
+        {
+          keyName: "LSP4Metadata",
+          value: tokenIdMetadata,
+        },
+      ]);
+      const metadataHash = decodedMetadata[0].value.url;
 
-      const _momentName = await nftAsset.getData("LSP4TokenName");
-      console.log("_momentName", _momentName.value);
-      setMomentName(_momentName.value as string);
+      const metadataJsonLink =
+        process.env.NEXT_PUBLIC_IPFS_GATEWAY + "/" + metadataHash;
 
-      const vaultAddress = await VaultContract.tokenOwnerOf(tokenId);
+      const resMetadata = await fetch(metadataJsonLink);
+      const jsonMetadata = await resMetadata.json();
+      const ipfsHash = jsonMetadata.LSP4Metadata.ipfsHash;
+      const metadata = jsonMetadata.LSP4Metadata;
+
+      setMomentHeadline(metadata.headline);
+      setMomentDescription(metadata.description);
+      const notes = await VaultAssist.getLongDescription(tokenId);
+      setMomentNotes(notes);
+
+      const _vaultAddress = await VaultContract.tokenOwnerOf(tokenId);
+      setVaultAddress(_vaultAddress);
 
       const vaultData = await VaultFactoryContract.getVaultMetadata(
-        vaultAddress
+        _vaultAddress
       );
 
       setVaultMode(vaultData.vaultMode);
       setVaultName(vaultData.title);
 
-      // const _momentSymbol = await nftAsset.getData("LSP4TokenSymbol");
-      // setNftSymbol(_momentSymbol.value as string);
-      const nft = await nftAsset.getData("LSP4Metadata");
-      let ipfsHash;
-      if (hasUrlProperty(nft?.value)) {
-        ipfsHash = nft.value.url;
-      } else {
-        // Handle the case where vault?.value does not have a 'url' property
-        console.log("The value does not have a 'url' property.");
-      }
-      // const encryptionKey = await generateEncryptionKey(
-      //   process.env.NEXT_PUBLIC_ENCRYPTION_KEY!
-      // );
-      const fetchUrl =
-        "https://plum-certain-marten-441.mypinata.cloud/ipfs/" + ipfsHash;
+      const fetchUrl = process.env.NEXT_PUBLIC_FETCH_URL + ipfsHash;
+
       const response = await fetch(fetchUrl);
       if (!response.ok) {
         throw new Error("Failed to fetch image from IPFS");
@@ -190,21 +204,17 @@ export default function Page({ params }: { params: { slug: string } }) {
       );
       const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
       const objectURL = URL.createObjectURL(blob);
-      console.log("objectURL", objectURL);
       setCid(objectURL);
 
-      // setVaultAddress(creator);
-
-      // setNftAddress(bytes32ToAddress(tokenId));
-
-      // const unixMintedDates = await VaultContract.mintingDates(
-      //   bytes32ToAddress(tokenId)
-      // );
-      // const md = convertUnixTimestampToCustomDate(
-      //   unixMintedDates,
-      //   "yyyy-MM-dd HH:mm"
-      // );
-      // setMintedDate(md);
+      const unixMintedDates = await VaultContract.mintingDates(
+        bytes32ToAddress(tokenId)
+      );
+      const md = convertUnixTimestampToCustomDate(
+        unixMintedDates,
+        "dd MMM yyyy-HH:mm:ss"
+      );
+      console.log("md", md);
+      setMintedDate(md);
 
       const likes = await VaultContract.getLikes(tokenId);
       setMomentLike(likes.length);
@@ -215,7 +225,6 @@ export default function Page({ params }: { params: { slug: string } }) {
 
   const handleLike = async () => {
     if (walletProvider) {
-      console.log("handle like");
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
         "any"
@@ -233,12 +242,11 @@ export default function Page({ params }: { params: { slug: string } }) {
         toast.success("Already liked!");
       } else {
         await VaultContract.like(tokenId);
-        const likesB = await VaultContract.getLikes(tokenId);
-        setMomentLike(likesB.length);
+        setMomentLike(momentLike + 1);
         toast.success("Like Success");
       }
     } else {
-      alert("Connect the wallet");
+      toast.error("Connect the wallet");
     }
   };
 
@@ -312,13 +320,15 @@ export default function Page({ params }: { params: { slug: string } }) {
         <div className="px-2 flex justify-between py-4">
           <div className="flex gap-2">
             <div>
-              <Button color="gray" className="text-blue-500">
-                <MdClose />
-              </Button>
+              <Link href={"/myVaults/vault/" + vaultAddress}>
+                <Button color="gray" className="text-blue-500">
+                  <MdClose />
+                </Button>{" "}
+              </Link>
             </div>
             <div className="text-sm">
-              <div className="font-bold">{momentName}</div>
-              <div>02 July 2024 -21:32:15 GMT</div>
+              <div className="font-bold">{momentHeadline}</div>
+              <div>{mintedDate} GMT</div>
             </div>
           </div>
           <div className="flex gap-2">
@@ -373,17 +383,14 @@ export default function Page({ params }: { params: { slug: string } }) {
                 <div>
                   <BsChatRightTextFill />
                 </div>
-                <div>0</div>
+                <div>{commentCnt}</div>
               </div>
             </div>
           </div>
 
           <div className="mt-10 p-3">
-            <div className="text-3xl font-bold">{momentName}</div>
-            <div className="">
-              My first selfie on the blockchain, time to log my journey for
-              asdflsadkjflk
-            </div>
+            <div className="text-3xl font-bold">{momentHeadline}</div>
+            <div className="">{momentDescription}</div>
             <div className="flex gap-2 pt-1 items-center">
               <img
                 className="rounded-lg h-[25px] w-[25px]"
@@ -404,18 +411,10 @@ export default function Page({ params }: { params: { slug: string } }) {
           <div className="comments h-[auto] p-3">
             <div>
               <div className="text-xl font-bold">Notepad</div>
-              <div>
-                LUKSO is a new layer-1 EVM blockchain built for social, culture
-                and creators. It is the foundation to unify your digital life
-                through a smart profile and is an open, permissionless
-                playground for decentralized applications to flourish. LUKSO
-                offers an innovative approach to form the basis for managing
-                your online presence while enabling unexplored ways to connect
-                and co-create the next era of the internet.
-              </div>
+              <div>{momentNotes}</div>
             </div>
             <div>
-              <CommentComponent />
+              <CommentComponent tokenId={tokenId} />
             </div>
           </div>
         </div>

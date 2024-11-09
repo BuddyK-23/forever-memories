@@ -19,6 +19,7 @@ import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
 import { generateEncryptionKey, decryptFile } from "@/utils/upload";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
 import VaultABI from "@/artifacts/Vault.json";
+import VaultAssistABI from "@/artifacts/VaultAssist.json";
 import MomentCard from "@/components/MomentCard";
 import toast, { Toaster } from "react-hot-toast";
 import { HiOutlineExclamationCircle, HiOutlineUserAdd } from "react-icons/hi";
@@ -28,8 +29,7 @@ import {
 } from "@/utils/encryptKey";
 
 interface Moment {
-  name: string;
-  symbol: string;
+  headline: string;
   description: string;
   cid: string;
   likes: number;
@@ -100,6 +100,12 @@ export default function Page({ params }: { params: { slug: string } }) {
         signer
       );
 
+      const VaultAssist = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_ASSIST_ADDRESS as string,
+        VaultAssistABI.abi,
+        signer
+      );
+
       const data = await VaultFactoryContract.getVaultMetadata(vaultAddress);
       setVaultMode(data.vaultMode);
       console.log("data", data);
@@ -116,6 +122,10 @@ export default function Page({ params }: { params: { slug: string } }) {
       // NFT info
       if (allMoments.length > 0) {
         for (let i = 0; i < allMoments.length; i++) {
+          // Get the total number of comments
+          const _commentCnt = await VaultAssist.getCommentCount(allMoments[i]);
+          const commentCnt = parseInt(_commentCnt.toString(), 10); // Convert BigNumber to number
+
           // get the encryption key from encryptedEncryptionKey of Vault Contract
           const combinedEncryptedData_ = await VaultContract.getEncryptedKey(
             bytes32ToAddress(allMoments[i])
@@ -150,7 +160,16 @@ export default function Page({ params }: { params: { slug: string } }) {
             },
           ]);
           console.log("decodedMetadata", decodedMetadata);
-          const ipfsHash = decodedMetadata[0].value.url;
+          const metadataHash = decodedMetadata[0].value.url;
+
+          const metadataJsonLink =
+            process.env.NEXT_PUBLIC_IPFS_GATEWAY + "/" + metadataHash;
+
+          const resMetadata = await fetch(metadataJsonLink);
+          const jsonMetadata = await resMetadata.json();
+          const ipfsHash = jsonMetadata.LSP4Metadata.ipfsHash;
+          const metadata = jsonMetadata.LSP4Metadata;
+
 
           if (ipfsHash == "") continue;
           const fetchUrl =
@@ -169,40 +188,18 @@ export default function Page({ params }: { params: { slug: string } }) {
           console.log("decryptedData__", decryptedData);
           const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
           const objectURL = URL.createObjectURL(blob);
-          console.log("objectURL__", objectURL);
-
-          // const encryptedData = await decryptFile(cid, encryptionKey);
-          const lspContractAddress = bytes32ToAddress(allMoments[i]);
-
-          const myAsset = new ERC725(
-            lsp4Schema,
-            lspContractAddress,
-            process.env.NEXT_PUBLIC_MAINNET_URL,
-            {
-              ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
-            }
-          );
-          const tokenSymbol = await myAsset.getData("LSP4TokenSymbol");
-          const tokenName = await myAsset.getData("LSP4TokenName");
-          const likes = await await VaultContract.getLikes(allMoments[i]);
-
-          console.log("tokenSymbol", tokenSymbol);
-          console.log("tokenName", tokenName);
-          console.log("likes", likes);
-          console.log("creator", creator);
-          console.log("objectURL", objectURL);
+          const likes_ = await await VaultContract.getLikes(allMoments[i]);
 
           moments_.push({
-            name: tokenName.value as string,
-            symbol: tokenSymbol.value as string,
-            description:
-              "Feeling joyful and full of life! This moment is everything. #happyvibes #bestlife #2024",
+            headline: metadata.headline, //tokenSymbol.value as string,
+            description: metadata.description,
             cid: objectURL,
-            likes: likes.length,
-            comments: 0,
+            likes: likes_.length,
+            comments: commentCnt,
             owner: creator,
             momentAddress: allMoments[i],
           });
+
         }
       }
       setMoments(moments_);

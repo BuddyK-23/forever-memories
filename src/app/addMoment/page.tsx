@@ -20,7 +20,13 @@ import {
 } from "@web3modal/ethers5/react";
 // import { FMTContract } from "@/components/MasterWalletProvider";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
-import { hexToDecimal, hexStringToUint8Array } from "@/utils/format";
+import VaultAssistABI from "@/artifacts/VaultAssist.json";
+import {
+  hexToDecimal,
+  hexStringToUint8Array,
+  bytes32ToAddress,
+  decimalToBytes32,
+} from "@/utils/format";
 import {
   generateAESKey,
   decryptEncryptedEncryptionKey,
@@ -28,6 +34,7 @@ import {
 import toast, { Toaster } from "react-hot-toast";
 
 import "./index.css";
+import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
 
 interface TagOption {
   value: number;
@@ -57,8 +64,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
   const { walletProvider } = useWeb3ModalProvider();
   const [selectedTags, setSelectedTags] = useState<MultiValue<TagOption>>([]);
   const [headline, setHeadline] = useState<string>("");
-  const [tokenName, setTokenName] = useState<string>("");
-  const [tokenSymbol, setTokenSymbol] = useState<string>("");
+  const [notes, setNotes] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [copies, setCopies] = useState<number>(3); // Default to 3 copies
   const [vault, setVault] = useState<Vault>();
@@ -126,7 +132,9 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
             privateVaults[i]
           );
 
-          const momentCount = await VaultContract.getNFTcounts(privateVaults[i]);
+          const momentCount = await VaultContract.getNFTcounts(
+            privateVaults[i]
+          );
           vaults.push({
             name: data.title,
             description: data.description,
@@ -190,16 +198,16 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         !file ? "" : formData.append("file", file); // FormData keys are called fields
         formData.append(
           "lsp7CollectionMetadata",
-          vault?.vaultAddress + tokenName + tokenSymbol + headline
+          vault?.vaultAddress + headline
         );
-        const res = await fetch("/api/uploadAssetsToIPFS", {
+        const resAssetData_ = await fetch("/api/uploadAssetsToIPFS", {
           method: "POST",
           body: formData,
         });
 
-        const resData = await res.json();
-        const ipfsHash = resData.ipfsHash;
-        const combinedEncryptedData = resData.combinedEncryptedData;
+        const resAssetData = await resAssetData_.json();
+        const ipfsHash = resAssetData.ipfsHash;
+        const combinedEncryptedData = resAssetData.combinedEncryptedData;
 
         setCid(ipfsHash);
 
@@ -221,18 +229,20 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         // first mint or over 24 hours
         // if (lastClaimed == 0 || timestamp / 1000 - lastClaimed > 86400) {
         ///////////// mint function logic
-        const lsp7SubCollectionMetadata = {
+
+        const momentMetadata = {
           LSP4Metadata: {
-            // name: 'Daily Selfie',
+            name: process.env.NEXT_PUBLIC_LSP8COLLECTION_NAME,
             headline,
+            ipfsHash,
             description,
-            links: [],
+            links: [{ title: "Twitter", url: "https://twitter.com/" }],
             tags: [],
             icons: [
               {
                 width: 256,
                 height: 256,
-                url: "ipfs://" + cid,
+                url: "ipfs://" + process.env.NEXT_PUBLIC_MOMENT_DEFAULT_IMAGE,
                 verification: {
                   method: "keccak256(bytes)",
                   data: "0xdd6b5fb6dc984fda0222fb6f6e96b471c0667b12f03b1e804f7b5e6ab62acdb0",
@@ -244,7 +254,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                 {
                   width: 1024,
                   height: 974,
-                  url: "ipfs://" + cid,
+                  url: "ipfs://" + process.env.NEXT_PUBLIC_MOMENT_DEFAULT_IMAGE,
                   verification: {
                     method: "keccak256(bytes)",
                     data: "0x951bf983a4b7bcebc5c0b00a5e783630dcb788e95ee9e44b0b7d4bde4a0b4d81",
@@ -252,47 +262,87 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                 },
               ],
             ],
-            assets: [
-              {
-                verification: {
-                  method: "keccak256(bytes)",
-                  data: "0x88f3d704f3d534267c564019ce2b70a5733d070e71bf2c1f85b5fc487f47a46f",
-                },
-                url: "ifps://" + ipfsHash,
-                fileType: "jpg",
-              },
-            ],
+            assets: [],
             attributes: [],
           },
         };
-        const lsp7SubCollectionMetadataCID = ipfsHash;
+
+        const resMetadata_ = await fetch("/api/uploadMetadataToIPFS", {
+          method: "POST",
+          body: JSON.stringify(momentMetadata),
+        });
+
+        const resMetadata = await resMetadata_.json();
+        console.log("resMetadata", resMetadata);
+
+        const momentCID = ipfsHash;
+        console.log("momentCID", momentCID);
+        // const erc725 = new ERC725(schema);
         const erc725 = new ERC725(LSP4DigitalAsset, "", "", {});
-        const encodeLSP7Metadata = erc725.encodeData([
+        const encodedMetadataURI = erc725.encodeData([
           {
             keyName: "LSP4Metadata",
             value: {
-              json: lsp7SubCollectionMetadata,
-              url: lsp7SubCollectionMetadataCID,
+              json: momentMetadata,
+              url: resMetadata.metadataHash,
             },
           },
         ]);
 
-        // const encryptionKey = decryptEncryptedEncryptionKey(aesKey, iv, encryptedKey);
-        // console.log("encryptionKey+++", encryptionKey);
+        console.log("encodeLSP7Metadata", encodedMetadataURI);
 
-        const tx = await VaultContract.mint(
-          tokenName, // tokenName
-          tokenSymbol, //tokenSymbol
-          true, // isNonDivisible
-          copies, // totalSupplyofLSP7
-          address, //receiverOfInitialTokens_
-          encodeLSP7Metadata.values[0],
-          combinedEncryptedData,
-          vaultAddress
+        const _cnt = await VaultContract.totalNFTcounts(vaultAddress);
+        const cnt = hexToDecimal(_cnt._hex);
+        const tokenId = decimalToBytes32(cnt + 1);
+        const momentAddress = bytes32ToAddress(tokenId);
+
+        const LSP4MetadataKey = ERC725YDataKeys.LSP4['LSP4Metadata'];
+        console.log("LSP4MetadataKey", LSP4MetadataKey);
+
+        // const tx2 = await VaultContract.setDataForTokenId(
+        //   tokenId,
+        //   ERC725YDataKeys.LSP4["LSP4Metadata"],
+        //   encodedMetadataURI.values[0]
+        // );
+        // console.log("tx2", tx2);
+
+        const tx1 = await VaultContract.mintMoment(
+          momentAddress,
+          vaultAddress,
+          LSP4MetadataKey,
+          encodedMetadataURI.values[0],
+          combinedEncryptedData
         );
 
-        console.log("tx", tx);
+        console.log("tx1", tx1);
 
+        const VaultAssistContract = new ethers.Contract(
+          process.env.NEXT_PUBLIC_VAULT_ASSIST_ADDRESS as string,
+          VaultAssistABI.abi,
+          signer
+        );
+        const tx3 = await VaultAssistContract.setLongDescription(
+          tokenId,
+          notes
+        );
+        console.log("tx3", tx3);
+
+        // const OrchestratorContract = new ethers.Contract(
+        //   process.env.NEXT_PUBLIC_ORCHESTRATOR_ADDRESS as string,
+        //   OrchestratorABI.abi,
+        //   signer
+        // );
+
+        // const tx4 = await OrchestratorContract.executeBatch(
+        //   momentAddress,
+        //   vaultAddress,
+        //   combinedEncryptedData,
+        //   ERC725YDataKeys.LSP4["LSP4Metadata"],
+        //   encodedMetadataURI.values[0],
+        //   notes
+        // );
+        // console.log("tx4", tx4);
+        //**************************** */
         //////////// send reward token logic
         // const gasLimit = 100000;
         // const rewardAmount = await ForeverMemoryContract.rewardAmount();
@@ -426,100 +476,6 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                 htmlFor="headline"
                 className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
               >
-                Token Name
-              </label>
-              <input
-                id="headline"
-                type="text"
-                className="rounded p-2 w-full border-solid border-black-500"
-                placeholder="Input the Token Name"
-                value={tokenName}
-                onChange={(e) => setTokenName(e.target.value)}
-              />
-            </div>
-
-            <div className="mb-4">
-              <label
-                htmlFor="headline"
-                className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-              >
-                Token Symbol
-              </label>
-              <input
-                id="headline"
-                type="text"
-                className="rounded p-2 w-full border-solid border-black-500"
-                placeholder="Input the Token Symbol"
-                value={tokenSymbol}
-                onChange={(e) => setTokenSymbol(e.target.value)}
-              />
-            </div>
-
-            <div className="mb-4">
-              <label
-                htmlFor="copies"
-                className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-              >
-                How many copies?
-              </label>
-              <div className="flex items-center mb-4">
-                <input
-                  id="copies-1"
-                  type="radio"
-                  value="1"
-                  name="copies"
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                  checked={copies === 1}
-                  onChange={() => setCopies(1)}
-                />
-                <label
-                  htmlFor="copies-1"
-                  className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-                >
-                  1
-                </label>
-              </div>
-              <div className="flex items-center mb-4">
-                <input
-                  id="copies-3"
-                  type="radio"
-                  value="3"
-                  name="copies"
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                  checked={copies === 3}
-                  onChange={() => setCopies(3)}
-                />
-                <label
-                  htmlFor="copies-3"
-                  className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-                >
-                  3 (recommended)
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  id="copies-10"
-                  type="radio"
-                  value="10"
-                  name="copies"
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                  checked={copies === 10}
-                  onChange={() => setCopies(10)}
-                />
-                <label
-                  htmlFor="copies-10"
-                  className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-                >
-                  10
-                </label>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label
-                htmlFor="headline"
-                className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-              >
                 Headline
               </label>
               <input
@@ -557,6 +513,22 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                 onChange={handleTagChange}
                 isMulti
                 value={selectedTags}
+              />
+            </div>
+
+            <div className="mb-4">
+              <label
+                htmlFor="notes"
+                className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              >
+                Notes
+              </label>
+              <textarea
+                id="notes"
+                className="resize-y rounded-md w-full h-20 p-2"
+                placeholder="Input the notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
               />
             </div>
             <div className="w-full flex justify-center">

@@ -61,6 +61,19 @@ export function bytes32ToAddress(bytes32: string): string {
   return address;
 }
 
+export function decimalToBytes32(decimal: number | string): string {
+  // Convert the decimal to a BigNumber
+  const bigNumber = ethers.BigNumber.from(decimal);
+
+  // Ensure the BigNumber fits within 32 bytes
+  if (bigNumber.gt(ethers.BigNumber.from("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))) {
+      throw new Error("Decimal value is too large to fit in 32 bytes");
+  }
+
+  // Convert to 32-byte hex string
+  return ethers.utils.hexZeroPad(bigNumber.toHexString(), 32);
+}
+
 /**
  * Convert a Unix timestamp to a custom formatted date string.
  * @param unixTimestamp - The Unix timestamp to convert.

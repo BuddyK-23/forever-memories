@@ -56,14 +56,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.log("Uploaded encrypted data to Pinata. IPFS Hash:", ipfsHash);
 
     //////////////
-    const aesKey = await generateAESKey();
-    console.log("aesKey:", aesKey);
-
     const combinedEncryptedData_ = await generateEncryptedEncryptionKey(
       encryptionKey
     );
     const combinedEncryptedData = uint8ArrayToHexString(combinedEncryptedData_);
-    console.log("Combined Encrypted Data:", combinedEncryptedData);
 
     return new NextResponse(
       JSON.stringify({ ipfsHash, combinedEncryptedData }),
