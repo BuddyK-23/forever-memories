@@ -51,6 +51,7 @@ export default function Page({ params }: { params: { slug: string } }) {
   const { walletProvider } = useWeb3ModalProvider();
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [moments, setMoments] = useState<Moment[]>([]);
+  const [invitationAddress, setInvitationAddress] = useState<string>();
 
   const [openModal, setOpenModal] = useState(false);
   const [openInvitationModal, setOpenInvitationModal] = useState(false);
@@ -204,8 +205,8 @@ export default function Page({ params }: { params: { slug: string } }) {
         VaultFactoryABI.abi,
         signer
       );
-      const tx = await VaultFactoryContract.joinVault(vaultAddress);
-      toast.success("Joint to vault successfully.");
+      const tx = await VaultFactoryContract.inviteMember(vaultAddress, invitationAddress);
+      toast.success("Invited to vault successfully.");
       setOpenInvitationModal(false);
     } else {
       toast.error("Please connect the wallet.");
@@ -382,7 +383,8 @@ export default function Page({ params }: { params: { slug: string } }) {
             <TextInput
               id="invitationAddress"
               type="text"
-              // rightIcon={HiOutlineUserAdd}
+              value={invitationAddress}
+              onChange={(e) => setInvitationAddress(e.target.value)}
               placeholder="Input the address"
               className="pt-2 pb-8"
               required

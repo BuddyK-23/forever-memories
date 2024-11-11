@@ -96,20 +96,31 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
           VaultFactoryABI.abi,
           signer
         );
-        const publicVaults = await VaultFactoryContract.getPublicVaultsByUser(
-          address
-        );
 
-        console.log("publicVaults", publicVaults);
+        // get all vault list
+        const ownedPrivateVaultList =
+          await VaultFactoryContract.getPrivateVaultsOwnedByUser(address);
+        const nonOwnedPrivateVaultList =
+          await VaultFactoryContract.getPrivateVaultsByUser(address);
+        const ownedPublicVaultList =
+          await VaultFactoryContract.getPublicVaultsOwnedByUser(address);
+        const nonOwnedPublicVaultList =
+          await VaultFactoryContract.getPublicVaultsByUser(address);
+        const vaultList = [
+          ...ownedPrivateVaultList,
+          ...nonOwnedPrivateVaultList,
+          ...ownedPublicVaultList,
+          ...nonOwnedPublicVaultList,
+        ];
 
         const vaults: Vault[] = [];
-        for (let i = 0; i < publicVaults.length; i++) {
+        for (let i = 0; i < vaultList.length; i++) {
           const data = await VaultFactoryContract.getVaultMetadata(
-            publicVaults[i]
+            vaultList[i]
           );
 
-          const momentCount = await VaultContract.getNFTcounts(publicVaults[i]);
-
+          const momentCount = await VaultContract.getNFTcounts(vaultList[i]);
+          console.log("data.vaultMode", data.vaultMode);
           vaults.push({
             name: data.title,
             description: data.description,
@@ -117,32 +128,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
             moments: hexToDecimal(momentCount._hex),
             members: hexToDecimal(data.memberCount._hex),
             owner: data.vaultOwner,
-            vaultAddress: publicVaults[i],
-            vaultMode: data.vaultMode,
-          });
-        }
-
-        const privateVaults = await VaultFactoryContract.getPrivateVaultsByUser(
-          address
-        );
-        console.log("privateVaults", privateVaults);
-
-        for (let i = 0; i < privateVaults.length; i++) {
-          const data = await VaultFactoryContract.getVaultMetadata(
-            privateVaults[i]
-          );
-
-          const momentCount = await VaultContract.getNFTcounts(
-            privateVaults[i]
-          );
-          vaults.push({
-            name: data.title,
-            description: data.description,
-            cid: data.imageURI,
-            moments: hexToDecimal(momentCount._hex),
-            members: hexToDecimal(data.memberCount._hex),
-            owner: data.vaultOwner,
-            vaultAddress: privateVaults[i],
+            vaultAddress: vaultList[i],
             vaultMode: data.vaultMode,
           });
         }
@@ -296,7 +282,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         const tokenId = decimalToBytes32(cnt + 1);
         const momentAddress = bytes32ToAddress(tokenId);
 
-        const LSP4MetadataKey = ERC725YDataKeys.LSP4['LSP4Metadata'];
+        const LSP4MetadataKey = ERC725YDataKeys.LSP4["LSP4Metadata"];
         console.log("LSP4MetadataKey", LSP4MetadataKey);
 
         const vaultTx = await VaultContract.mintMoment(
@@ -304,21 +290,11 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
           vaultAddress,
           LSP4MetadataKey,
           encodedMetadataURI.values[0],
-          combinedEncryptedData
+          combinedEncryptedData,
+          notes
         );
 
         console.log("vaultTx", vaultTx);
-
-        const VaultAssistContract = new ethers.Contract(
-          process.env.NEXT_PUBLIC_VAULT_ASSIST_ADDRESS as string,
-          VaultAssistABI.abi,
-          signer
-        );
-        const vaultAssistTx = await VaultAssistContract.setLongDescription(
-          tokenId,
-          notes
-        );
-        console.log("vaultAssistTx", vaultAssistTx);
 
         // const OrchestratorContract = new ethers.Contract(
         //   process.env.NEXT_PUBLIC_ORCHESTRATOR_ADDRESS as string,
@@ -436,7 +412,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
               >
                 <div>Select a vault</div>
                 <div>
-                  {!vault?.vaultMode ? (
+                  {vault?.vaultMode === 0 ? (
                     <span className="text-blue-500 font-bold">Public</span>
                   ) : (
                     <span className="text-red-500 font-bold">Private</span>

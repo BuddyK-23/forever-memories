@@ -88,43 +88,59 @@ export default function Profile() {
         signer
       );
 
-      let vaultList;
-      // private, owner
+      let vaultList: string[] = []; // Initialize with an empty array
+      let ownedVaultList: string[] = [];
+      let nonOwnedVaultList: string[] = [];
+
+      // Private, owner
       if (permissionflag && ownerflag) {
-        vaultList = await VaultFactoryContract.getPrivateVaultsOwnedByUser(
+        ownedVaultList = await VaultFactoryContract.getPrivateVaultsOwnedByUser(
           address
         );
-        const s_vaultList = await VaultFactoryContract.getPrivateVaultsByUser(
+        nonOwnedVaultList = await VaultFactoryContract.getPrivateVaultsByUser(
           address
         );
-        setPrivateVaultCount(vaultList.length + s_vaultList.length);
-        // private, no-onwer
+        vaultList = [...ownedVaultList, ...nonOwnedVaultList];
+        setPrivateVaultCount(vaultList.length);
+
+        // Private, non-owner
       } else if (permissionflag && !ownerflag) {
-        vaultList = await VaultFactoryContract.getPrivateVaultsByUser(address);
-        const s_vaultList =
-          await await VaultFactoryContract.getPrivateVaultsOwnedByUser(address);
-        setPrivateVaultCount(vaultList.length + s_vaultList.length);
-        // public, owner
+        ownedVaultList = await VaultFactoryContract.getPrivateVaultsOwnedByUser(
+          address
+        );
+        nonOwnedVaultList = await VaultFactoryContract.getPrivateVaultsByUser(
+          address
+        );
+        vaultList = [...ownedVaultList, ...nonOwnedVaultList];
+        setPrivateVaultCount(vaultList.length);
+
+        // Public, owner
       } else if (!permissionflag && ownerflag) {
-        vaultList = await VaultFactoryContract.getPublicVaultsOwnedByUser(
+        ownedVaultList = await VaultFactoryContract.getPublicVaultsOwnedByUser(
           address
         );
-        const s_vaultList = await VaultFactoryContract.getPublicVaultsByUser(
+        nonOwnedVaultList = await VaultFactoryContract.getPublicVaultsByUser(
           address
         );
-        setPublicVaultCount(vaultList.length + s_vaultList.length);
-        // public, no-owner
+        vaultList = [...ownedVaultList, ...nonOwnedVaultList];
+        setPublicVaultCount(vaultList.length);
+
+        // Public, non-owner
       } else if (!permissionflag && !ownerflag) {
-        vaultList = await VaultFactoryContract.getPublicVaultsByUser(address);
-        const s_vaultList =
-          await VaultFactoryContract.getPublicVaultsOwnedByUser(address);
-        setPublicVaultCount(vaultList.length + s_vaultList.length);
+        ownedVaultList = await VaultFactoryContract.getPublicVaultsOwnedByUser(
+          address
+        );
+        nonOwnedVaultList = await VaultFactoryContract.getPublicVaultsByUser(
+          address
+        );
+        vaultList = [...ownedVaultList, ...nonOwnedVaultList];
+        setPublicVaultCount(vaultList.length);
       }
 
+      // Fetch vault metadata
       const vaults: Vault[] = [];
       for (let i = 0; i < vaultList.length; i++) {
         const data = await VaultFactoryContract.getVaultMetadata(vaultList[i]);
-
         const momentCount = await VaultContract.getNFTcounts(vaultList[i]);
 
         vaults.push({
@@ -138,6 +154,7 @@ export default function Profile() {
           vaultMode: data.vaultMode,
         });
       }
+
       setVaultData(vaults);
       setIsDownloading(false);
     }
