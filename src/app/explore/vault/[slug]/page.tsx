@@ -101,7 +101,7 @@ export default function Page({ params }: { params: { slug: string } }) {
       );
 
       const VaultAssist = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_ASSIST_ADDRESS as string,
+        process.env.NEXT_PUBLIC_VAULT_ASSIST_CONTRACT_ADDRESS as string,
         VaultAssistABI.abi,
         signer
       );
@@ -170,10 +170,8 @@ export default function Page({ params }: { params: { slug: string } }) {
           const ipfsHash = jsonMetadata.LSP4Metadata.ipfsHash;
           const metadata = jsonMetadata.LSP4Metadata;
 
-
           if (ipfsHash == "") continue;
-          const fetchUrl =
-            "https://plum-certain-marten-441.mypinata.cloud/ipfs/" + ipfsHash;
+          const fetchUrl = process.env.NEXT_PUBLIC_FETCH_URL + ipfsHash;
           console.log("ipfsHash", ipfsHash);
           const response = await fetch(fetchUrl);
           if (!response.ok) {
@@ -199,7 +197,6 @@ export default function Page({ params }: { params: { slug: string } }) {
             owner: creator,
             momentAddress: allMoments[i],
           });
-
         }
       }
       setMoments(moments_);

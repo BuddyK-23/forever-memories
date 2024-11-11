@@ -277,16 +277,10 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
 
         console.log("encodeLSP7Metadata", encodedMetadataURI);
 
-        const _cnt = await VaultContract.totalNFTcounts(vaultAddress);
-        const cnt = hexToDecimal(_cnt._hex);
-        const tokenId = decimalToBytes32(cnt + 1);
-        const momentAddress = bytes32ToAddress(tokenId);
-
         const LSP4MetadataKey = ERC725YDataKeys.LSP4["LSP4Metadata"];
         console.log("LSP4MetadataKey", LSP4MetadataKey);
 
         const vaultTx = await VaultContract.mintMoment(
-          momentAddress,
           vaultAddress,
           LSP4MetadataKey,
           encodedMetadataURI.values[0],
@@ -296,21 +290,6 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
 
         console.log("vaultTx", vaultTx);
 
-        // const OrchestratorContract = new ethers.Contract(
-        //   process.env.NEXT_PUBLIC_ORCHESTRATOR_ADDRESS as string,
-        //   OrchestratorABI.abi,
-        //   signer
-        // );
-
-        // const tx4 = await OrchestratorContract.executeBatch(
-        //   momentAddress,
-        //   vaultAddress,
-        //   combinedEncryptedData,
-        //   ERC725YDataKeys.LSP4["LSP4Metadata"],
-        //   encodedMetadataURI.values[0],
-        //   notes
-        // );
-        // console.log("tx4", tx4);
         //**************************** */
         //////////// send reward token logic
         // const gasLimit = 100000;

@@ -62,7 +62,7 @@ const CommentComponent: React.FC<CommentProps> = ({ tokenId }) => {
         const signer = ethersProvider.getSigner(address);
 
         const VaultAssist = new ethers.Contract(
-          process.env.NEXT_PUBLIC_VAULT_ASSIST_ADDRESS as string,
+          process.env.NEXT_PUBLIC_VAULT_ASSIST_CONTRACT_ADDRESS as string,
           VaultAssistABI.abi,
           signer
         );
@@ -119,7 +119,7 @@ const CommentComponent: React.FC<CommentProps> = ({ tokenId }) => {
         const signer = ethersProvider.getSigner(address);
 
         const VaultAssist = new ethers.Contract(
-          process.env.NEXT_PUBLIC_VAULT_ASSIST_ADDRESS as string,
+          process.env.NEXT_PUBLIC_VAULT_ASSIST_CONTRACT_ADDRESS as string,
           VaultAssistABI.abi,
           signer
         );
