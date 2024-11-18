@@ -155,7 +155,7 @@ export default function Profile() {
     if (address && walletProvider) {
       const erc725js = new ERC725(
         LSP5Schema,
-        "0x3c33871d7ff685433cdba55a85a5960fd9feb007",
+        address, //"0x3c33871d7ff685433cdba55a85a5960fd9feb007",
         RPC_MAINNET
       );
 
@@ -257,7 +257,7 @@ export default function Profile() {
 
       const erc725js = new ERC725(
         LSP3Schema,
-        "0x3c33871d7ff685433cdba55a85a5960fd9feb007", //address,
+        address, //"0x3c33871d7ff685433cdba55a85a5960fd9feb007", //address,
         process.env.NEXT_PUBLIC_MAINNET_URL,
         {
           ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
