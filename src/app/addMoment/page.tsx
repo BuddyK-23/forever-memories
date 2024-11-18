@@ -10,6 +10,7 @@ import React, {
 import Image from "next/image";
 import Select, { MultiValue } from "react-select";
 import { generateEncryptionKey, decryptFile } from "@/utils/upload";
+import { detectFileType } from "@/utils/detectFileType";
 import { ethers } from "ethers";
 import { ERC725 } from "@erc725/erc725.js";
 import LSP4DigitalAsset from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
@@ -35,6 +36,9 @@ import toast, { Toaster } from "react-hot-toast";
 
 import "./index.css";
 import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
+// Define MIME type limits
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
 
 interface TagOption {
   value: number;
@@ -47,6 +51,8 @@ const Tags: TagOption[] = [
   { value: 3, label: "Selfie" },
 ];
 
+const FileTypes = ["image", "video"] as const;
+
 interface Vault {
   name: string;
   description: string;
@@ -57,6 +63,39 @@ interface Vault {
   vaultAddress: string;
   vaultMode: number;
 }
+
+// Function to detect file type and check size limits
+const getFileTypeAndCheckSize = (
+  file: File
+): { type: number; isValid: boolean } => {
+  if (!file) {
+    return { type: 0, isValid: false };
+  }
+
+  const mimeType = file.type;
+  let fileType = 0;
+  let isValid = true;
+
+  // Check file type and size
+  if (mimeType === "image/jpeg" || mimeType === "image/png") {
+    fileType = 1; // Image type
+    if (file.size > MAX_IMAGE_SIZE) {
+      isValid = false;
+      toast.error("Image file size exceeds the 10MB limit.");
+    }
+  } else if (mimeType === "video/mp4" || mimeType === "video/avi") {
+    fileType = 2; // Video type
+    if (file.size > MAX_VIDEO_SIZE) {
+      isValid = false;
+      toast.error("Video file size exceeds the 20MB limit.");
+    }
+  } else {
+    isValid = false;
+    toast.error("Unsupported file type.");
+  }
+
+  return { type: fileType, isValid };
+};
 
 export default function AddMoment({ params }: { params: { slug: string } }) {
   const vaultAddress = params.slug;
@@ -72,8 +111,11 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
   const [cid, setCid] = useState("");
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [vaultData, setVaultData] = useState<Vault[]>([]);
+  const [fileType, setFileType] = useState<number>(1); // 1 for image, 2 for video
 
   useEffect(() => {
     const init = async () => {
@@ -145,21 +187,39 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
     setSelectedTags(selectedOptions);
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    if (e.target.files) {
-      setFile(e.target.files[0]);
+    if (!file) return;
+
+    // Detect file type
+    const { type, error } = detectFileType(file);
+    console.log("type", type);
+    if (error) {
+      toast.error(error);
+      setFile(null);
+      setImagePreview(null);
+      setVideoPreview(null);
+      return;
     }
 
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
+    // Set the file state
+    setFile(file);
+
+    // Generate preview based on file type
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (type === 1) {
+        // Image preview
         setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setImagePreview(null);
-    }
+        setVideoPreview(null);
+      } else if (type === 2) {
+        // Video preview
+        setVideoPreview(reader.result as string);
+        setImagePreview(null);
+      }
+    };
+
+    reader.readAsDataURL(file);
   };
 
   // Update the setter to set the entire object
@@ -181,7 +241,9 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         }
         setUploading(true);
         const formData = new FormData();
+
         !file ? "" : formData.append("file", file); // FormData keys are called fields
+        console.log("file", file);
         formData.append(
           "lsp7CollectionMetadata",
           vault?.vaultAddress + headline
@@ -249,9 +311,11 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
               ],
             ],
             assets: [],
-            attributes: [],
+            // fileType, // 1: image, 2: video
+            attributes: [{ key: "FileType", value: FileTypes[fileType], type: "string" }],
           },
         };
+        console.log("momentMetadata", momentMetadata);
 
         const resMetadata_ = await fetch("/api/uploadMetadataToIPFS", {
           method: "POST",
@@ -348,7 +412,15 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                     />
                   )}
 
-                  {!imagePreview && (
+                  {videoPreview && (
+                    <video
+                      src={videoPreview}
+                      controls
+                      className="w-full h-[500px] rounded-lg"
+                    />
+                  )}
+
+                  {!videoPreview && !imagePreview && (
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <svg
                         className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400"
@@ -370,7 +442,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                         or drag and drop
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Max. File Size: 30MB
+                        Max. File Size: 20MB
                       </p>
                     </div>
                   )}
@@ -379,7 +451,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                     id="dropzone-file"
                     type="file"
                     className="hidden"
-                    onChange={handleImageChange}
+                    onChange={handleFileChange}
                   />
                 </label>
               </div>
@@ -389,7 +461,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                 htmlFor="vault"
                 className="block mb-2 text-sm font-medium text-gray-900 dark:text-white flex justify-between"
               >
-                <div>Select a vault</div>
+                <div>Select a vault{fileType}</div>
                 <div>
                   {vault?.vaultMode === 0 ? (
                     <span className="text-blue-500 font-bold">Public</span>

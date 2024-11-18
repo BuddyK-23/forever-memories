@@ -158,3 +158,8 @@ export function jsonToUint8Array(json: { [key: string]: number }): Uint8Array {
 
   return arr; // Return the constructed Uint8Array
 }
+
+export function getValueByKey(attributes: { key: string; value: string; type: string }[], key: string): string | undefined {
+  const attribute = attributes.find(attr => attr.key === key);
+  return attribute?.value;
+}

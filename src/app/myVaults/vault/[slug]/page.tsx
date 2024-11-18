@@ -12,6 +12,7 @@ import {
   bytes32ToAddress,
   hexToDecimal,
   hexStringToUint8Array,
+  getValueByKey,
 } from "@/utils/format"; // Adjust the import path as necessary
 import { ERC725 } from "@erc725/erc725.js";
 import lsp4Schema from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
@@ -20,7 +21,6 @@ import { generateEncryptionKey, decryptFile } from "@/utils/upload";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
 import VaultABI from "@/artifacts/Vault.json";
 import VaultAssistABI from "@/artifacts/VaultAssist.json";
-
 import MomentCard from "@/components/MomentCard";
 import toast, { Toaster } from "react-hot-toast";
 import { HiOutlineExclamationCircle, HiOutlineUserAdd } from "react-icons/hi";
@@ -32,6 +32,7 @@ import {
 interface Moment {
   headline: string;
   description: string;
+  fileType: string;
   cid: string;
   likes: number;
   comments: number;
@@ -177,9 +178,16 @@ export default function Page({ params }: { params: { slug: string } }) {
           const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
           const objectURL = URL.createObjectURL(blob);
           const likes_ = await await VaultContract.getLikes(allMoments[i]);
+          const attributes = metadata.attributes;
+          let fileType: string = "image";
+          if (attributes.length > 0) {
+            fileType = getValueByKey(attributes, "FileType") as string;
+          }
+
           moments_.push({
             headline: metadata.headline, //tokenSymbol.value as string,
             description: metadata.description,
+            fileType: fileType,
             cid: objectURL,
             likes: likes_.length,
             comments: commentCnt,
@@ -205,7 +213,10 @@ export default function Page({ params }: { params: { slug: string } }) {
         VaultFactoryABI.abi,
         signer
       );
-      const tx = await VaultFactoryContract.inviteMember(vaultAddress, invitationAddress);
+      const tx = await VaultFactoryContract.inviteMember(
+        vaultAddress,
+        invitationAddress
+      );
       toast.success("Invited to vault successfully.");
       setOpenInvitationModal(false);
     } else {

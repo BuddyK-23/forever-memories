@@ -11,6 +11,7 @@ import {
 interface Moment {
   headline: string;
   description: string;
+  fileType: string;
   cid: string;
   likes: number;
   comments: number;
@@ -45,11 +46,21 @@ const MomentCard: React.FC<MomentCardProps> = ({ moment }) => {
   return (
     <Link className="w-full h-[300px]" href={`/nft/` + moment.momentAddress}>
       <div className="w-full">
-        <img
-          className="w-full rounded-lg h-[300px]"
-          src={moment.cid}
-          alt="Moment Image"
-        />
+        {moment.fileType == "image" && (
+          <img
+            src={moment.cid}
+            alt="Preview"
+            className="w-full rounded-lg h-[300px]"
+          />
+        )}
+
+        {moment.fileType == "video" && (
+          <video
+            src={moment.cid}
+            controls
+            className="w-full rounded-lg h-[300px]"
+          />
+        )}
       </div>
       <div className="flex gap-2 text-xs pt-2">
         <div>Likes: {moment.likes}</div>

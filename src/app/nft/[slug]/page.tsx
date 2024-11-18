@@ -28,6 +28,7 @@ import {
   bytes32ToAddress,
   getUniversalProfileCustomName,
   convertIpfsUriToUrl,
+  getValueByKey,
 } from "@/utils/format";
 import CommentComponent from "@/components/CommentComponent";
 import toast, { Toaster } from "react-hot-toast";
@@ -67,6 +68,7 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [profileName, setProfileName] = useState<string>("");
   const [profileCid, setProfileCid] = useState<string>("");
+  const [fileType, setFileType] = useState<string>("");
 
   // Arrow function to call the API route and get the decrypted key
   const fetchDecryptedKey = async (
@@ -175,9 +177,14 @@ export default function Page({ params }: { params: { slug: string } }) {
       const jsonMetadata = await resMetadata.json();
       const ipfsHash = jsonMetadata.LSP4Metadata.ipfsHash;
       const metadata = jsonMetadata.LSP4Metadata;
-
+      const attributes = metadata.attributes;
+      let fileType_: string = "image";
+      if (attributes.length > 0) {
+        fileType_ = getValueByKey(attributes, "FileType") as string;
+      }
       setMomentHeadline(metadata.headline);
       setMomentDescription(metadata.description);
+      setFileType(fileType_);
       const notes = await VaultAssist.getLongDescription(tokenId);
       setMomentNotes(notes);
 
@@ -348,13 +355,21 @@ export default function Page({ params }: { params: { slug: string } }) {
         </div>
         <div className="px-10 pb-4">
           <div className="flex gap-4">
-            <div className="w-full h-[600px] rounded border-8 border-indigo-100 shadow-lg shadow-gray-500/50">
+            {fileType == "image" && (
               <img
-                className="carousel-item w-full h-[584px]"
                 src={cid}
-                alt="moment image"
+                alt="Preview"
+                className="carousel-item w-full h-[584px]"
               />
-            </div>
+            )}
+
+            {fileType == "video" && (
+              <video
+                src={cid}
+                controls
+                className="carousel-item w-full h-[584px]"
+              />
+            )}
           </div>
 
           <div className="flex justify-between pt-4">
