@@ -20,7 +20,7 @@ interface DecodedProfileMetadata {
 
 export async function getUniversalProfileCustomName(
   address: string
-): Promise<{ profileName: string; cid: string }> {
+): Promise<{ profileName: string; cid: string, description: string }> {
   const erc725js = new ERC725(
     LSP3Schema,
     address,
@@ -35,11 +35,12 @@ export async function getUniversalProfileCustomName(
     profileData as unknown as DecodedProfileMetadata;
   const addressPrefix = address.slice(0, 4);
   const profile: LSP3Profile = decodedProfileMetadata.value.LSP3Profile;
+  const description = profile.description;
   const profileName = `@${profile.name}#${addressPrefix}`;
   const cid = profile?.profileImage ? profile.profileImage[0]?.url : "";
 
   // Return the Universal Profile name
-  return { profileName, cid };
+  return { profileName, cid, description };
 }
 
 export function generateProfileName(name: string, address: string): string {
@@ -66,8 +67,14 @@ export function decimalToBytes32(decimal: number | string): string {
   const bigNumber = ethers.BigNumber.from(decimal);
 
   // Ensure the BigNumber fits within 32 bytes
-  if (bigNumber.gt(ethers.BigNumber.from("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))) {
-      throw new Error("Decimal value is too large to fit in 32 bytes");
+  if (
+    bigNumber.gt(
+      ethers.BigNumber.from(
+        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      )
+    )
+  ) {
+    throw new Error("Decimal value is too large to fit in 32 bytes");
   }
 
   // Convert to 32-byte hex string
@@ -141,13 +148,13 @@ export function hexStringToUint8Array(hexString: string): Uint8Array {
 }
 
 export function jsonToUint8Array(json: { [key: string]: number }): Uint8Array {
-  const keys = Object.keys(json);            // Get keys as strings
-  const length = keys.length;                // Determine the length of the array
-  const arr = new Uint8Array(length);        // Create a new Uint8Array of that length
+  const keys = Object.keys(json); // Get keys as strings
+  const length = keys.length; // Determine the length of the array
+  const arr = new Uint8Array(length); // Create a new Uint8Array of that length
 
   for (let i = 0; i < length; i++) {
-    arr[i] = json[i];                        // Assign each value from the JSON object
+    arr[i] = json[i]; // Assign each value from the JSON object
   }
 
-  return arr;                                // Return the constructed Uint8Array
+  return arr; // Return the constructed Uint8Array
 }

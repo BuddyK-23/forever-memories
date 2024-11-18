@@ -108,10 +108,8 @@ export default function Page({ params }: { params: { slug: string } }) {
 
       const data = await VaultFactoryContract.getVaultMetadata(vaultAddress);
       setVaultMode(data.vaultMode);
-      console.log("data", data);
 
       const allMoments = await VaultContract.getAllMoments(vaultAddress);
-      console.log("allMoments", allMoments);
       setVaultTitle(data.title as string);
       setVaultDescription(data.description as string);
       setVaultMoments(allMoments.length);
@@ -139,13 +137,6 @@ export default function Page({ params }: { params: { slug: string } }) {
           const decryptedKey_ = await fetchDecryptedKey(combinedEncryptedData);
           const decryptedKey = Buffer.from(decryptedKey_);
           console.log("decryptedKey", decryptedKey);
-
-          let lsp7Contract = new ethers.Contract(
-            bytes32ToAddress(allMoments[i]),
-            VaultABI.abi,
-            signer
-          );
-          // const balance = await lsp7Contract.balanceOf(address);
 
           // if (hexToDecimal(balance._hex) == 0) continue;
           const tokenIdMetadata = await VaultContract.getDataForTokenId(

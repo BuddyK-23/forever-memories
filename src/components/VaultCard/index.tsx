@@ -28,7 +28,6 @@ const VaultCard: React.FC<VaultCardProps> = ({ vault, href }) => {
   const [profileCid, setProfileCid] = useState<string>("");
 
   useEffect(() => {
-    console.log("vault.owner", vault.owner);
     const fetchProfileName = async () => {
       try {
         const profile = await getUniversalProfileCustomName(vault.owner);
