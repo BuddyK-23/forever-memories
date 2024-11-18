@@ -68,7 +68,7 @@ export default function Profile() {
   const [profileName, setProfileName] = useState<string>("");
   const [profileCid, setProfileCid] = useState<string>("");
   const [totalAssetsCount, setTotalAssetsCount] = useState<number>(0);
-  const [loadedAssetsCount, setLoadedAssetsCount] = useState<number>();
+  const [loadedAssetsCount, setLoadedAssetsCount] = useState<number>(0);
 
   const fetchProfileName = async (addr: string) => {
     try {
@@ -164,6 +164,8 @@ export default function Profile() {
 
       const moments = await fetchMyMoments();
       if (moments.length > 0) {
+        setTotalAssetsCount(1);
+        setLoadedAssetsCount(1);
         const defaultImage =
           "https://plum-certain-marten-441.mypinata.cloud/ipfs/QmQonbn3FnmQHQwEqTraFRM7o1ostMMh74J6ej6ApqZK5r";
         tokenMetadata_.push({
@@ -182,7 +184,7 @@ export default function Profile() {
 
       const tokensData_ = await erc725js.getData("LSP5ReceivedAssets[]");
       const tokens = tokensData_.value as string[];
-      setTotalAssetsCount(tokens.length);
+      setTotalAssetsCount((prevCount) => prevCount + tokens.length);
       console.log("tokens", tokens);
       console.log("tokens.length", tokens.length);
       if (tokens.length > 0) {
@@ -236,7 +238,7 @@ export default function Profile() {
               height: 300,
             },
           });
-          setLoadedAssetsCount(i + 1);
+          setLoadedAssetsCount((prevCount) => prevCount + 1);
         }
       }
       console.log("tokenMetadata", tokenMetadata_);
