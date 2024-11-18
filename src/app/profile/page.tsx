@@ -188,8 +188,8 @@ export default function Profile() {
       console.log("tokens", tokens);
       console.log("tokens.length", tokens.length);
       if (tokens.length > 0) {
-        for (let i = 0; i < tokens.length; i++) {
-          const erc725 = new ERC725(LSP4Schema, tokens[i], RPC_MAINNET);
+        for (let i = 0; i < 1; i++) {
+          const erc725 = new ERC725(LSP4Schema, "0x8bF5bf6C2F11643E75Dc4199AF2C7D39B1AEFcD3", RPC_MAINNET);
 
           // Step 1: Fetch the LSP4Metadata key
           const metadataResult = await erc725.getData("LSP4Metadata");
