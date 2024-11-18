@@ -155,13 +155,13 @@ export default function Profile() {
     if (address && walletProvider) {
       const erc725js = new ERC725(
         LSP5Schema,
-        address, //"0x3c33871d7ff685433cdba55a85a5960fd9feb007",
+        "0x3c33871d7ff685433cdba55a85a5960fd9feb007",
         RPC_MAINNET
       );
 
       let tokenMetadata_: TokenMetadata[] = [];
       let ipfsHash_: IpfsHash[] = [];
-
+      
       const moments = await fetchMyMoments();
       if (moments.length > 0) {
         setTotalAssetsCount(1);
@@ -201,7 +201,7 @@ export default function Profile() {
 
           let ipfsHashUrl: string = "";
           const defaultIpfsHashUrl: string =
-            "https://api.universalprofile.cloud/image/QmSTbGKK9NECKbC3fcf6xy1mNrzJDEykdLLUtV35WNTXnj";
+            "https://api.universalprofile.cloud/image/QmRnodxiibv3CnEa59eiYyNyjahCVAvLUi2JE9Zsp5bZn3";
 
           if (metadataResult?.value) {
             // Step 2: Get the metadata URI (e.g., ipfs://QmHash)
@@ -259,7 +259,7 @@ export default function Profile() {
 
       const erc725js = new ERC725(
         LSP3Schema,
-        address, //"0x3c33871d7ff685433cdba55a85a5960fd9feb007", //address,
+        "0x3c33871d7ff685433cdba55a85a5960fd9feb007", //address,
         process.env.NEXT_PUBLIC_MAINNET_URL,
         {
           ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
