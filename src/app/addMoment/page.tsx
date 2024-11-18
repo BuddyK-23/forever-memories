@@ -208,7 +208,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
     // Generate preview based on file type
     const reader = new FileReader();
     reader.onloadend = () => {
-      if (type === 1) {
+      if (type === 0) {
         // Image preview
         setImagePreview(reader.result as string);
         setVideoPreview(null);
@@ -244,6 +244,8 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
 
         !file ? "" : formData.append("file", file); // FormData keys are called fields
         console.log("file", file);
+        const { type, error } = detectFileType(file as File);
+        console.log("handleMintMoment type", type);
         formData.append(
           "lsp7CollectionMetadata",
           vault?.vaultAddress + headline
@@ -312,7 +314,9 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
             ],
             assets: [],
             // fileType, // 1: image, 2: video
-            attributes: [{ key: "FileType", value: FileTypes[fileType], type: "string" }],
+            attributes: [
+              { key: "FileType", value: FileTypes[type], type: "string" },
+            ],
           },
         };
         console.log("momentMetadata", momentMetadata);
