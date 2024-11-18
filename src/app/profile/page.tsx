@@ -67,6 +67,8 @@ export default function Profile() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [profileName, setProfileName] = useState<string>("");
   const [profileCid, setProfileCid] = useState<string>("");
+  const [totalAssetsCount, setTotalAssetsCount] = useState<number>(0);
+  const [loadedAssetsCount, setLoadedAssetsCount] = useState<number>();
 
   const fetchProfileName = async (addr: string) => {
     try {
@@ -153,7 +155,7 @@ export default function Profile() {
     if (address && walletProvider) {
       const erc725js = new ERC725(
         LSP5Schema,
-        address, //"0x3c33871d7ff685433cdba55a85a5960fd9feb007",
+        "0x3c33871d7ff685433cdba55a85a5960fd9feb007",
         RPC_MAINNET
       );
 
@@ -180,6 +182,7 @@ export default function Profile() {
 
       const tokensData_ = await erc725js.getData("LSP5ReceivedAssets[]");
       const tokens = tokensData_.value as string[];
+      setTotalAssetsCount(tokens.length);
       console.log("tokens", tokens);
       console.log("tokens.length", tokens.length);
       if (tokens.length > 0) {
@@ -233,6 +236,7 @@ export default function Profile() {
               height: 300,
             },
           });
+          setLoadedAssetsCount(i + 1);
         }
       }
       console.log("tokenMetadata", tokenMetadata_);
@@ -253,7 +257,7 @@ export default function Profile() {
 
       const erc725js = new ERC725(
         LSP3Schema,
-        address, //"0x3c33871d7ff685433cdba55a85a5960fd9feb007", //address,
+        "0x3c33871d7ff685433cdba55a85a5960fd9feb007", //address,
         process.env.NEXT_PUBLIC_MAINNET_URL,
         {
           ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
@@ -368,14 +372,23 @@ export default function Profile() {
           </button>
         </div>
       </div>
-      <div className="py-10 grid grid-cols-3 gap-4">
-        {tokens &&
-          tokens.map((token, index) => (
-            <div key={index}>
-              <TokenCard tokenMetadata={token} />
-            </div>
-          ))}
-      </div>
+      <div className="mt-4">Total: {totalAssetsCount}</div>
+
+      {loadedAssetsCount === totalAssetsCount ? (
+        <div className="pt-10 grid grid-cols-3 gap-4">
+          {tokens &&
+            tokens.map((token, index) => (
+              <div key={index}>
+                <TokenCard tokenMetadata={token} />
+              </div>
+            ))}
+        </div>
+      ) : (
+        <>
+          <div>Loaded: {loadedAssetsCount}</div>
+          <div className="font-bold">Assets are Loading...</div>
+        </>
+      )}
       <Toaster />
     </div>
 
