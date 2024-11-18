@@ -212,7 +212,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         // Image preview
         setImagePreview(reader.result as string);
         setVideoPreview(null);
-      } else if (type === 2) {
+      } else if (type === 1) {
         // Video preview
         setVideoPreview(reader.result as string);
         setImagePreview(null);
