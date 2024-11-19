@@ -208,7 +208,7 @@ export default function Profile() {
           const defaultIpfsHashUrl: string =
             "https://api.universalprofile.cloud/image/QmRnodxiibv3CnEa59eiYyNyjahCVAvLUi2JE9Zsp5bZn3";
 
-          if (metadataResult?.value) {
+          if (metadataResult?.value && tokenName.value !== "CHILL") {
             // Step 2: Get the metadata URI (e.g., ipfs://QmHash)
             const metadataUri = (metadataResult.value as { url: string }).url;
             const metadataUrl = metadataUri.replace(
