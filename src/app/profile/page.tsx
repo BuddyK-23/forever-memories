@@ -161,7 +161,7 @@ export default function Profile() {
 
       let tokenMetadata_: TokenMetadata[] = [];
       let ipfsHash_: IpfsHash[] = [];
-      
+
       const moments = await fetchMyMoments();
       if (moments.length > 0) {
         setTotalAssetsCount(1);
@@ -185,11 +185,16 @@ export default function Profile() {
       const tokensData_ = await erc725js.getData("LSP5ReceivedAssets[]");
       const tokens = tokensData_.value as string[];
       setTotalAssetsCount((prevCount) => prevCount + tokens.length);
+      const tLength = tokens.length;
       console.log("tokens", tokens);
       console.log("tokens.length", tokens.length);
       if (tokens.length > 0) {
-        for (let i = 0; i < 1; i++) {
-          const erc725 = new ERC725(LSP4Schema, "0x8bF5bf6C2F11643E75Dc4199AF2C7D39B1AEFcD3", RPC_MAINNET);
+        for (let i = 0; i < tLength; i++) {
+          const erc725 = new ERC725(
+            LSP4Schema,
+            tokens[i],
+            RPC_MAINNET
+          );
 
           // Step 1: Fetch the LSP4Metadata key
           const metadataResult = await erc725.getData("LSP4Metadata");
@@ -211,14 +216,20 @@ export default function Profile() {
               "https://ipfs.io/ipfs/"
             );
 
-            // Step 3: Fetch the metadata JSON file
-            const response = await fetch(metadataUrl);
+            const response = await fetch("/api/getAssetsByIpfsHash", {
+              method: "POST",
+              body: metadataUrl,
+            });
+            // const resAssetData = await resAssetData_.json();
+            // console.log("resAssetData", resAssetData);
+            // const response = await fetch(metadataUrl);
             const metadataJson = await response.json();
-            console.log("metadataJson", metadataJson);
+            const data = metadataJson.metadataJson
+            console.log("data", data);
 
             let ipfsHashUri = "";
-            if (metadataJson.LSP4Metadata?.images.length > 0) {
-              ipfsHashUri = metadataJson.LSP4Metadata?.images[0][0].url;
+            if (data.LSP4Metadata?.images.length > 0) {
+              ipfsHashUri = data.LSP4Metadata?.images[0][0].url;
               ipfsHashUrl = ipfsHashUri.replace(
                 "ipfs://",
                 "https://api.universalprofile.cloud/image/"
