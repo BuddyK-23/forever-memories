@@ -185,16 +185,13 @@ export default function Profile() {
       const tokensData_ = await erc725js.getData("LSP5ReceivedAssets[]");
       const tokens = tokensData_.value as string[];
       setTotalAssetsCount((prevCount) => prevCount + tokens.length);
-      const tLength = tokens.length;
+      const tLength = 10; //tokens.length;
       console.log("tokens", tokens);
       console.log("tokens.length", tokens.length);
+      
       if (tokens.length > 0) {
         for (let i = 0; i < tLength; i++) {
-          const erc725 = new ERC725(
-            LSP4Schema,
-            tokens[i],
-            RPC_MAINNET
-          );
+          const erc725 = new ERC725(LSP4Schema, tokens[i], RPC_MAINNET);
 
           // Step 1: Fetch the LSP4Metadata key
           const metadataResult = await erc725.getData("LSP4Metadata");
@@ -208,7 +205,7 @@ export default function Profile() {
           const defaultIpfsHashUrl: string =
             "https://api.universalprofile.cloud/image/QmRnodxiibv3CnEa59eiYyNyjahCVAvLUi2JE9Zsp5bZn3";
 
-          if (metadataResult?.value && tokenName.value !== "CHILL") {
+          if (metadataResult?.value) {
             // Step 2: Get the metadata URI (e.g., ipfs://QmHash)
             const metadataUri = (metadataResult.value as { url: string }).url;
             const metadataUrl = metadataUri.replace(
@@ -216,15 +213,15 @@ export default function Profile() {
               "https://ipfs.io/ipfs/"
             );
 
+            console.log("metadataUri", metadataUri);
+            console.log("metadataUrl", metadataUrl);
+
             const response = await fetch("/api/getAssetsByIpfsHash", {
               method: "POST",
               body: metadataUrl,
             });
-            // const resAssetData = await resAssetData_.json();
-            // console.log("resAssetData", resAssetData);
-            // const response = await fetch(metadataUrl);
             const metadataJson = await response.json();
-            const data = metadataJson.metadataJson
+            const data = metadataJson.metadataJson;
             console.log("data", data);
 
             let ipfsHashUri = "";
