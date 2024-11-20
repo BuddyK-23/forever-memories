@@ -185,10 +185,10 @@ export default function Profile() {
       const tokensData_ = await erc725js.getData("LSP5ReceivedAssets[]");
       const tokens = tokensData_.value as string[];
       setTotalAssetsCount((prevCount) => prevCount + tokens.length);
-      const tLength = 10; //tokens.length;
+      const tLength = tokens.length;
       console.log("tokens", tokens);
       console.log("tokens.length", tokens.length);
-      
+
       if (tokens.length > 0) {
         for (let i = 0; i < tLength; i++) {
           const erc725 = new ERC725(LSP4Schema, tokens[i], RPC_MAINNET);

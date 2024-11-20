@@ -48,7 +48,7 @@ const Feed: React.FC = () => {
 
       const tokensData_ = await erc725js.getData("LSP5ReceivedAssets[]");
       const tokens = tokensData_.value as string[];
-      const tLength = 10; //tokens.length;
+      const tLength = tokens.length;
       console.log("tokens", tokens);
       console.log("tokens.length", tokens.length);
 
