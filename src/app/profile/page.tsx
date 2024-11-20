@@ -155,7 +155,7 @@ export default function Profile() {
     if (address && walletProvider) {
       const erc725js = new ERC725(
         LSP5Schema,
-        "0x3c33871d7ff685433cdba55a85a5960fd9feb007",
+        address, //"0x2d6584E545B5c4A15FB3a825431b10A1452c3780",
         RPC_MAINNET
       );
 
@@ -186,8 +186,6 @@ export default function Profile() {
       const tokens = tokensData_.value as string[];
       setTotalAssetsCount((prevCount) => prevCount + tokens.length);
       const tLength = tokens.length;
-      console.log("tokens", tokens);
-      console.log("tokens.length", tokens.length);
 
       if (tokens.length > 0) {
         for (let i = 0; i < tLength; i++) {
@@ -197,9 +195,6 @@ export default function Profile() {
           const metadataResult = await erc725.getData("LSP4Metadata");
           const tokenName = await erc725.getData("LSP4TokenName");
           const tokenSymbol = await erc725.getData("LSP4TokenName");
-          console.log("Token Name:", tokenName.value);
-          console.log("Token Symbol:", tokenSymbol.value);
-          console.log("Token ID:", tokens[i]);
 
           let ipfsHashUrl: string = "";
           const defaultIpfsHashUrl: string =
@@ -208,29 +203,28 @@ export default function Profile() {
           if (metadataResult?.value) {
             // Step 2: Get the metadata URI (e.g., ipfs://QmHash)
             const metadataUri = (metadataResult.value as { url: string }).url;
-            const metadataUrl = metadataUri.replace(
-              "ipfs://",
-              "https://ipfs.io/ipfs/"
-            );
-
-            console.log("metadataUri", metadataUri);
-            console.log("metadataUrl", metadataUrl);
-
-            const response = await fetch("/api/getAssetsByIpfsHash", {
-              method: "POST",
-              body: metadataUrl,
-            });
-            const metadataJson = await response.json();
-            const data = metadataJson.metadataJson;
-            console.log("data", data);
-
-            let ipfsHashUri = "";
-            if (data.LSP4Metadata?.images.length > 0) {
-              ipfsHashUri = data.LSP4Metadata?.images[0][0].url;
-              ipfsHashUrl = ipfsHashUri.replace(
+            const checkBuffer = "ipfs://";
+            if (metadataUri && metadataUri.startsWith(checkBuffer)) {
+              const metadataUrl = metadataUri.replace(
                 "ipfs://",
-                "https://api.universalprofile.cloud/image/"
+                "https://ipfs.io/ipfs/"
               );
+
+              const response = await fetch("/api/getAssetsByIpfsHash", {
+                method: "POST",
+                body: metadataUrl,
+              });
+              const metadataJson = await response.json();
+              const data = metadataJson.metadataJson;
+
+              let ipfsHashUri = "";
+              if (data.LSP4Metadata?.images.length > 0) {
+                ipfsHashUri = data.LSP4Metadata?.images[0][0].url;
+                ipfsHashUrl = ipfsHashUri.replace(
+                  "ipfs://",
+                  "https://api.universalprofile.cloud/image/"
+                );
+              }
             }
           }
 
@@ -267,7 +261,7 @@ export default function Profile() {
 
       const erc725js = new ERC725(
         LSP3Schema,
-        "0x3c33871d7ff685433cdba55a85a5960fd9feb007", //address,
+        address,
         process.env.NEXT_PUBLIC_MAINNET_URL,
         {
           ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
@@ -320,31 +314,32 @@ export default function Profile() {
   ) : (
     <div className="max-w-3xl mx-auto">
       {/* Header Section */}
-      <div className="relative w-full h-60 bg-pink-400">
+      <div className="relative w-full h-60 bg-gray-300 border-none">
         {/* Background Image */}
-        <Image
-          src={
-            profile?.backgroundImage && profile.backgroundImage[0]?.url
-              ? convertIpfsUriToUrl(profile.backgroundImage[0].url)
-              : ""
-          }
-          alt="Profile Background"
-          fill
-          className="object-cover"
-        />
-        {/* User Avatar */}
-        <div className="absolute left-6 bottom-[-40px] w-24 h-24 rounded-full border-4 border-white overflow-hidden">
+        {profile?.backgroundImage && profile.backgroundImage[0]?.url ? (
           <Image
-            src={
-              profile?.profileImage && profile.profileImage[0]?.url
-                ? convertIpfsUriToUrl(profile.profileImage[0].url)
-                : ""
-            }
-            alt="User Avatar"
-            width={96}
-            height={96}
+            src={convertIpfsUriToUrl(profile.backgroundImage[0].url)}
+            alt=""
+            fill
             className="object-cover"
           />
+        ) : (
+          ""
+        )}
+
+        {/* User Avatar */}
+        <div className="absolute left-6 bottom-[-40px] w-24 h-24 rounded-full border-4 border-white overflow-hidden">
+          {profile?.profileImage && profile.profileImage[0]?.url ? (
+            <Image
+              src={convertIpfsUriToUrl(profile.profileImage[0].url)}
+              alt=""
+              width={96}
+              height={96}
+              className="object-cover"
+            />
+          ) : (
+            ""
+          )}
         </div>
       </div>
 
@@ -382,10 +377,12 @@ export default function Profile() {
           </button>
         </div>
       </div>
+      <h1 className="mt-4">{lyxBalance} LYX</h1>
+      <div className="mt-4">{fmtBalance} FMT</div>
       <div className="mt-4">Total: {totalAssetsCount}</div>
 
       {loadedAssetsCount === totalAssetsCount ? (
-        <div className="pt-10 grid grid-cols-3 gap-4">
+        <div className="py-10 grid grid-cols-3 gap-4">
           {tokens &&
             tokens.map((token, index) => (
               <div key={index}>
