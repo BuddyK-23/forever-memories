@@ -4,7 +4,7 @@ import { Button } from "flowbite-react";
 import React, { useState, useEffect } from "react";
 import { FaHeart } from "react-icons/fa6";
 import { BsChatLeftTextFill, BsFillShareFill } from "react-icons/bs";
-import { AiOutlineLike } from "react-icons/ai";
+import { AiOutlineLike, AiOutlineDislike } from "react-icons/ai";
 import { BsChatRightTextFill } from "react-icons/bs";
 import { MdInsertComment } from "react-icons/md";
 import { MdClose } from "react-icons/md";
@@ -40,6 +40,12 @@ type URLDataWithHash = {
   hash: string;
 };
 
+type LikeMemberType = {
+  name: string;
+  generatedName: string;
+  cid: string;
+};
+
 // Type guard to check if the value has a 'url' property
 function hasUrlProperty(value: any): value is URLDataWithHash {
   return value && typeof value === "object" && "url" in value;
@@ -49,12 +55,13 @@ export default function Page({ params }: { params: { slug: string } }) {
   const tokenId = params.slug;
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
-  const [showModal, setShowModal] = useState(false);
+  const [showLikeModal, setShowLikeModal] = useState(false);
+  const [showDislikeModal, setShowDislikeModal] = useState(false);
   const [cid, setCid] = useState<string>();
   const [mintedDate, setMintedDate] = useState<string>();
   const [totalSupply, setTotalSupply] = useState<number>();
   const [myBalance, setMyBalance] = useState<number>();
-  const [commentCnt, setCommentCnt] = useState<number>();
+  const [commentCnt, setCommentCnt] = useState<number>(0);
   const [momentHeadline, setMomentHeadline] = useState<string>();
   const [momentDescription, setMomentDescription] = useState<string>();
   const [momentNotes, setMomentNotes] = useState<string>();
@@ -64,7 +71,8 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [vaultAddress, setVaultAddress] = useState<string>();
   const [nftAddress, setNftAddress] = useState<string>();
   const [nftSymbol, setNftSymbol] = useState<string>();
-  const [momentLike, setMomentLike] = useState<string>("0");
+  const [momentLikes, setMomentLikes] = useState<LikeMemberType[]>([]);
+  const [momentDislikes, setMomentDislikes] = useState<LikeMemberType[]>([]);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [profileName, setProfileName] = useState<string>("");
   const [profileCid, setProfileCid] = useState<string>("");
@@ -94,7 +102,7 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   useEffect(() => {
-    fetchNFT();
+    init();
   }, []);
 
   const fetchProfileName = async (mmtOwner: string) => {
@@ -108,7 +116,42 @@ export default function Page({ params }: { params: { slug: string } }) {
     }
   };
 
-  const fetchNFT = async () => {
+  const fetchLikeMemberProfile = async (pname: string) => {
+    try {
+      const profile = await getUniversalProfileCustomName(pname);
+      return {
+        generatedName: profile.profileName,
+        cid: convertIpfsUriToUrl(profile.cid),
+      };
+    } catch (error) {
+      console.error("Error fetching profile name:", error);
+      return {
+        name: "",
+        cid: "",
+      };
+    }
+  };
+
+  const checkMemberOfVaultByAddress = async (vaultAddress: string) => {
+    if (walletProvider) {
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
+
+      const VaultFactoryContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+        VaultFactoryABI.abi,
+        signer
+      );
+
+      // const members: string[] = await getVaultMembers(vaultAddress);
+      // if (members.includes(address))
+    }
+  };
+
+  const init = async () => {
     if (walletProvider) {
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
@@ -128,14 +171,14 @@ export default function Page({ params }: { params: { slug: string } }) {
         signer
       );
 
-      const VaultAssist = new ethers.Contract(
+      const VaultAssistContract = new ethers.Contract(
         process.env.NEXT_PUBLIC_VAULT_ASSIST_CONTRACT_ADDRESS as string,
         VaultAssistABI.abi,
         signer
       );
 
       // Get the total number of comments
-      const _commentCnt = await VaultAssist.getCommentCount(tokenId);
+      const _commentCnt = await VaultAssistContract.getCommentCount(tokenId);
       setCommentCnt(parseInt(_commentCnt.toString(), 10)); // Convert BigNumber to number
 
       const combinedEncryptedData_ = await VaultContract.getEncryptedKey(
@@ -151,11 +194,11 @@ export default function Page({ params }: { params: { slug: string } }) {
       const decryptedKey_ = await fetchDecryptedKey(combinedEncryptedData);
       const decryptedKey = Buffer.from(decryptedKey_);
 
-      const lsp7Contract = new ethers.Contract(
-        bytes32ToAddress(tokenId),
-        VaultABI.abi,
-        signer
-      );
+      // const lsp7Contract = new ethers.Contract(
+      //   bytes32ToAddress(tokenId),
+      //   VaultABI.abi,
+      //   signer
+      // );
 
       const tokenIdMetadata = await VaultContract.getDataForTokenId(
         tokenId,
@@ -185,7 +228,7 @@ export default function Page({ params }: { params: { slug: string } }) {
       setMomentHeadline(metadata.headline);
       setMomentDescription(metadata.description);
       setFileType(fileType_);
-      const notes = await VaultAssist.getLongDescription(tokenId);
+      const notes = await VaultAssistContract.getLongDescription(tokenId);
       setMomentNotes(notes);
 
       const _vaultAddress = await VaultContract.tokenOwnerOf(tokenId);
@@ -224,13 +267,36 @@ export default function Page({ params }: { params: { slug: string } }) {
       setMintedDate(md);
 
       const likes = await VaultContract.getLikes(tokenId);
-      setMomentLike(likes.length);
+      let likesTemp: LikeMemberType[] = [];
+      for (let i = 0; i < likes.length; i++) {
+        const { generatedName, cid } = await fetchLikeMemberProfile(likes[i]);
+        const likes_: LikeMemberType = {
+          name: likes[i],
+          generatedName: generatedName as string,
+          cid: cid,
+        };
+        likesTemp.push(likes_);
+      }
+      setMomentLikes(likesTemp);
 
+      const disikes = await VaultContract.getLikes(tokenId);
+      let dislikesTemp: LikeMemberType[] = [];
+      for (let i = 0; i < disikes.length; i++) {
+        const { generatedName, cid } = await fetchLikeMemberProfile(disikes[i]);
+        const disikes_: LikeMemberType = {
+          name: likes[i],
+          generatedName: generatedName as string,
+          cid: cid,
+        };
+        dislikesTemp.push(disikes_);
+      }
+      setMomentDislikes(dislikesTemp);
       setIsDownloading(true);
     }
   };
 
   const handleLike = async () => {
+    setIsDownloading(false);
     if (walletProvider) {
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
@@ -238,22 +304,111 @@ export default function Page({ params }: { params: { slug: string } }) {
       );
       const signer = ethersProvider.getSigner(address);
 
-      const VaultContract = new ethers.Contract(
+      const VaultAssistContract = new ethers.Contract(
         process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
-        VaultABI.abi,
+        VaultAssistABI.abi,
         signer
       );
 
-      const likesA = await VaultContract.getLikes(tokenId);
-      if (likesA.includes(address)) {
+      const likes_ = await VaultAssistContract.getLikes(tokenId);
+      if (likes_.includes(address)) {
         toast.success("Already liked!");
       } else {
-        await VaultContract.like(tokenId);
-        setMomentLike(momentLike + 1);
+        await VaultAssistContract.like(tokenId);
+        const likes = await VaultAssistContract.getLikes(tokenId);
+        const dislikes_ = await VaultAssistContract.getDislike(tokenId);
+
+        let likesTemp: LikeMemberType[] = [];
+        for (let i = 0; i < likes.length; i++) {
+          const { generatedName, cid } = await fetchLikeMemberProfile(likes[i]);
+          const likes_: LikeMemberType = {
+            name: likes[i],
+            generatedName: generatedName as string,
+            cid: cid,
+          };
+          likesTemp.push(likes_);
+        }
+        setMomentLikes(likesTemp);
+
+        const disikes = await VaultAssistContract.getLikes(tokenId);
+        let dislikesTemp: LikeMemberType[] = [];
+        for (let i = 0; i < disikes.length; i++) {
+          const { generatedName, cid } = await fetchLikeMemberProfile(
+            disikes[i]
+          );
+          const disikes_: LikeMemberType = {
+            name: likes[i],
+            generatedName: generatedName as string,
+            cid: cid,
+          };
+          dislikesTemp.push(disikes_);
+        }
+        setMomentDislikes(dislikesTemp);
         toast.success("Like Success");
+
+        setIsDownloading(true);
       }
     } else {
       toast.error("Connect the wallet");
+      setIsDownloading(true);
+    }
+  };
+
+  const handleDislike = async () => {
+    setIsDownloading(false);
+    if (walletProvider) {
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
+
+      const VaultAssistContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+        VaultAssistABI.abi,
+        signer
+      );
+
+      const dislikes_ = await VaultAssistContract.getDislikes(tokenId);
+      if (dislikes_.includes(address)) {
+        toast.success("Already liked!");
+      } else {
+        await VaultAssistContract.dislike(tokenId);
+        const likes = await VaultAssistContract.getLikes(tokenId);
+        const dislikes_ = await VaultAssistContract.getDislike(tokenId);
+
+        let likesTemp: LikeMemberType[] = [];
+        for (let i = 0; i < likes.length; i++) {
+          const { generatedName, cid } = await fetchLikeMemberProfile(likes[i]);
+          const likes_: LikeMemberType = {
+            name: likes[i],
+            generatedName: generatedName as string,
+            cid: cid,
+          };
+          likesTemp.push(likes_);
+        }
+        setMomentLikes(likesTemp);
+
+        const disikes = await VaultAssistContract.getLikes(tokenId);
+        let dislikesTemp: LikeMemberType[] = [];
+        for (let i = 0; i < disikes.length; i++) {
+          const { generatedName, cid } = await fetchLikeMemberProfile(
+            disikes[i]
+          );
+          const disikes_: LikeMemberType = {
+            name: likes[i],
+            generatedName: generatedName as string,
+            cid: cid,
+          };
+          dislikesTemp.push(disikes_);
+        }
+        setMomentDislikes(dislikesTemp);
+        toast.success("Dislike Success");
+        setIsDownloading(true);
+      }
+    } else {
+      toast.error("Connect the wallet");
+      setIsDownloading(true);
     }
   };
 
@@ -314,8 +469,13 @@ export default function Page({ params }: { params: { slug: string } }) {
     // setShowModal(false);
   };
 
+  const handleChildAction = (data: string) => {
+    console.log("child component handleer", data);
+    setCommentCnt((prevCommentCnt) => prevCommentCnt + 1);
+  };
+
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center bg-white h-screen dark:invert">
+    <div className="flex space-x-2 justify-center items-center bg-white h-[600px] dark:invert">
       <span className="sr-only">Loading...</span>
       <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
       <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>
@@ -385,20 +545,29 @@ export default function Page({ params }: { params: { slug: string } }) {
               </div>
             </div>
             <div className="flex gap-2">
-              <div
-                onClick={() => handleLike()}
-                className="flex items-center gap-2 bg-gray-300  py-1  px-2 rounded-lg cursor-pointer"
-              >
-                <div>
-                  <AiOutlineLike />
-                </div>
-                <div>{momentLike}</div>
-              </div>
               <div className="flex items-center gap-2 bg-gray-300 py-1  px-2 rounded-lg">
                 <div>
                   <BsChatRightTextFill />
                 </div>
                 <div>{commentCnt}</div>
+              </div>
+              <div
+                onClick={() => setShowLikeModal(true)}
+                className="flex items-center gap-2 bg-gray-300  py-1  px-2 rounded-lg cursor-pointer"
+              >
+                <div>
+                  <AiOutlineLike />
+                </div>
+                <div>{momentLikes.length}</div>
+              </div>
+              <div
+                onClick={() => setShowDislikeModal(true)}
+                className="flex items-center gap-2 bg-gray-300  py-1  px-2 rounded-lg cursor-pointer"
+              >
+                <div>
+                  <AiOutlineDislike />
+                </div>
+                <div>{momentDislikes.length}</div>
               </div>
             </div>
           </div>
@@ -429,12 +598,15 @@ export default function Page({ params }: { params: { slug: string } }) {
               <div>{momentNotes}</div>
             </div>
             <div>
-              <CommentComponent tokenId={tokenId} />
+              <CommentComponent
+                tokenId={tokenId}
+                onMessageToParent={handleChildAction}
+              />
             </div>
           </div>
         </div>
 
-        {showModal ? (
+        {showLikeModal ? (
           <>
             <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
               <div className="relative w-auto my-6 mx-auto max-w-3xl">
@@ -442,10 +614,10 @@ export default function Page({ params }: { params: { slug: string } }) {
                 <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
                   {/*header*/}
                   <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
-                    <h3 className="text-3xl font-semibold">Send Asset</h3>
+                    <h3 className="text-3xl font-semibold">Liked Members</h3>
                     <button
                       className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
-                      onClick={() => setShowModal(false)}
+                      onClick={() => setShowLikeModal(false)}
                     >
                       <span className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
                         ×
@@ -453,43 +625,110 @@ export default function Page({ params }: { params: { slug: string } }) {
                     </button>
                   </div>
                   {/*body*/}
-                  <div className="relative p-6 flex-auto">
-                    <div>
-                      <div className="text-xl">Address:</div>
-                      <div>
-                        <input
-                          className="border-2 w-full p-1"
-                          placeholder="0x12345..."
-                          type="text"
-                        />
+                  <div className="relative p-6 flex-auto max-h-[600px] w-[400px]">
+                    {momentLikes.map((mlike, index) => (
+                      <div key={index} className="commentPanelItem my-2">
+                        <div className="p-1 flex items-center space-x-3 hover:cursor-pointer">
+                          <img
+                            src={mlike.cid}
+                            alt="Andrew Alfred"
+                            className="w-10 h-10 rounded-full"
+                          />
+                          <div>
+                            <h3 className="text-sm font-medium">
+                              {mlike.generatedName}
+                            </h3>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="pt-6 text-xl">
-                      <div>Amount:</div>
-                      <div>
-                        <input
-                          className="border-2 w-full p-1"
-                          placeholder="2"
-                          type="text"
-                        />
-                      </div>
-                    </div>
+                    ))}
                   </div>
                   {/*footer*/}
                   <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
                     <button
                       className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
                       type="button"
-                      onClick={() => setShowModal(false)}
+                      onClick={() => setShowLikeModal(false)}
                     >
                       Close
                     </button>
                     <button
                       className="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
                       type="button"
-                      onClick={() => handleSend()}
+                      onClick={() => handleLike()}
                     >
-                      Send
+                      <div className="flex items-center gap-2 cursor-pointer">
+                        <div>
+                          <AiOutlineLike />
+                        </div>
+                        <div>Like</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
+          </>
+        ) : null}
+
+        {showDislikeModal ? (
+          <>
+            <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
+              <div className="relative w-auto my-6 mx-auto max-w-3xl">
+                {/*content*/}
+                <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+                  {/*header*/}
+                  <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
+                    <h3 className="text-3xl font-semibold">Disliked Members</h3>
+                    <button
+                      className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
+                      onClick={() => setShowDislikeModal(false)}
+                    >
+                      <span className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
+                        ×
+                      </span>
+                    </button>
+                  </div>
+                  {/*body*/}
+                  <div className="relative p-6 flex-auto max-h-[600px] w-[400px]">
+                    {momentLikes.map((mlike, index) => (
+                      <div key={index} className="commentPanelItem my-2">
+                        <div className="p-1 flex items-center space-x-3 hover:cursor-pointer">
+                          <img
+                            src={mlike.cid}
+                            alt="Andrew Alfred"
+                            className="w-10 h-10 rounded-full"
+                          />
+                          <div>
+                            <h3 className="text-sm font-medium">
+                              {mlike.generatedName}
+                            </h3>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/*footer*/}
+                  <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
+                    <button
+                      className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                      type="button"
+                      onClick={() => setShowDislikeModal(false)}
+                    >
+                      Close
+                    </button>
+                    <button
+                      className="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                      type="button"
+                      onClick={() => handleDislike()}
+                    >
+                      <div className="flex items-center gap-2 cursor-pointer">
+                        <div>
+                          <AiOutlineDislike />
+                        </div>
+                        <div>Dislike</div>
+                      </div>
                     </button>
                   </div>
                 </div>
@@ -503,3 +742,7 @@ export default function Page({ params }: { params: { slug: string } }) {
     </div>
   );
 }
+function getVaultMembers(vaultAddress: string) {
+  throw new Error("Function not implemented.");
+}
+

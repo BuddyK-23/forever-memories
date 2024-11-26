@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState, FormEvent } from "react";
 import Select, { MultiValue } from "react-select";
 import { ethers } from "ethers";
@@ -9,6 +10,7 @@ import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
 } from "@web3modal/ethers5/react";
+import { getCategoryOptions } from "@/utils/format";
 import { ERC725 } from "@erc725/erc725.js";
 import LSP4DigitalAsset from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
@@ -27,51 +29,13 @@ interface CategoryOption {
   label: string;
 }
 
-const Categories: CategoryOption[] = [
-  { value: 1, label: "Animals" },
-  { value: 2, label: "Art" },
-  { value: 3, label: "Beauty" },
-  { value: 4, label: "Best of" },
-  { value: 5, label: "Cars" },
-  { value: 6, label: "Comedy" },
-  { value: 7, label: "Culture" },
-  { value: 8, label: "Daily life" },
-  { value: 9, label: "Drama" },
-  { value: 10, label: "Earth" },
-  { value: 11, label: "Education" },
-  { value: 12, label: "Events" },
-  { value: 13, label: "Family" },
-  { value: 14, label: "Famous" },
-  { value: 15, label: "Fashion" },
-  { value: 16, label: "Food & Drink" },
-  { value: 17, label: "Fitness" },
-  { value: 18, label: "Games" },
-  { value: 19, label: "Good times" },
-  { value: 20, label: "Health" },
-  { value: 21, label: "History" },
-  { value: 22, label: "Humanity" },
-  { value: 23, label: "Innovation" },
-  { value: 24, label: "Journalism" },
-  { value: 25, label: "Love" },
-  { value: 26, label: "Music" },
-  { value: 27, label: "Nature" },
-  { value: 28, label: "Party" },
-  { value: 29, label: "Personal" },
-  { value: 30, label: "Photography" },
-  { value: 31, label: "Random" },
-  { value: 32, label: "Science" },
-  { value: 33, label: "Society" },
-  { value: 34, label: "Sport" },
-  { value: 35, label: "Technology" },
-  { value: 36, label: "Time capsule" },
-  { value: 37, label: "Travel & Adventure" },
-];
-
 export default function CreateVault() {
   const [selectedCategories, setSelectedCategories] = useState<
     MultiValue<CategoryOption>
   >([]);
+  const router = useRouter();
   const { walletProvider } = useWeb3ModalProvider();
+  const [isDownloading, setIsDownloading] = useState<boolean>(true);
   const [formValues, setFormValues] = useState<FormValues>({
     vaultName: "",
     metadataUriImage: null,
@@ -80,6 +44,7 @@ export default function CreateVault() {
     vaultMode: 1, // Default to Private
   });
 
+  const categories = getCategoryOptions();
   const handleCategoryChange = (
     selectedOptions: MultiValue<CategoryOption>
   ) => {
@@ -132,7 +97,6 @@ export default function CreateVault() {
 
     try {
       const formData = new FormData();
-
       if (formValues.metadataUriImage && walletProvider) {
         formData.append("file", formValues.metadataUriImage);
         const res = await fetch("/api/vaultImageToIPFS", {
@@ -140,17 +104,20 @@ export default function CreateVault() {
           body: formData,
         });
         const resData = await res.json();
+        console.log("resData", resData);
         const categories = selectedCategories.map((category) => category.value);
         const ethersProvider = new ethers.providers.Web3Provider(
           walletProvider,
           "any"
         );
         const signer = ethersProvider.getSigner(address);
+        setIsDownloading(false);
         const VaultFactoryContract = new ethers.Contract(
           process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
           VaultFactoryABI.abi,
           signer
         );
+
         const tx = await VaultFactoryContract.createVault(
           formValues.vaultName,
           formValues.metadataUriDescription,
@@ -160,16 +127,25 @@ export default function CreateVault() {
           categories
         );
         console.log("tx", tx);
+        toast.success("Vault is created successfully!");
+        router.push("/myVaults");
+        setImagePreview(null);
+        setIsDownloading(true);
       }
-
-      toast.success("Vault is created successfully!");
-      setImagePreview(null);
     } catch (err) {
       toast.error("An error occurred while creating the vault.");
+      setIsDownloading(true);
     }
   };
 
-  return (
+  return !isDownloading ? (
+    <div className="flex space-x-2 justify-center items-center h-[600px] dark:invert">
+      <span className="sr-only">Loading...</span>
+      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+      <div className="h-8 w-8 bg-black rounded-full animate-bounce"></div>
+    </div>
+  ) : (
     <div className="flex justify-center bg-gray-200 w-full">
       <div className="flex justify-center main-content gap-x-1 mt-4 mb-20 w-full">
         <div className="rounded-lg border p-5 bg-white ml-4 mr-2 shadow-lg shadow-gray-500/50 w-1/2">
@@ -313,7 +289,7 @@ export default function CreateVault() {
               Select Categories
             </label>
             <Select
-              options={Categories}
+              options={categories}
               onChange={handleCategoryChange}
               isMulti
               value={selectedCategories}

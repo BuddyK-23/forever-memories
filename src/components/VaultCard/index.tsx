@@ -31,7 +31,6 @@ const VaultCard: React.FC<VaultCardProps> = ({ vault, href }) => {
     const fetchProfileName = async () => {
       try {
         const profile = await getUniversalProfileCustomName(vault.owner);
-        console.log("profile.cid", profile.cid);
         setProfileName(profile.profileName);
         setProfileCid(convertIpfsUriToUrl(profile.cid));
       } catch (error) {

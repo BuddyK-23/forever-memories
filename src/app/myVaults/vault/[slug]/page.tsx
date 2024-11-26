@@ -13,6 +13,8 @@ import {
   hexToDecimal,
   hexStringToUint8Array,
   getValueByKey,
+  convertIpfsUriToUrl,
+  getUniversalProfileCustomName,
 } from "@/utils/format"; // Adjust the import path as necessary
 import { ERC725 } from "@erc725/erc725.js";
 import lsp4Schema from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
@@ -48,20 +50,34 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [vaultMembers, setVaultMembers] = useState<number>();
   const [vaultMoments, setVaultMoments] = useState<number>();
   const [vaultMode, setVaultMode] = useState<number>(0);
+  const [vaultOwner, setVaultOwner] = useState<string>();
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [moments, setMoments] = useState<Moment[]>([]);
-  const [invitationAddress, setInvitationAddress] = useState<string>();
+  const [invitationAddress, setInvitationAddress] = useState<string>("");
 
   const [openModal, setOpenModal] = useState(false);
   const [openInvitationModal, setOpenInvitationModal] = useState(false);
+  const [openMembersModal, setOpenMembersModal] = useState(false);
   // const [openInvitationModal, setInvitationModal] = useState(false);
+  const [vaultProfileName, setVaultProfileName] = useState<string>("");
+  const [vaultProfileCid, setVaultProfileCid] = useState<string>("");
 
   useEffect(() => {
-    fetchNFT();
-    setIsDownloading(true);
+    fetchData();
   }, [isConnected, address, walletProvider]);
+
+  const fetchProfileName = async (owner: string) => {
+    try {
+      const profile = await getUniversalProfileCustomName(owner);
+      setVaultProfileName(profile.profileName);
+      setVaultProfileCid(convertIpfsUriToUrl(profile.cid));
+    } catch (error) {
+      console.error("Error fetching profile name:", error);
+      setVaultProfileName("Unknown");
+    }
+  };
 
   // Arrow function to call the API route and get the decrypted key
   const fetchDecryptedKey = async (
@@ -86,8 +102,9 @@ export default function Page({ params }: { params: { slug: string } }) {
     }
   };
 
-  const fetchNFT = async () => {
+  const fetchData = async () => {
     if (walletProvider) {
+      setIsDownloading(false);
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
         "any"
@@ -114,7 +131,8 @@ export default function Page({ params }: { params: { slug: string } }) {
 
       const data = await VaultFactoryContract.getVaultMetadata(vaultAddress);
       setVaultMode(data.vaultMode);
-
+      if (data.vaultOwner) await fetchProfileName(data.vaultOwner);
+      setVaultOwner(data.vaultOwner);
       const allMoments = await VaultContract.getAllMoments(vaultAddress);
       setVaultTitle(data.title as string);
       setVaultDescription(data.description as string);
@@ -213,12 +231,40 @@ export default function Page({ params }: { params: { slug: string } }) {
         VaultFactoryABI.abi,
         signer
       );
+      setIsDownloading(false);
+      const tx = await VaultFactoryContract.inviteMember(
+        vaultAddress,
+        invitationAddress
+      );
+      console.log("tx", tx);
+      setIsDownloading(true);
+      fetchData();
+      toast.success("Invited to vault successfully.");
+      setOpenInvitationModal(false);
+    } else {
+      toast.error("Please connect the wallet.");
+      setIsDownloading(false);
+    }
+  };
+
+  const handleMembers = async () => {
+    if (walletProvider) {
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
+      const VaultFactoryContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+        VaultFactoryABI.abi,
+        signer
+      );
       const tx = await VaultFactoryContract.inviteMember(
         vaultAddress,
         invitationAddress
       );
       toast.success("Invited to vault successfully.");
-      setOpenInvitationModal(false);
+      setOpenMembersModal(false);
     } else {
       toast.error("Please connect the wallet.");
     }
@@ -247,8 +293,31 @@ export default function Page({ params }: { params: { slug: string } }) {
     }
   };
 
+  const handleRemoveMember = async (memberAddress: string) => {
+    if (walletProvider) {
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
+      const VaultFactoryContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+        VaultFactoryABI.abi,
+        signer
+      );
+      if (vaultOwner === memberAddress) {
+        toast.error("The vault owner cannot be removed");
+        return;
+      }
+      const tx = VaultFactoryContract.removeMember(vaultAddress, memberAddress);
+      toast.success("Member is removed successfully!");
+    } else {
+      toast.error("Connect the wallet");
+    }
+  };
+
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center bg-gray-200 h-screen dark:invert">
+    <div className="flex space-x-2 justify-center items-center h-[600px] dark:invert">
       <span className="sr-only">Loading...</span>
       <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
       <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>
@@ -257,7 +326,19 @@ export default function Page({ params }: { params: { slug: string } }) {
   ) : (
     <div className="px-6 bg-white pt-10 h-[800px]">
       <div className="font-bold text-3xl">{vaultTitle}</div>
-      <div className="pt-3 h-[50px]">{vaultDescription}</div>
+      <div className="pt-1">
+        <div className="flex gap-2 pt-1 items-center">
+          <img
+            className="rounded-lg h-[25px] w-[25px]"
+            src={vaultProfileCid}
+            alt="Profile"
+          />
+          <div className="text-sm justify-center item-center">
+            {vaultProfileName || "Loading..."}
+          </div>
+        </div>
+      </div>
+      <div className="pt-1 mb-4">{vaultDescription}</div>
       <div className="flex justify-between">
         <div className="flex justify-between gap-4 items-center">
           <div className="flex items-center max-w-sm mx-auto">
@@ -313,7 +394,12 @@ export default function Page({ params }: { params: { slug: string } }) {
             </button>
           </div>
 
-          <div className="max-w-md">{vaultMembers} members</div>
+          <div
+            className="max-w-md hover:cursor-pointer"
+            onClick={() => setOpenMembersModal(true)}
+          >
+            {vaultMembers} member{!vaultMembers ? "" : "s"}
+          </div>
         </div>
         <div>
           {vaultMode === 1 ? (
@@ -332,22 +418,33 @@ export default function Page({ params }: { params: { slug: string } }) {
               Create Moment
             </button>
           </Link>
-          <button
-            onClick={() => handleLeaveVault()}
-            className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-          >
-            Leave vault
-          </button>
+          {vaultOwner !== address ? (
+            <button
+              onClick={() => handleLeaveVault()}
+              className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+            >
+              Leave vault
+            </button>
+          ) : (
+            ""
+          )}
         </div>
       </div>
 
-      <div className="py-10 grid grid-cols-5 gap-4">
-        {moments &&
-          moments.map((moment, index) => (
-            <div key={index}>
-              <MomentCard moment={moment} />
-            </div>
-          ))}
+      <div className="div">
+        {!moments.length ? (
+          <div className="pt-4 text-xl">
+            There are no moments in this vault yet. Please add a moment!
+          </div>
+        ) : (
+          <div className="py-10 grid grid-cols-5 gap-4">
+            {moments.map((moment, index) => (
+              <div key={index}>
+                <MomentCard moment={moment} />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       <Toaster />
       <Modal
@@ -402,7 +499,7 @@ export default function Page({ params }: { params: { slug: string } }) {
             />
             <div className="flex justify-center gap-4">
               <Button
-                className="bg-blue-400"
+                className={invitationAddress ? "bg-blue-600" : "bg-blue-400"}
                 onClick={() => handleInvitationMember()}
               >
                 Invite
@@ -416,6 +513,105 @@ export default function Page({ params }: { params: { slug: string } }) {
             </div>
           </div>
         </Modal.Body>
+      </Modal>
+
+      <Modal
+        show={openMembersModal}
+        size="md"
+        onClose={() => setOpenMembersModal(false)}
+        popup
+      >
+        <Modal.Header>
+          <div className="w-full flex justify-center text-4xl">Members</div>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="p-4 w-full">
+            <div className="w-64 rounded-lg overflow-y-auto max-h-[300px]">
+              <div className="p-1 flex items-center space-x-3">
+                <img
+                  src={vaultProfileCid}
+                  alt="Andrew Alfred"
+                  className="w-10 h-10 rounded-full"
+                />
+                <div>
+                  <h3 className="text-sm font-medium">{vaultProfileName}</h3>
+                </div>
+                <div className="flex justify-center gap-4">
+                  <Button
+                    className="bg-red-400 text-white"
+                    onClick={() => handleRemoveMember("0xasldkfjwlkejglwkejg")}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+              <div className="p-1 flex items-center space-x-3">
+                <img
+                  src={vaultProfileCid}
+                  alt="Andrew Alfred"
+                  className="w-10 h-10 rounded-full"
+                />
+                <div>
+                  <h3 className="text-sm font-medium">{vaultProfileName}</h3>
+                </div>
+                <div className="flex justify-center gap-4">
+                  <Button
+                    className="bg-red-400 text-white"
+                    onClick={() => setOpenMembersModal(false)}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+              <div className="p-1 flex items-center space-x-3">
+                <img
+                  src={vaultProfileCid}
+                  alt="Andrew Alfred"
+                  className="w-10 h-10 rounded-full"
+                />
+                <div>
+                  <h3 className="text-sm font-medium">{vaultProfileName}</h3>
+                </div>
+                <div className="flex justify-center gap-4">
+                  <Button
+                    className="bg-red-400 text-white"
+                    onClick={() => setOpenMembersModal(false)}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+              <div className="p-1 flex items-center space-x-3">
+                <img
+                  src={vaultProfileCid}
+                  alt="Andrew Alfred"
+                  className="w-10 h-10 rounded-full"
+                />
+                <div>
+                  <h3 className="text-sm font-medium">{vaultProfileName}</h3>
+                </div>
+                <div className="flex justify-center gap-4">
+                  <Button
+                    className="bg-red-400 text-white"
+                    onClick={() => setOpenMembersModal(false)}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <div className="w-full flex justify-center">
+            <Button
+              className="bg-red-400 text-white"
+              onClick={() => setOpenMembersModal(false)}
+            >
+              Close
+            </Button>
+          </div>
+        </Modal.Footer>
       </Modal>
     </div>
   );

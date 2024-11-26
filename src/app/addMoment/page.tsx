@@ -8,6 +8,7 @@ import React, {
   FormEvent,
 } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import Select, { MultiValue } from "react-select";
 import { generateEncryptionKey, decryptFile } from "@/utils/upload";
 import { detectFileType } from "@/utils/detectFileType";
@@ -99,6 +100,7 @@ const getFileTypeAndCheckSize = (
 
 export default function AddMoment({ params }: { params: { slug: string } }) {
   const vaultAddress = params.slug;
+  const router = useRouter();
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const [selectedTags, setSelectedTags] = useState<MultiValue<TagOption>>([]);
@@ -163,7 +165,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
 
           const momentCount = await VaultContract.getNFTcounts(vaultList[i]);
           console.log("data.vaultMode", data.vaultMode);
-          vaults.push({
+          const _vault = {
             name: data.title,
             description: data.description,
             cid: data.imageURI,
@@ -172,7 +174,12 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
             owner: data.vaultOwner,
             vaultAddress: vaultList[i],
             vaultMode: data.vaultMode,
-          });
+          };
+          vaults.push(_vault);
+
+          if (i == 0) {
+            setVault(_vault);
+          }
         }
 
         setVaultData(vaults);
@@ -229,7 +236,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
 
   const handleMintMoment = async (e: FormEvent) => {
     e.preventDefault();
-
+    setIsDownloading(false);
     /////////////////////////////////////////////////////////
     if (address && walletProvider && vaultData.length) {
       try {
@@ -376,9 +383,10 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         //   "0x",
         //   { gasLimit: gasLimit }
         // );
-        // console.log("tx:", txt);
+
         setUploading(false);
         toast.success("You minted one memory successfully!");
+        router.push("/myVaults/vault/" + vault?.vaultAddress);
       } catch (e) {
         console.log(e);
         setUploading(false);
@@ -387,10 +395,11 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
     } else {
       toast.error("Connect your wallet");
     }
+    setIsDownloading(true);
   };
 
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center bg-white h-screen dark:invert">
+    <div className="flex space-x-2 justify-center items-center bg-white h-[600px] dark:invert">
       <span className="sr-only">Loading...</span>
       <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
       <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>

@@ -16,6 +16,7 @@ import {
 import toast, { Toaster } from "react-hot-toast";
 
 import "./index.css";
+import { SiTruenas } from "react-icons/si";
 
 interface CommentList {
   cid: string;
@@ -24,11 +25,15 @@ interface CommentList {
   date: string;
 }
 
-interface CommentProps {
+interface CommentComponentProps {
   tokenId: string;
+  onMessageToParent?: (msg: string) => void; // Optional callback for parent communication
 }
 
-const CommentComponent: React.FC<CommentProps> = ({ tokenId }) => {
+const CommentComponent: React.FC<CommentComponentProps> = ({
+  tokenId,
+  onMessageToParent,
+}) => {
   const { walletProvider } = useWeb3ModalProvider();
   const { address, isConnected } = useWeb3ModalAccount();
   const [commentCnt, setCommentCnt] = useState<number>();
@@ -37,6 +42,7 @@ const CommentComponent: React.FC<CommentProps> = ({ tokenId }) => {
   const [profileName, setProfileName] = useState<string>("");
   const [profileCid, setProfileCid] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   useEffect(() => {
     init();
@@ -79,7 +85,6 @@ const CommentComponent: React.FC<CommentProps> = ({ tokenId }) => {
         const formattedComments: CommentList[] = await Promise.all(
           usernames.map(async (username: string, index: number) => {
             const profileCid = await fetchProfileCID(username);
-            console.log("profileCid", profileCid);
             const profileName = await fetchProfileName(username);
 
             return {
@@ -96,6 +101,7 @@ const CommentComponent: React.FC<CommentProps> = ({ tokenId }) => {
 
         // Update the comment list state
         setCommentList(formattedComments);
+        setIsDownloading(true);
       } catch (error) {
         console.error("Error fetching comments:", error);
       }
@@ -104,14 +110,16 @@ const CommentComponent: React.FC<CommentProps> = ({ tokenId }) => {
 
   // Function to handle posting a comment
   const postComment = async () => {
+    setIsDownloading(false);
     if (walletProvider) {
-      if (!commentInput || !isConnected) {
-        alert("Please enter a comment and connect your wallet.");
+      if (!commentInput) {
+        toast.error("Please enter a comment.");
         return;
       }
 
       try {
         setLoading(true);
+        setIsDownloading(!isDownloading);
         const ethersProvider = new ethers.providers.Web3Provider(
           walletProvider,
           "any"
@@ -127,21 +135,38 @@ const CommentComponent: React.FC<CommentProps> = ({ tokenId }) => {
         // Call the smart contract function to add a comment
         const tx = await VaultAssist.addComment(tokenId, commentInput);
         await tx.wait();
+        console.log("loading state", isDownloading);
 
-        // Reset input and update the comments list
         setCommentInput("");
         await init(); // Refresh the comments list
+
+        if (onMessageToParent) {
+          const msg = "comment increase";
+          onMessageToParent(msg);
+        }
+
         toast.success("Comment posted successfully!");
       } catch (error) {
         console.error("Error posting comment:", error);
         toast.success("Failed to post comment. Please try again.");
       } finally {
         setLoading(false);
+        setIsDownloading(true);
       }
+    } else {
+      toast.error("Connect your wallet.");
     }
+    setIsDownloading(true);
   };
 
-  return (
+  return !isDownloading ? (
+    <div className="flex space-x-2 justify-center items-center bg-white h-[300px] dark:invert">
+      <span className="sr-only">Loading...</span>
+      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+      <div className="h-8 w-8 bg-black rounded-full animate-bounce"></div>
+    </div>
+  ) : (
     <div className="pb-8">
       <div className="text-xl font-bold py-4">Comments ({commentCnt})</div>
       <div className="postPanel">

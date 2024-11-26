@@ -11,6 +11,7 @@ export const maxDuration = 5;
 async function uploadToPinata(data: ArrayBuffer): Promise<string> {
   const formData = new FormData();
   formData.append("file", new Blob([data]));
+  console.log("formData============", formData);
   const response = await fetch(
     "https://api.pinata.cloud/pinning/pinFileToIPFS",
     {
@@ -33,16 +34,16 @@ async function uploadToPinata(data: ArrayBuffer): Promise<string> {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const data = await request.formData();
+    
     const file: File | null = data.get("file") as File | null;
 
     if (!file) {
       throw new Error("No file found in request");
     }
-
+    
     const arrayBuffer = await file.arrayBuffer();
     const ipfsHash = await uploadToPinata(arrayBuffer);
     console.log("Uploaded encrypted data to Pinata. IPFS Hash:", ipfsHash);
-
     return new NextResponse(JSON.stringify({ ipfsHash }), {
       status: 200,
       headers: { "Content-Type": "application/json" },

@@ -18,9 +18,63 @@ interface DecodedProfileMetadata {
   };
 }
 
+interface CategoryOption {
+  value: number;
+  label: string;
+}
+
+const Categories: CategoryOption[] = [
+  { value: 1, label: "Animals" },
+  { value: 2, label: "Art" },
+  { value: 3, label: "Beauty" },
+  { value: 4, label: "Best of" },
+  { value: 5, label: "Cars" },
+  { value: 6, label: "Comedy" },
+  { value: 7, label: "Culture" },
+  { value: 8, label: "Daily life" },
+  { value: 9, label: "Drama" },
+  { value: 10, label: "Earth" },
+  { value: 11, label: "Education" },
+  { value: 12, label: "Events" },
+  { value: 13, label: "Family" },
+  { value: 14, label: "Famous" },
+  { value: 15, label: "Fashion" },
+  { value: 16, label: "Food & Drink" },
+  { value: 17, label: "Fitness" },
+  { value: 18, label: "Games" },
+  { value: 19, label: "Good times" },
+  { value: 20, label: "Health" },
+  { value: 21, label: "History" },
+  { value: 22, label: "Humanity" },
+  { value: 23, label: "Innovation" },
+  { value: 24, label: "Journalism" },
+  { value: 25, label: "Love" },
+  { value: 26, label: "Music" },
+  { value: 27, label: "Nature" },
+  { value: 28, label: "Party" },
+  { value: 29, label: "Personal" },
+  { value: 30, label: "Photography" },
+  { value: 31, label: "Random" },
+  { value: 32, label: "Science" },
+  { value: 33, label: "Society" },
+  { value: 34, label: "Sport" },
+  { value: 35, label: "Technology" },
+  { value: 36, label: "Time capsule" },
+  { value: 37, label: "Travel & Adventure" },
+];
+
+/**
+ * Retrieves the list of category options.
+ * @returns {CategoryOption[]} The list of category options.
+ */
+export function getCategoryOptions(): CategoryOption[] {
+  return Categories;
+}
+
+
 export async function getUniversalProfileCustomName(
   address: string
-): Promise<{ profileName: string; cid: string, description: string }> {
+): Promise<{ profileName: string; cid: string; description: string }> {
   const erc725js = new ERC725(
     LSP3Schema,
     address,
@@ -33,7 +87,7 @@ export async function getUniversalProfileCustomName(
   const profileData = await erc725js.fetchData("LSP3Profile");
   const decodedProfileMetadata =
     profileData as unknown as DecodedProfileMetadata;
-  const addressPrefix = address.slice(0, 4);
+  const addressPrefix = address.slice(2, 6);
   const profile: LSP3Profile = decodedProfileMetadata.value.LSP3Profile;
   const description = profile.description;
   const profileName = `@${profile.name}#${addressPrefix}`;
@@ -159,7 +213,10 @@ export function jsonToUint8Array(json: { [key: string]: number }): Uint8Array {
   return arr; // Return the constructed Uint8Array
 }
 
-export function getValueByKey(attributes: { key: string; value: string; type: string }[], key: string): string | undefined {
-  const attribute = attributes.find(attr => attr.key === key);
+export function getValueByKey(
+  attributes: { key: string; value: string; type: string }[],
+  key: string
+): string | undefined {
+  const attribute = attributes.find((attr) => attr.key === key);
   return attribute?.value;
 }

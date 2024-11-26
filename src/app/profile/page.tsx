@@ -73,7 +73,6 @@ export default function Profile() {
   const fetchProfileName = async (addr: string) => {
     try {
       const profile = await getUniversalProfileCustomName(addr);
-      console.log("profile.cid", profile.cid);
       setProfileName(profile.profileName);
       setProfileCid(convertIpfsUriToUrl(profile.cid));
     } catch (error) {
