@@ -539,8 +539,8 @@ export default function Page({ params }: { params: { slug: string } }) {
                 <div className="relative p-6 flex-auto max-h-[400px] w-[400px] overflow-y-auto ">
                   {vaultMembers &&
                     vaultOwner == address &&
-                    vaultMembers.map((member) => (
-                      <div className="p-1 flex items-center space-x-3">
+                    vaultMembers.map((member, index) => (
+                      <div className="p-1 flex items-center space-x-3" key={index}>
                         <img
                           src={member.cid}
                           alt={member.name}

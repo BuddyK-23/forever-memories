@@ -192,7 +192,9 @@ export default function Page({ params }: { params: { slug: string } }) {
       if (allMoments.length > 0) {
         for (let i = 0; i < allMoments.length; i++) {
           // Get the total number of comments
-          const _commentCnt = await VaultAssistContract.getCommentCount(allMoments[i]);
+          const _commentCnt = await VaultAssistContract.getCommentCount(
+            allMoments[i]
+          );
           const commentCnt = parseInt(_commentCnt.toString(), 10); // Convert BigNumber to number
 
           // get the encryption key from encryptedEncryptionKey of Vault Contract
@@ -449,8 +451,11 @@ export default function Page({ params }: { params: { slug: string } }) {
                 {/*body*/}
                 <div className="relative p-6 flex-auto max-h-[400px] w-[400px] overflow-y-auto ">
                   {vaultMembers &&
-                    vaultMembers.map((member) => (
-                      <div className="p-1 flex items-center space-x-3">
+                    vaultMembers.map((member, index) => (
+                      <div
+                        className="p-1 flex items-center space-x-3"
+                        key={index}
+                      >
                         <img
                           src={member.cid}
                           alt={member.name}
