@@ -266,7 +266,7 @@ export default function Page({ params }: { params: { slug: string } }) {
       console.log("md", md);
       setMintedDate(md);
 
-      const likes = await VaultContract.getLikes(tokenId);
+      const likes = await VaultAssistContract.getLikes(tokenId);
       let likesTemp: LikeMemberType[] = [];
       for (let i = 0; i < likes.length; i++) {
         const { generatedName, cid } = await fetchLikeMemberProfile(likes[i]);
@@ -279,7 +279,7 @@ export default function Page({ params }: { params: { slug: string } }) {
       }
       setMomentLikes(likesTemp);
 
-      const disikes = await VaultContract.getLikes(tokenId);
+      const disikes = await VaultAssistContract.getDislikes(tokenId);
       let dislikesTemp: LikeMemberType[] = [];
       for (let i = 0; i < disikes.length; i++) {
         const { generatedName, cid } = await fetchLikeMemberProfile(disikes[i]);
@@ -296,7 +296,6 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   const handleLike = async () => {
-    setIsDownloading(false);
     if (walletProvider) {
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
@@ -305,18 +304,17 @@ export default function Page({ params }: { params: { slug: string } }) {
       const signer = ethersProvider.getSigner(address);
 
       const VaultAssistContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+        process.env.NEXT_PUBLIC_VAULT_ASSIST_CONTRACT_ADDRESS as string,
         VaultAssistABI.abi,
         signer
       );
-
       const likes_ = await VaultAssistContract.getLikes(tokenId);
       if (likes_.includes(address)) {
         toast.success("Already liked!");
       } else {
+        setIsDownloading(false);
         await VaultAssistContract.like(tokenId);
         const likes = await VaultAssistContract.getLikes(tokenId);
-        const dislikes_ = await VaultAssistContract.getDislike(tokenId);
 
         let likesTemp: LikeMemberType[] = [];
         for (let i = 0; i < likes.length; i++) {
@@ -330,7 +328,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         }
         setMomentLikes(likesTemp);
 
-        const disikes = await VaultAssistContract.getLikes(tokenId);
+        const disikes = await VaultAssistContract.getDislikes(tokenId);
         let dislikesTemp: LikeMemberType[] = [];
         for (let i = 0; i < disikes.length; i++) {
           const { generatedName, cid } = await fetchLikeMemberProfile(
@@ -355,7 +353,6 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   const handleDislike = async () => {
-    setIsDownloading(false);
     if (walletProvider) {
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
@@ -364,18 +361,18 @@ export default function Page({ params }: { params: { slug: string } }) {
       const signer = ethersProvider.getSigner(address);
 
       const VaultAssistContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+        process.env.NEXT_PUBLIC_VAULT_ASSIST_CONTRACT_ADDRESS as string,
         VaultAssistABI.abi,
         signer
       );
 
       const dislikes_ = await VaultAssistContract.getDislikes(tokenId);
       if (dislikes_.includes(address)) {
-        toast.success("Already liked!");
+        toast.success("Already disliked!");
       } else {
+        setIsDownloading(false);
         await VaultAssistContract.dislike(tokenId);
         const likes = await VaultAssistContract.getLikes(tokenId);
-        const dislikes_ = await VaultAssistContract.getDislike(tokenId);
 
         let likesTemp: LikeMemberType[] = [];
         for (let i = 0; i < likes.length; i++) {
@@ -389,7 +386,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         }
         setMomentLikes(likesTemp);
 
-        const disikes = await VaultAssistContract.getLikes(tokenId);
+        const disikes = await VaultAssistContract.getDislikes(tokenId);
         let dislikesTemp: LikeMemberType[] = [];
         for (let i = 0; i < disikes.length; i++) {
           const { generatedName, cid } = await fetchLikeMemberProfile(
@@ -626,22 +623,24 @@ export default function Page({ params }: { params: { slug: string } }) {
                   </div>
                   {/*body*/}
                   <div className="relative p-6 flex-auto max-h-[600px] w-[400px]">
-                    {momentLikes.map((mlike, index) => (
-                      <div key={index} className="commentPanelItem my-2">
-                        <div className="p-1 flex items-center space-x-3 hover:cursor-pointer">
-                          <img
-                            src={mlike.cid}
-                            alt="Andrew Alfred"
-                            className="w-10 h-10 rounded-full"
-                          />
-                          <div>
-                            <h3 className="text-sm font-medium">
-                              {mlike.generatedName}
-                            </h3>
+                    {momentLikes.length
+                      ? momentLikes.map((mlike, index) => (
+                          <div key={index} className="commentPanelItem my-2">
+                            <div className="p-1 flex items-center space-x-3 hover:cursor-pointer">
+                              <img
+                                src={mlike.cid}
+                                alt="Andrew Alfred"
+                                className="w-10 h-10 rounded-full"
+                              />
+                              <div>
+                                <h3 className="text-sm font-medium">
+                                  {mlike.generatedName}
+                                </h3>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    ))}
+                        ))
+                      : "No Data"}
                   </div>
                   {/*footer*/}
                   <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
@@ -692,22 +691,24 @@ export default function Page({ params }: { params: { slug: string } }) {
                   </div>
                   {/*body*/}
                   <div className="relative p-6 flex-auto max-h-[600px] w-[400px]">
-                    {momentLikes.map((mlike, index) => (
-                      <div key={index} className="commentPanelItem my-2">
-                        <div className="p-1 flex items-center space-x-3 hover:cursor-pointer">
-                          <img
-                            src={mlike.cid}
-                            alt="Andrew Alfred"
-                            className="w-10 h-10 rounded-full"
-                          />
-                          <div>
-                            <h3 className="text-sm font-medium">
-                              {mlike.generatedName}
-                            </h3>
+                    {momentDislikes.length
+                      ? momentDislikes.map((mdlike, index) => (
+                          <div key={index} className="commentPanelItem my-2">
+                            <div className="p-1 flex items-center space-x-3 hover:cursor-pointer">
+                              <img
+                                src={mdlike.cid}
+                                alt="Andrew Alfred"
+                                className="w-10 h-10 rounded-full"
+                              />
+                              <div>
+                                <h3 className="text-sm font-medium">
+                                  {mdlike.generatedName}
+                                </h3>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    ))}
+                        ))
+                      : "No Data"}
                   </div>
                   {/*footer*/}
                   <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">

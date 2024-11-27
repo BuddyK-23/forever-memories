@@ -273,6 +273,7 @@ export default function Page({ params }: { params: { slug: string } }) {
 
   const handleJoinVault = async () => {
     if (walletProvider) {
+      setIsDownloading(false);
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
         "any"
@@ -285,7 +286,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         signer
       );
       const tx = await VaultFactoryContract.joinVault(vaultAddress);
-
+      init();
       toast.success("Joint to vault successfully.");
     } else {
       toast.error("Please connect the wallet.");

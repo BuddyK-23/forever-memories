@@ -140,16 +140,23 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
           VaultFactoryABI.abi,
           signer
         );
-
-        // get all vault list
-        const ownedPrivateVaultList =
-          await VaultFactoryContract.getPrivateVaultsOwnedByUser(address);
-        const nonOwnedPrivateVaultList =
-          await VaultFactoryContract.getPrivateVaultsByUser(address);
-        const ownedPublicVaultList =
-          await VaultFactoryContract.getPublicVaultsOwnedByUser(address);
         const nonOwnedPublicVaultList =
-          await VaultFactoryContract.getPublicVaultsByUser(address);
+          await VaultFactoryContract.getVaultsByUser(address, true);
+        const nonOwnedPrivateVaultList =
+          await VaultFactoryContract.getVaultsByUser(address, false);
+        const ownedPublicVaultList =
+          await VaultFactoryContract.getVaultsOwnedByUser(address, true);
+        const ownedPrivateVaultList =
+          await VaultFactoryContract.getVaultsOwnedByUser(address, false);
+        // // get all vault list
+        // const ownedPrivateVaultList =
+        //   await VaultFactoryContract.getPrivateVaultsOwnedByUser(address);
+        // const nonOwnedPrivateVaultList =
+        //   await VaultFactoryContract.getPrivateVaultsByUser(address);
+        // const ownedPublicVaultList =
+        //   await VaultFactoryContract.getPublicVaultsOwnedByUser(address);
+        // const nonOwnedPublicVaultList =
+        //   await VaultFactoryContract.getPublicVaultsByUser(address);
         const vaultList = [
           ...ownedPrivateVaultList,
           ...nonOwnedPrivateVaultList,
@@ -474,7 +481,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                 htmlFor="vault"
                 className="block mb-2 text-sm font-medium text-gray-900 dark:text-white flex justify-between"
               >
-                <div>Select a vault{fileType}</div>
+                <div>Select a vault</div>
                 <div>
                   {vault?.vaultMode === 0 ? (
                     <span className="text-blue-500 font-bold">Public</span>
