@@ -24,6 +24,7 @@ interface CategoryOption {
 }
 
 const Categories: CategoryOption[] = [
+  { value: 0, label: "All" },
   { value: 1, label: "Animals" },
   { value: 2, label: "Art" },
   { value: 3, label: "Beauty" },

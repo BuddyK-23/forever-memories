@@ -585,11 +585,11 @@ export default function Page({ params }: { params: { slug: string } }) {
                 {profileName || "Loading..."}
               </div>
             </div>
-            <div className="flex gap-2 pt-5">
+            {/* <div className="flex gap-2 pt-5">
               <div className="px-2 py-1 bg-gray-200 rounded sm">Selfie</div>
               <div className="px-2 py-1 bg-gray-200 rounded sm">Daily Log</div>
               <div className="px-2 py-1 bg-gray-200 rounded sm">Baby</div>
-            </div>
+            </div> */}
           </div>
 
           <div className="comments h-[auto] p-3">
@@ -742,7 +742,3 @@ export default function Page({ params }: { params: { slug: string } }) {
     </div>
   );
 }
-function getVaultMembers(vaultAddress: string) {
-  throw new Error("Function not implemented.");
-}
-

@@ -221,6 +221,8 @@ export default function Explore() {
           </div>
         ))}
       </div>
+
+      {!vaultData.length && <div>No Vault</div>}
     </div>
   );
 }

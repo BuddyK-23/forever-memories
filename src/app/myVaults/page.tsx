@@ -58,35 +58,11 @@ export default function Profile() {
     "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-gray-200 hover:bg-blue-500 text-black hover:text-white";
 
   useEffect(() => {
-    getPrivateVaultCount();
     fetchVaultsByPermissionAndOwner(permissionFlag, ownerFlag);
-    setIsDownloading(false);
+   
   }, [isConnected, address, walletProvider]);
-  const getPrivateVaultCount = async () => {
-    if (walletProvider) {
-      const ethersProvider = new ethers.providers.Web3Provider(
-        walletProvider,
-        "any"
-      );
-      const signer = ethersProvider.getSigner(address);
 
-      const VaultFactoryContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-        VaultFactoryABI.abi,
-        signer
-      );
-
-      const privateVaultsByUser =
-        await VaultFactoryContract.getPrivateVaultsByUser(address);
-      const privateVaultsOwnedByUser =
-        await await VaultFactoryContract.getPrivateVaultsOwnedByUser(address);
-      setPrivateVaultCount(
-        privateVaultsByUser.length + privateVaultsOwnedByUser.length
-      );
-    }
-  };
-
-  const handleCategory = async (index: number) => {
+  const handleCategory = async (index: number, permissionflag: boolean) => {
     setCategoryIndex(index);
 
     if (walletProvider) {
@@ -110,17 +86,32 @@ export default function Profile() {
 
       let categoryVaults;
       if (index === 0) {
-        categoryVaults = await VaultFactoryContract.getVaultsByCategory(0, address, 0, true);
+        categoryVaults = await VaultFactoryContract.getVaultsByCategory(
+          0,
+          address,
+          permissionflag ? 1 : 0,
+          true
+        );
       } else {
-        categoryVaults = await VaultFactoryContract.getVaultsByCategory(index, address, 0, true);
+        categoryVaults = await VaultFactoryContract.getVaultsByCategory(
+          index,
+          address,
+          permissionflag ? 1 : 0,
+          true
+        );
       }
-      fetchData(permissionVaultList, categoryVaults);
+      fetchData(permissionVaultList, categoryVaults, permissionflag);
       setCategoryVaultList(categoryVaults);
     }
   };
 
-  const fetchData = async (pVaultList: string[], cVaultList: string[]) => {
+  const fetchData = async (
+    pVaultList: string[],
+    cVaultList: string[],
+    permissionflag: boolean
+  ) => {
     if (walletProvider) {
+      setVaultData([]);
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
         "any"
@@ -144,6 +135,10 @@ export default function Profile() {
       const pset = new Set(pVaultList);
       // Filter blist to find common values
       const vaultList = cVaultList.filter((item) => pset.has(item));
+
+      permissionflag
+        ? setPrivateVaultCount(vaultList.length)
+        : setPublicVaultCount(vaultList.length);
 
       // Fetch vault metadata
       const vaults: Vault[] = [];
@@ -171,6 +166,7 @@ export default function Profile() {
     ownerflag: boolean
   ) => {
     if (walletProvider) {
+      setIsDownloading(false);
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
         "any"
@@ -197,7 +193,6 @@ export default function Profile() {
           address,
           false
         );
-
         // Private, non-owner
       } else if (permissionflag && !ownerflag) {
         vaultList = await VaultFactoryContract.getVaultsByUser(address, false);
@@ -211,23 +206,36 @@ export default function Profile() {
       } else if (!permissionflag && !ownerflag) {
         vaultList = await VaultFactoryContract.getVaultsByUser(address, true);
       }
-      const prVaultList = await VaultFactoryContract.getVaultsByUser(
+      const prVaultList = await VaultFactoryContract.getVaultsByCategory(
+        0,
         address,
-        false
-      );
-      const puVaultList = await VaultFactoryContract.getVaultsByUser(
-        address,
+        1,
         true
       );
-
+      const puVaultList = await VaultFactoryContract.getVaultsByCategory(
+        0,
+        address,
+        0,
+        true
+      );
+      console.log("permissionflag", permissionflag);
       // fetch all category moments
-      const categoryVaults_ = await VaultFactoryContract.getVaultsByCategory(0, address, 0, true);
+      const categoryVaults_ = await VaultFactoryContract.getVaultsByCategory(
+        0,
+        address,
+        permissionflag ? 1 : 0,
+        true
+      );
 
       setPrivateVaultCount(prVaultList.length);
       setPublicVaultCount(puVaultList.length);
 
-      fetchData(vaultList, categoryVaults_);
+      console.log("categoryVaults_", categoryVaults_);
+      console.log("vaultList", vaultList);
+
+      fetchData(vaultList, categoryVaults_, permissionflag);
       setPermissionVaultList(vaultList);
+      setIsDownloading(true);
     }
   };
 
@@ -236,7 +244,7 @@ export default function Profile() {
     // public
     if (index === 0) {
       setPermissionFlag(false);
-      const vaults = fetchVaultsByPermissionAndOwner(false, ownerFlag);
+      fetchVaultsByPermissionAndOwner(false, ownerFlag);
       // private
     } else {
       setPermissionFlag(true);
@@ -255,7 +263,7 @@ export default function Profile() {
     }
   };
 
-  return isDownloading ? (
+  return !isDownloading ? (
     <div className="flex space-x-2 justify-center items-center bg-gray-200 h-screen dark:invert">
       <span className="sr-only">Loading...</span>
       <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
@@ -276,7 +284,7 @@ export default function Profile() {
           {categories.map((category, index) => (
             <SwiperSlide
               key={index}
-              onClick={() => handleCategory(index)}
+              onClick={() => handleCategory(index, permissionFlag)}
               className={
                 categoryIndex === index
                   ? selectedCategoryButtonStyle

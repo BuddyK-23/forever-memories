@@ -13,6 +13,8 @@ import {
   hexToDecimal,
   hexStringToUint8Array,
   getValueByKey,
+  getUniversalProfileCustomName,
+  convertIpfsUriToUrl,
 } from "@/utils/format"; // Adjust the import path as necessary
 import { ERC725 } from "@erc725/erc725.js";
 import lsp4Schema from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
@@ -40,24 +42,69 @@ interface Moment {
   momentAddress: string;
 }
 
+interface VaultMember {
+  name: string;
+  cid: string;
+  generatedName: string;
+}
+
 export default function Page({ params }: { params: { slug: string } }) {
   const vaultAddress = params.slug;
 
   const [vaultTitle, setVaultTitle] = useState<string>();
   const [vaultDescription, setVaultDescription] = useState<string>();
-  const [vaultMembers, setVaultMembers] = useState<number>();
+  const [vaultMembers, setVaultMembers] = useState<VaultMember[]>();
   const [vaultMoments, setVaultMoments] = useState<number>();
   const [vaultMode, setVaultMode] = useState<number>(0);
+  const [vaultOwner, setVaultOwner] = useState<string>();
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [moments, setMoments] = useState<Moment[]>([]);
   const [openModal, setOpenModal] = useState(false);
+  const [openMembersModal, setOpenMembersModal] = useState(false);
+  const [vaultProfileName, setVaultProfileName] = useState<string>("");
+  const [vaultProfileCid, setVaultProfileCid] = useState<string>("");
 
   useEffect(() => {
-    fetchNFT();
-    setIsDownloading(true);
+    init();
   }, [isConnected, address, walletProvider]);
+
+  const fetchProfileName = async (owner: string) => {
+    const profile = await getUniversalProfileCustomName(owner);
+    return {
+      generatedName: profile.profileName as string,
+      cid: convertIpfsUriToUrl(profile.cid),
+    };
+  };
+
+  const handleRemoveMember = async (memberAddress: string) => {
+    if (walletProvider) {
+      setIsDownloading(false);
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
+      const VaultFactoryContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+        VaultFactoryABI.abi,
+        signer
+      );
+      if (vaultOwner === memberAddress) {
+        toast.error("The vault owner cannot be removed");
+        return;
+      }
+      const tx = await VaultFactoryContract.removeMember(
+        vaultAddress,
+        memberAddress
+      );
+      toast.success("Member is removed successfully!");
+      init();
+    } else {
+      toast.error("Connect the wallet");
+    }
+  };
 
   // Arrow function to call the API route and get the decrypted key
   const fetchDecryptedKey = async (
@@ -82,8 +129,9 @@ export default function Page({ params }: { params: { slug: string } }) {
     }
   };
 
-  const fetchNFT = async () => {
+  const init = async () => {
     if (walletProvider) {
+      setIsDownloading(false);
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
         "any"
@@ -114,8 +162,29 @@ export default function Page({ params }: { params: { slug: string } }) {
       const allMoments = await VaultContract.getAllMoments(vaultAddress);
       setVaultTitle(data.title as string);
       setVaultDescription(data.description as string);
+      setVaultOwner(data.vaultOwner as string);
       setVaultMoments(allMoments.length);
-      setVaultMembers(hexToDecimal(data.memberCount));
+
+      const ownerData = await fetchProfileName(data.vaultOwner);
+      setVaultProfileName(ownerData.generatedName);
+      setVaultProfileCid(ownerData.cid);
+
+      const memberList = await VaultFactoryContract.getVaultMembers(
+        vaultAddress
+      );
+      let vaultMembers_: VaultMember[] = [];
+      if (memberList.length > 0)
+        for (let i = 0; i < memberList.length; i++) {
+          const generatedVaultMember = await fetchProfileName(memberList[i]);
+          console.log("generatedVaultMember", generatedVaultMember);
+          vaultMembers_.push({
+            name: memberList[i],
+            generatedName: generatedVaultMember.generatedName,
+            cid: generatedVaultMember.cid,
+          });
+        }
+
+      setVaultMembers(vaultMembers_);
 
       let moments_: Moment[] = [];
 
@@ -233,6 +302,18 @@ export default function Page({ params }: { params: { slug: string } }) {
   ) : (
     <div className="px-6 bg-white pt-10 h-[800px]">
       <div className="font-bold text-3xl">{vaultTitle}</div>
+      <div className="pt-1">
+        <div className="flex gap-2 pt-1 items-center">
+          <img
+            className="rounded-lg h-[25px] w-[25px]"
+            src={vaultProfileCid}
+            alt="Profile"
+          />
+          <div className="text-sm justify-center item-center">
+            {vaultProfileName || "Loading..."}
+          </div>
+        </div>
+      </div>
       <div className="pt-3 h-[50px]">{vaultDescription}</div>
       <div className="flex justify-between">
         <div className="flex justify-between gap-4 items-center">
@@ -289,7 +370,12 @@ export default function Page({ params }: { params: { slug: string } }) {
             </button>
           </div>
 
-          <div className="max-w-md">{vaultMembers} members</div>
+          <div
+            className="max-w-md hover:cursor-pointer"
+            onClick={() => setOpenMembersModal(true)}
+          >
+            {vaultMembers?.length} member{!vaultMembers?.length ? "" : "s"}
+          </div>
         </div>
         <div>
           <button
@@ -344,6 +430,71 @@ export default function Page({ params }: { params: { slug: string } }) {
           </div>
         </Modal.Body>
       </Modal>
+
+      {openMembersModal ? (
+        <>
+          <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
+            <div className="relative w-auto my-6 mx-auto max-w-3xl">
+              {/*content*/}
+              <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+                {/*header*/}
+                <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
+                  <h3 className="text-3xl font-semibold">Members</h3>
+                  <button
+                    className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
+                    onClick={() => setOpenMembersModal(false)}
+                  >
+                    <span className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
+                      ×
+                    </span>
+                  </button>
+                </div>
+                {/*body*/}
+                <div className="relative p-6 flex-auto max-h-[400px] w-[400px] overflow-y-auto ">
+                  {vaultMembers &&
+                    vaultMembers.map((member) => (
+                      <div className="p-1 flex items-center space-x-3">
+                        <img
+                          src={member.cid}
+                          alt={member.name}
+                          className="w-10 h-10 rounded-full"
+                        />
+                        <div>
+                          <h3 className="text-sm font-medium">
+                            {member.generatedName}
+                          </h3>
+                        </div>
+                        {vaultOwner == address ? (
+                          <div className="flex justify-center gap-4">
+                            <Button
+                              className="bg-red-400 text-white"
+                              onClick={() => handleRemoveMember(member.name)}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ) : (
+                          ""
+                        )}
+                      </div>
+                    ))}
+                </div>
+                {/*footer*/}
+                <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
+                  <button
+                    className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                    type="button"
+                    onClick={() => setOpenMembersModal(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
+        </>
+      ) : null}
     </div>
   );
 }
