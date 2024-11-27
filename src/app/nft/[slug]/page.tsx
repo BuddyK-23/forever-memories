@@ -77,6 +77,7 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [profileName, setProfileName] = useState<string>("");
   const [profileCid, setProfileCid] = useState<string>("");
   const [fileType, setFileType] = useState<string>("");
+  const [isMember, setIsMember] = useState<boolean>(false);
 
   // Arrow function to call the API route and get the decrypted key
   const fetchDecryptedKey = async (
@@ -237,6 +238,12 @@ export default function Page({ params }: { params: { slug: string } }) {
       const vaultData = await VaultFactoryContract.getVaultMetadata(
         _vaultAddress
       );
+      const memberList = await VaultFactoryContract.getVaultMembers(
+        _vaultAddress
+      );
+
+      const _isMember = memberList.includes(address) ? true : false;
+      setIsMember(_isMember);
 
       setVaultMode(vaultData.vaultMode);
       setVaultName(vaultData.title);
@@ -296,6 +303,10 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   const handleLike = async () => {
+    if (!isMember) {
+      toast.error("Please join this vault!");
+      return;
+    }
     if (walletProvider) {
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
@@ -315,36 +326,9 @@ export default function Page({ params }: { params: { slug: string } }) {
         setIsDownloading(false);
         await VaultAssistContract.like(tokenId);
         const likes = await VaultAssistContract.getLikes(tokenId);
-
-        let likesTemp: LikeMemberType[] = [];
-        for (let i = 0; i < likes.length; i++) {
-          const { generatedName, cid } = await fetchLikeMemberProfile(likes[i]);
-          const likes_: LikeMemberType = {
-            name: likes[i],
-            generatedName: generatedName as string,
-            cid: cid,
-          };
-          likesTemp.push(likes_);
-        }
-        setMomentLikes(likesTemp);
-
-        const disikes = await VaultAssistContract.getDislikes(tokenId);
-        let dislikesTemp: LikeMemberType[] = [];
-        for (let i = 0; i < disikes.length; i++) {
-          const { generatedName, cid } = await fetchLikeMemberProfile(
-            disikes[i]
-          );
-          const disikes_: LikeMemberType = {
-            name: likes[i],
-            generatedName: generatedName as string,
-            cid: cid,
-          };
-          dislikesTemp.push(disikes_);
-        }
-        setMomentDislikes(dislikesTemp);
+        init();
+        setShowLikeModal(false);
         toast.success("Like Success");
-
-        setIsDownloading(true);
       }
     } else {
       toast.error("Connect the wallet");
@@ -353,6 +337,10 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   const handleDislike = async () => {
+    if (!isMember) {
+      toast.error("Please join this vault!");
+      return;
+    }
     if (walletProvider) {
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
@@ -371,37 +359,11 @@ export default function Page({ params }: { params: { slug: string } }) {
         toast.success("Already disliked!");
       } else {
         setIsDownloading(false);
-        await VaultAssistContract.dislike(tokenId);
-        const likes = await VaultAssistContract.getLikes(tokenId);
-
-        let likesTemp: LikeMemberType[] = [];
-        for (let i = 0; i < likes.length; i++) {
-          const { generatedName, cid } = await fetchLikeMemberProfile(likes[i]);
-          const likes_: LikeMemberType = {
-            name: likes[i],
-            generatedName: generatedName as string,
-            cid: cid,
-          };
-          likesTemp.push(likes_);
-        }
-        setMomentLikes(likesTemp);
-
-        const disikes = await VaultAssistContract.getDislikes(tokenId);
-        let dislikesTemp: LikeMemberType[] = [];
-        for (let i = 0; i < disikes.length; i++) {
-          const { generatedName, cid } = await fetchLikeMemberProfile(
-            disikes[i]
-          );
-          const disikes_: LikeMemberType = {
-            name: likes[i],
-            generatedName: generatedName as string,
-            cid: cid,
-          };
-          dislikesTemp.push(disikes_);
-        }
-        setMomentDislikes(dislikesTemp);
+        console.log(1);
+        const dislikes = await VaultAssistContract.dislike(tokenId);
+        init();
+        setShowDislikeModal(false);
         toast.success("Dislike Success");
-        setIsDownloading(true);
       }
     } else {
       toast.error("Connect the wallet");
@@ -597,6 +559,7 @@ export default function Page({ params }: { params: { slug: string } }) {
             <div>
               <CommentComponent
                 tokenId={tokenId}
+                isMember={isMember}
                 onMessageToParent={handleChildAction}
               />
             </div>

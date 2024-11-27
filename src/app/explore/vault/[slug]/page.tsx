@@ -150,7 +150,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         signer
       );
 
-      const VaultAssist = new ethers.Contract(
+      const VaultAssistContract = new ethers.Contract(
         process.env.NEXT_PUBLIC_VAULT_ASSIST_CONTRACT_ADDRESS as string,
         VaultAssistABI.abi,
         signer
@@ -192,7 +192,7 @@ export default function Page({ params }: { params: { slug: string } }) {
       if (allMoments.length > 0) {
         for (let i = 0; i < allMoments.length; i++) {
           // Get the total number of comments
-          const _commentCnt = await VaultAssist.getCommentCount(allMoments[i]);
+          const _commentCnt = await VaultAssistContract.getCommentCount(allMoments[i]);
           const commentCnt = parseInt(_commentCnt.toString(), 10); // Convert BigNumber to number
 
           // get the encryption key from encryptedEncryptionKey of Vault Contract
@@ -207,7 +207,6 @@ export default function Page({ params }: { params: { slug: string } }) {
 
           const decryptedKey_ = await fetchDecryptedKey(combinedEncryptedData);
           const decryptedKey = Buffer.from(decryptedKey_);
-          console.log("decryptedKey", decryptedKey);
 
           // if (hexToDecimal(balance._hex) == 0) continue;
           const tokenIdMetadata = await VaultContract.getDataForTokenId(
@@ -221,7 +220,6 @@ export default function Page({ params }: { params: { slug: string } }) {
               value: tokenIdMetadata,
             },
           ]);
-          console.log("decodedMetadata", decodedMetadata);
           const metadataHash = decodedMetadata[0].value.url;
 
           const metadataJsonLink =
@@ -234,7 +232,6 @@ export default function Page({ params }: { params: { slug: string } }) {
 
           if (ipfsHash == "") continue;
           const fetchUrl = process.env.NEXT_PUBLIC_FETCH_URL + ipfsHash;
-          console.log("ipfsHash", ipfsHash);
           const response = await fetch(fetchUrl);
           if (!response.ok) {
             throw new Error("Failed to fetch image from IPFS");
@@ -245,10 +242,9 @@ export default function Page({ params }: { params: { slug: string } }) {
             decryptedKey
           );
 
-          console.log("decryptedData__", decryptedData);
           const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
           const objectURL = URL.createObjectURL(blob);
-          const likes_ = await await VaultContract.getLikes(allMoments[i]);
+          const likes_ = await VaultAssistContract.getLikes(allMoments[i]);
           const attributes = metadata.attributes;
           let fileType: string = "image";
           if (attributes.length > 0) {

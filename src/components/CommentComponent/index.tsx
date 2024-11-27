@@ -27,11 +27,13 @@ interface CommentList {
 
 interface CommentComponentProps {
   tokenId: string;
+  isMember: boolean;
   onMessageToParent?: (msg: string) => void; // Optional callback for parent communication
 }
 
 const CommentComponent: React.FC<CommentComponentProps> = ({
   tokenId,
+  isMember,
   onMessageToParent,
 }) => {
   const { walletProvider } = useWeb3ModalProvider();
@@ -110,6 +112,12 @@ const CommentComponent: React.FC<CommentComponentProps> = ({
 
   // Function to handle posting a comment
   const postComment = async () => {
+    console.log("isMember", isMember);
+    if (!isMember) {
+      toast.error("Please join this vault!");
+      return;
+    }
+
     setIsDownloading(false);
     if (walletProvider) {
       if (!commentInput) {
@@ -155,8 +163,8 @@ const CommentComponent: React.FC<CommentComponentProps> = ({
       }
     } else {
       toast.error("Connect your wallet.");
+      setIsDownloading(true);
     }
-    setIsDownloading(true);
   };
 
   return !isDownloading ? (
