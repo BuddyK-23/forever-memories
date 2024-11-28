@@ -104,7 +104,6 @@ export default function CreateVault() {
           body: formData,
         });
         const resData = await res.json();
-        console.log("resData", resData);
         const categories = selectedCategories.map((category) => category.value);
         const ethersProvider = new ethers.providers.Web3Provider(
           walletProvider,

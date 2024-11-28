@@ -165,7 +165,9 @@ export default function Page({ params }: { params: { slug: string } }) {
       if (allMoments.length > 0) {
         for (let i = 0; i < allMoments.length; i++) {
           // Get the total number of comments
-          const _commentCnt = await VaultAssistContract.getCommentCount(allMoments[i]);
+          const _commentCnt = await VaultAssistContract.getCommentCount(
+            allMoments[i]
+          );
           const commentCnt = parseInt(_commentCnt.toString(), 10); // Convert BigNumber to number
           // get the encryption key from encryptedEncryptionKey of Vault Contract
           const combinedEncryptedData_ = await VaultContract.getEncryptedKey(
@@ -215,7 +217,9 @@ export default function Page({ params }: { params: { slug: string } }) {
 
           const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
           const objectURL = URL.createObjectURL(blob);
-          const likes_ = await await VaultAssistContract.getLikes(allMoments[i]);
+          const likes_ = await await VaultAssistContract.getLikes(
+            allMoments[i]
+          );
           const attributes = metadata.attributes;
           let fileType: string = "image";
           if (attributes.length > 0) {
@@ -240,6 +244,14 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   const handleInvitationMember = async () => {
+    if (invitationAddress == address) {
+      toast.error("Cannot invite yourself!");
+      return;
+    }
+    if (vaultOwner !== address) {
+      toast.error("Only Vault Owner can invite!");
+      return;
+    }
     if (walletProvider) {
       const ethersProvider = new ethers.providers.Web3Provider(
         walletProvider,
@@ -540,7 +552,10 @@ export default function Page({ params }: { params: { slug: string } }) {
                   {vaultMembers &&
                     vaultOwner == address &&
                     vaultMembers.map((member, index) => (
-                      <div className="p-1 flex items-center space-x-3" key={index}>
+                      <div
+                        className="p-1 flex items-center space-x-3"
+                        key={index}
+                      >
                         <img
                           src={member.cid}
                           alt={member.name}

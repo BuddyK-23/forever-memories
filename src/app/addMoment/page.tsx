@@ -257,9 +257,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         const formData = new FormData();
 
         !file ? "" : formData.append("file", file); // FormData keys are called fields
-        console.log("file", file);
         const { type, error } = detectFileType(file as File);
-        console.log("handleMintMoment type", type);
         formData.append(
           "lsp7CollectionMetadata",
           vault?.vaultAddress + headline
@@ -333,18 +331,14 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
             ],
           },
         };
-        console.log("momentMetadata", momentMetadata);
-
         const resMetadata_ = await fetch("/api/uploadMetadataToIPFS", {
           method: "POST",
           body: JSON.stringify(momentMetadata),
         });
 
         const resMetadata = await resMetadata_.json();
-        console.log("resMetadata", resMetadata);
 
         const momentCID = ipfsHash;
-        console.log("momentCID", momentCID);
         // const erc725 = new ERC725(schema);
         const erc725 = new ERC725(LSP4DigitalAsset, "", "", {});
         const encodedMetadataURI = erc725.encodeData([
@@ -357,11 +351,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
           },
         ]);
 
-        console.log("encodeLSP7Metadata", encodedMetadataURI);
-
         const LSP4MetadataKey = ERC725YDataKeys.LSP4["LSP4Metadata"];
-        console.log("LSP4MetadataKey", LSP4MetadataKey);
-
         const vaultTx = await VaultContract.mintMoment(
           vaultAddress,
           LSP4MetadataKey,
@@ -391,11 +381,15 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         //   { gasLimit: gasLimit }
         // );
 
+        const myToken = await VaultContract.getMyLastTokenByVaultAddress(
+          vault?.vaultAddress
+        );
+
         setUploading(false);
         toast.success("You minted one memory successfully!");
-        router.push("/myVaults/vault/" + vault?.vaultAddress);
+        router.push("/nft/" + myToken.tokenId);
       } catch (e) {
-        console.log(e);
+        console.log("error", e);
         setUploading(false);
         toast.error("Trouble uploading file");
       }

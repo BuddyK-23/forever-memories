@@ -7,6 +7,8 @@ import {
   getUniversalProfileCustomName,
   convertIpfsUriToUrl,
 } from "@/utils/format";
+import { useWeb3ModalAccount } from "@web3modal/ethers5/react";
+import "./index.css";
 
 interface Vault {
   name: string;
@@ -26,6 +28,7 @@ interface VaultCardProps {
 const VaultCard: React.FC<VaultCardProps> = ({ vault, href }) => {
   const [profileName, setProfileName] = useState<string>("");
   const [profileCid, setProfileCid] = useState<string>("");
+  const { address } = useWeb3ModalAccount();
 
   useEffect(() => {
     const fetchProfileName = async () => {
@@ -44,7 +47,12 @@ const VaultCard: React.FC<VaultCardProps> = ({ vault, href }) => {
 
   return (
     <Link className="w-full" href={`/` + href + `/vault/` + vault.vaultAddress}>
-      <div className="w-full h-auto">
+      <div className="box">
+        {vault.owner == address ? (
+          <div className="owner-ribbon">Owned</div>
+        ) : (
+          ""
+        )}
         <img
           className="rounded-lg h-[300px] w-full"
           src={"https://ipfs.io/ipfs/" + vault.cid}

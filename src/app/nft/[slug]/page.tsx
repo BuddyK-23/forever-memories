@@ -270,7 +270,6 @@ export default function Page({ params }: { params: { slug: string } }) {
         unixMintedDates,
         "dd MMM yyyy-HH:mm:ss"
       );
-      console.log("md", md);
       setMintedDate(md);
 
       const likes = await VaultAssistContract.getLikes(tokenId);

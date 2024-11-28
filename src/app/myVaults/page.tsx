@@ -59,7 +59,6 @@ export default function Profile() {
 
   useEffect(() => {
     fetchVaultsByPermissionAndOwner(permissionFlag, ownerFlag);
-   
   }, [isConnected, address, walletProvider]);
 
   const handleCategory = async (index: number, permissionflag: boolean) => {
@@ -78,27 +77,36 @@ export default function Profile() {
         signer
       );
 
-      const VaultContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
-        VaultABI.abi,
-        signer
-      );
-
-      let categoryVaults;
+      let categoryVaults: string[] = [];
+      let nonOwnedVaults: string[] = [];
       if (index === 0) {
-        categoryVaults = await VaultFactoryContract.getVaultsByCategory(
-          0,
+        if (!ownerFlag) {
+          nonOwnedVaults = await VaultFactoryContract.getVaultsByCategory(
+            0,
+            address,
+            permissionflag ? 1 : 0,
+            true
+          );
+        }
+        const ownedVaults = await VaultFactoryContract.getVaultsOwnedByUser(
           address,
-          permissionflag ? 1 : 0,
-          true
+          permissionflag ? 1 : 0
         );
+        categoryVaults = [...nonOwnedVaults, ...ownedVaults];
       } else {
-        categoryVaults = await VaultFactoryContract.getVaultsByCategory(
-          index,
+        if (!ownerFlag) {
+          nonOwnedVaults = await VaultFactoryContract.getVaultsByCategory(
+            index,
+            address,
+            permissionflag ? 1 : 0,
+            true
+          );
+        }
+        const ownedVaults = await VaultFactoryContract.getVaultsOwnedByUser(
           address,
-          permissionflag ? 1 : 0,
-          true
+          permissionflag ? 1 : 0
         );
+        categoryVaults = [...nonOwnedVaults, ...ownedVaults];
       }
       fetchData(permissionVaultList, categoryVaults, permissionflag);
       setCategoryVaultList(categoryVaults);
@@ -195,7 +203,15 @@ export default function Profile() {
         );
         // Private, non-owner
       } else if (permissionflag && !ownerflag) {
-        vaultList = await VaultFactoryContract.getVaultsByUser(address, false);
+        const nonOwnedVaultList = await VaultFactoryContract.getVaultsByUser(
+          address,
+          false
+        );
+        const ownedVaultList = await VaultFactoryContract.getVaultsOwnedByUser(
+          address,
+          false
+        );
+        vaultList = [...nonOwnedVaultList, ...ownedVaultList];
         // Public, owner
       } else if (!permissionflag && ownerflag) {
         vaultList = await VaultFactoryContract.getVaultsOwnedByUser(
@@ -204,31 +220,47 @@ export default function Profile() {
         );
         // Public, non-owner
       } else if (!permissionflag && !ownerflag) {
-        vaultList = await VaultFactoryContract.getVaultsByUser(address, true);
+        const nonOwnedVaultList = await VaultFactoryContract.getVaultsByUser(
+          address,
+          true
+        );
+        const ownedVaultList = await VaultFactoryContract.getVaultsOwnedByUser(
+          address,
+          true
+        );
+        vaultList = [...nonOwnedVaultList, ...ownedVaultList];
       }
-      const prVaultList = await VaultFactoryContract.getVaultsByCategory(
+
+      const prJoinedVaultList = await VaultFactoryContract.getVaultsByCategory(
         0,
         address,
         1,
         true
       );
-      const puVaultList = await VaultFactoryContract.getVaultsByCategory(
+      const puJoinedVaultList = await VaultFactoryContract.getVaultsByCategory(
         0,
         address,
         0,
-        true
-      );
-      console.log("permissionflag", permissionflag);
-      // fetch all category moments
-      const categoryVaults_ = await VaultFactoryContract.getVaultsByCategory(
-        0,
-        address,
-        permissionflag ? 1 : 0,
         true
       );
 
-      setPrivateVaultCount(prVaultList.length);
-      setPublicVaultCount(puVaultList.length);
+      let nonOwnedVaults: string[] = [];
+      if (!ownerFlag) {
+        nonOwnedVaults = await VaultFactoryContract.getVaultsByCategory(
+          0,
+          address,
+          permissionflag ? 1 : 0,
+          true
+        );
+      }
+      const ownedVaults = await VaultFactoryContract.getVaultsOwnedByUser(
+        address,
+        permissionflag ? 1 : 0
+      );
+      const categoryVaults_ = [...nonOwnedVaults, ...ownedVaults];
+
+      setPrivateVaultCount(prJoinedVaultList.length);
+      setPublicVaultCount(puJoinedVaultList.length);
 
       console.log("categoryVaults_", categoryVaults_);
       console.log("vaultList", vaultList);
