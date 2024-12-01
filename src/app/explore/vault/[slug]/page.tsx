@@ -299,31 +299,65 @@ export default function Page({ params }: { params: { slug: string } }) {
       <div className="h-8 w-8 bg-black rounded-full animate-bounce"></div>
     </div>
   ) : (
-    <div className="px-6 bg-white pt-10 h-[800px]">
-      <div className="font-bold text-3xl">{vaultTitle}</div>
-      <div className="pt-1">
-        <div className="flex gap-2 pt-1 items-center">
-          <img
-            className="rounded-lg h-[25px] w-[25px]"
-            src={vaultProfileCid}
-            alt="Profile"
-          />
-          <div className="text-sm justify-center item-center">
-            {vaultProfileName || "Loading..."}
+    <div 
+      className="relative min-h-screen bg-gradient-to-t from-gray-900 via-gray-800 to-black"
+      style={{
+        background: `radial-gradient(circle at center, rgba(17, 17, 34, 1) 0%, rgba(10, 10, 25, 1) 100%)`,
+      }}
+    >
+      <div className="container mx-auto max-w-6xl pt-32">
+        <div className="font-bold text-3xl text-white">{vaultTitle}</div>
+        <div className="pt-1">
+          <div className="flex gap-2 pt-1 items-center">
+            <img
+              className="rounded-lg h-[25px] w-[25px]"
+              src={vaultProfileCid}
+              alt="Profile"
+            />
+            <div className="text-sm justify-center item-center">
+              {vaultProfileName || "Loading..."}
+            </div>
           </div>
         </div>
-      </div>
-      <div className="pt-3 h-[50px]">{vaultDescription}</div>
-      <div className="flex justify-between">
-        <div className="flex justify-between gap-4 items-center">
-          <div className="flex items-center max-w-sm mx-auto">
-            <label htmlFor="simple-search" className="sr-only">
-              Search
-            </label>
-            <div className="relative w-full">
-              <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+        <div className="pt-3 text-gray-200">{vaultDescription}</div>
+        <div className="flex justify-between">
+          <div className="flex justify-between gap-4 items-center">
+            <div className="flex items-center max-w-sm mx-auto">
+              <label htmlFor="simple-search" className="sr-only">
+                Search
+              </label>
+              <div className="relative w-full">
+                <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                  <svg
+                    className="w-4 h-4 text-gray-500 dark:text-gray-400"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
+                    />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  id="simple-search"
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  placeholder={`Search ` + vaultMoments + ` moments`}
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="p-2.5 ms-2 text-sm font-medium text-white bg-blue-700 rounded-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+              >
                 <svg
-                  className="w-4 h-4 text-gray-500 dark:text-gray-400"
+                  className="w-4 h-4"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -337,65 +371,38 @@ export default function Page({ params }: { params: { slug: string } }) {
                     d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
                   />
                 </svg>
-              </div>
-              <input
-                type="text"
-                id="simple-search"
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                placeholder={`Search ` + vaultMoments + ` moments`}
-                required
-              />
+                <span className="sr-only">Search</span>
+              </button>
             </div>
-            <button
-              type="submit"
-              className="p-2.5 ms-2 text-sm font-medium text-white bg-blue-700 rounded-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+
+            <div
+              className="max-w-md hover:cursor-pointer text-gray-400 hover:text-gray-300"
+              onClick={() => setOpenMembersModal(true)}
             >
-              <svg
-                className="w-4 h-4"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-                />
-              </svg>
-              <span className="sr-only">Search</span>
+              {vaultMembers?.length} member{!vaultMembers?.length ? "" : "s"}
+            </div>
+          </div>
+          <div>
+            <button
+              onClick={() => handleJoinVault()}
+              className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+            >
+              Join Vault
+            </button>
+            <button className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
+              ...
             </button>
           </div>
-
-          <div
-            className="max-w-md hover:cursor-pointer"
-            onClick={() => setOpenMembersModal(true)}
-          >
-            {vaultMembers?.length} member{!vaultMembers?.length ? "" : "s"}
-          </div>
         </div>
-        <div>
-          <button
-            onClick={() => handleJoinVault()}
-            className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-          >
-            Join Vault
-          </button>
-          <button className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
-            ...
-          </button>
-        </div>
-      </div>
 
-      <div className="py-10 grid grid-cols-5 gap-4">
-        {moments &&
-          moments.map((moment, index) => (
-            <div key={index}>
-              <MomentCard moment={moment} />
-            </div>
-          ))}
+        <div className="py-10 grid grid-cols-5 gap-4">
+          {moments &&
+            moments.map((moment, index) => (
+              <div key={index}>
+                <MomentCard moment={moment} />
+              </div>
+            ))}
+        </div>
       </div>
       <Toaster />
       <Modal
