@@ -258,9 +258,12 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
 
         !file ? "" : formData.append("file", file); // FormData keys are called fields
         const { type, error } = detectFileType(file as File);
+
+        const currentTimestamp = Date.now();
+
         formData.append(
-          "lsp7CollectionMetadata",
-          vault?.vaultAddress + headline
+          "momentMetadata",
+          vault?.vaultAddress + headline + address + currentTimestamp
         );
         const resAssetData_ = await fetch("/api/uploadAssetsToIPFS", {
           method: "POST",
