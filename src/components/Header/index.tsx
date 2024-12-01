@@ -39,9 +39,10 @@ const Navbar = () => {
         if (isConnected && address) {
           const profile = await getUniversalProfileCustomName(address);
           setProfileName(profile.profileName || "Unknown");
-          setBannerUrl(
-            profile.banner ? convertIpfsUriToUrl(profile.banner) : "/default-banner.png"
-          );
+          // setBannerUrl(
+          //   profile.backgroundImage ? convertIpfsUriToUrl(profile.backgroundImage) : "/default-banner.png"
+          // );
+          setBannerUrl("/default-banner.png");
           setAvatarUrl(
             profile.cid ? convertIpfsUriToUrl(profile.cid) : "/default-avatar.png"
           );
