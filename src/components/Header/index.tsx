@@ -17,7 +17,7 @@ const Navbar = () => {
   const [profileName, setProfileName] = useState("Unknown");
   const [bannerUrl, setBannerUrl] = useState("/default-banner.png");
   const [lyxBalance, setLyxBalance] = useState("0.00");
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleConnect = async () => {
     await walletConnectInstance.open();
@@ -66,8 +66,8 @@ const Navbar = () => {
   }, [address, isConnected]);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setDropdownOpen(false);
       }
     };
