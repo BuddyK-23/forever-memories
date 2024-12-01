@@ -47,7 +47,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const encryptionKey = await generateEncryptionKey(
-      data.get("lsp7CollectionMetadata") as string
+      data.get("momentMetadata") as string
     ); // Ensure 256-bit key
     console.log("encryptionKey", encryptionKey);
     const encryptedData = await encryptFile(file, encryptionKey);
