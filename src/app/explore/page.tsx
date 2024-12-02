@@ -34,13 +34,53 @@ export default function Explore() {
   const [categoryIndex, setCategoryIndex] = useState<number>(0);
   const { address, isConnected } = useWeb3ModalAccount();
   const [vaultData, setVaultData] = useState<Vault[]>([]);
+  // const [categoryCounts, setCategoryCounts] = useState<number[]>([]); // To store counts of each category
   const { walletProvider } = useWeb3ModalProvider();
 
   const categories = getCategoryOptions();
   const selectedCategoryButtonStyle =
-    "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-blue-500 hover:bg-blue-500 text-white hover:text-white";
+    "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-gray-300 hover:bg-gray-200 text-gray-800 relative";
   const categoryButtonStyle =
-    "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-gray-200 hover:bg-blue-500 text-black hover:text-white";
+    "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-white relative";
+  
+  // // Fetch vault counts for all categories
+  // useEffect(() => {
+  //   const fetchCategoryCounts = async () => {
+  //     if (walletProvider && address) {
+  //       const ethersProvider = new ethers.providers.Web3Provider(
+  //         walletProvider,
+  //         "any"
+  //       );
+  //       const signer = ethersProvider.getSigner(address);
+  //       const VaultFactoryContract = new ethers.Contract(
+  //         process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+  //         VaultFactoryABI.abi,
+  //         signer
+  //       );
+
+  //       const counts = [];
+  //       for (let i = 0; i < categories.length; i++) {
+  //         const joinedVaults = await VaultFactoryContract.getVaultsByCategory(
+  //           i,
+  //           address,
+  //           0,
+  //           true
+  //         );
+  //         const unjoinedVaults = await VaultFactoryContract.getVaultsByCategory(
+  //           i,
+  //           address,
+  //           0,
+  //           false
+  //         );
+  //         counts.push(joinedVaults.length + unjoinedVaults.length);
+  //       }
+
+  //       setCategoryCounts(counts);
+  //     }
+  //   };
+
+  //   fetchCategoryCounts();
+  // }, [walletProvider, address]);
 
   useEffect(() => {
     const fetchVault = async () => {
@@ -181,48 +221,60 @@ export default function Explore() {
       <div className="h-8 w-8 bg-black rounded-full animate-bounce"></div>
     </div>
   ) : (
-    <div className="px-6 min-h-screen">
-      <div className="pt-10">
-        <Link href={"/createVault"}>
-          <div className="h-[40px] w-[80px] shadow-lg shadow-gray-500/50 rounded-md cursor-pointer flex items-center justify-center  bg-blue-500 hover:bg-blue-500 text-white">
-            <div className="flex items-center justify-center gap-2">New</div>
-          </div>
-        </Link>
-      </div>
+    <main
+      className="relative min-h-screen overflow-hidden bg-black pt-20"
+      style={{
+        background: "radial-gradient(circle at top left, #121212, #000000)",
+      }}
+    >
+      <div className="container mx-auto max-w-6xl">
+        {/* <div className="pt-6 flex justify-between items-center">
+          <Link href={"/createVault"}>
+            <button className="px-6 py-3 bg-primary-600 text-white rounded-lg shadow-md hover:bg-primary-700">
+              Create Collection
+            </button>
+          </Link>
+        </div> */}
 
-      <div className="pt-6 flex gap-2">
-        <Swiper
-          slidesPerView={"auto"}
-          spaceBetween={10}
-          navigation={true}
-          modules={[Navigation]}
-          className="mySwiper"
-        >
-          {categories.map((category, index) => (
-            <SwiperSlide
-              key={index}
-              onClick={() => handleCategory(index)}
-              className={
-                categoryIndex === index
-                  ? selectedCategoryButtonStyle
-                  : categoryButtonStyle
-              }
-            >
-              {category.label}
-            </SwiperSlide>
+        <div className="pt-6 flex gap-2">
+          <Swiper
+            slidesPerView={"auto"}
+            spaceBetween={8}
+            navigation={true}
+            modules={[Navigation]}
+            className="mySwiper"
+          >
+            {categories.map((category, index) => (  
+              <SwiperSlide
+                key={index}
+                onClick={() => handleCategory(index)}
+                className={
+                  categoryIndex === index
+                    ? selectedCategoryButtonStyle
+                    : categoryButtonStyle
+                }
+              >
+                {category.label}
+                {/* {categoryCounts[index] !== undefined && (
+                  <span className="ml-2 bg-gray-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {categoryCounts[index]}
+                  </span>
+                )} */}
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-8">
+          {vaultData.map((vault, index) => (
+            <div key={index}>
+              <VaultCard vault={vault} href="explore" />
+            </div>
           ))}
-        </Swiper>
-      </div>
+        </div>
 
-      <div className="py-10 grid grid-cols-5 gap-4">
-        {vaultData.map((vault, index) => (
-          <div key={index}>
-            <VaultCard vault={vault} href="explore" />
-          </div>
-        ))}
+        {!vaultData.length && <div className="text-center text-white mt-10">No Vaults Found</div>}
       </div>
-
-      {!vaultData.length && <div>No Vault</div>}
-    </div>
+    </main>
   );
 }
