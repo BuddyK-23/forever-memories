@@ -354,6 +354,8 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
           },
         ]);
 
+        console.log("vaultAddress", vaultAddress);
+
         const LSP4MetadataKey = ERC725YDataKeys.LSP4["LSP4Metadata"];
         const vaultTx = await VaultContract.mintMoment(
           vaultAddress,
@@ -364,6 +366,10 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         );
 
         console.log("vaultTx", vaultTx);
+
+        console.log("Transaction sent! Waiting for confirmation...");
+        const receipt = await vaultTx.wait(); // Wait for the transaction to be mined\
+        const tokenId = receipt.events[2].args[0];
 
         //**************************** */
         //////////// send reward token logic
@@ -384,13 +390,9 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         //   { gasLimit: gasLimit }
         // );
 
-        const myToken = await VaultContract.getMyLastTokenByVaultAddress(
-          vault?.vaultAddress
-        );
-
         setUploading(false);
         toast.success("You minted one memory successfully!");
-        router.push("/nft/" + myToken.tokenId);
+        router.push("/nft/" + tokenId);
       } catch (e) {
         console.log("error", e);
         setUploading(false);

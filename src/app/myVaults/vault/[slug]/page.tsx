@@ -8,6 +8,7 @@ import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
 } from "@web3modal/ethers5/react";
+import { useRouter } from "next/navigation";
 import {
   bytes32ToAddress,
   hexToDecimal,
@@ -44,13 +45,20 @@ interface VaultMember {
   generatedName: string;
 }
 
+interface VaultMoment {
+  name: string;
+  tokenId: string;
+  timestamp: Date;
+}
+
 export default function Page({ params }: { params: { slug: string } }) {
   const vaultAddress = params.slug;
+  const router = useRouter();
 
   const [vaultTitle, setVaultTitle] = useState<string>();
   const [vaultDescription, setVaultDescription] = useState<string>();
   const [vaultMembers, setVaultMembers] = useState<VaultMember[]>();
-  const [vaultMoments, setVaultMoments] = useState<number>();
+  const [vaultMoments, setVaultMoments] = useState<VaultMoment[]>([]);
   const [vaultMode, setVaultMode] = useState<number>(0);
   const [vaultOwner, setVaultOwner] = useState<string>();
   const { address, isConnected } = useWeb3ModalAccount();
@@ -136,7 +144,7 @@ export default function Page({ params }: { params: { slug: string } }) {
       const allMoments = await VaultContract.getAllMoments(vaultAddress);
       setVaultTitle(data.title as string);
       setVaultDescription(data.description as string);
-      setVaultMoments(allMoments.length);
+      setVaultMoments(allMoments);
 
       const ownerData = await fetchProfileName(data.vaultOwner);
       setVaultProfileName(ownerData.generatedName);
@@ -149,7 +157,6 @@ export default function Page({ params }: { params: { slug: string } }) {
       if (memberList.length > 0)
         for (let i = 0; i < memberList.length; i++) {
           const generatedVaultMember = await fetchProfileName(memberList[i]);
-          console.log("generatedVaultMember", generatedVaultMember);
           vaultMembers_.push({
             name: memberList[i],
             generatedName: generatedVaultMember.generatedName,
@@ -160,30 +167,31 @@ export default function Page({ params }: { params: { slug: string } }) {
       setVaultMembers(vaultMembers_);
 
       let moments_: Moment[] = [];
-
       // NFT info
       if (allMoments.length > 0) {
         for (let i = 0; i < allMoments.length; i++) {
           // Get the total number of comments
           const _commentCnt = await VaultAssistContract.getCommentCount(
-            allMoments[i]
+            allMoments[i].tokenId
           );
           const commentCnt = parseInt(_commentCnt.toString(), 10); // Convert BigNumber to number
           // get the encryption key from encryptedEncryptionKey of Vault Contract
           const combinedEncryptedData_ = await VaultContract.getEncryptedKey(
-            bytes32ToAddress(allMoments[i])
+            bytes32ToAddress(allMoments[i].tokenId)
           );
           const combinedEncryptedData = hexStringToUint8Array(
             combinedEncryptedData_
           );
-          const creator = await VaultContract.momentOwners(allMoments[i]);
+          const creator = await VaultContract.momentOwners(
+            allMoments[i].tokenId
+          );
 
           const decryptedKey_ = await fetchDecryptedKey(combinedEncryptedData);
           const decryptedKey = Buffer.from(decryptedKey_);
 
           // if (hexToDecimal(balance._hex) == 0) continue;
           const tokenIdMetadata = await VaultContract.getDataForTokenId(
-            allMoments[i],
+            allMoments[i].tokenId,
             ERC725YDataKeys.LSP4["LSP4Metadata"]
           );
           const erc725js = new ERC725(lsp4Schema);
@@ -218,7 +226,7 @@ export default function Page({ params }: { params: { slug: string } }) {
           const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
           const objectURL = URL.createObjectURL(blob);
           const likes_ = await await VaultAssistContract.getLikes(
-            allMoments[i]
+            allMoments[i].tokenId
           );
           const attributes = metadata.attributes;
           let fileType: string = "image";
@@ -234,7 +242,7 @@ export default function Page({ params }: { params: { slug: string } }) {
             likes: likes_.length,
             comments: commentCnt,
             owner: creator,
-            momentAddress: allMoments[i],
+            momentAddress: allMoments[i].tokenId,
           });
         }
       }
@@ -297,6 +305,31 @@ export default function Page({ params }: { params: { slug: string } }) {
       console.log("tx", tx);
       toast.success("Left to vault successfully!");
       setOpenModal(false);
+    } else {
+      toast.error("Please connect the wallet.");
+    }
+  };
+
+  const handleRemoveVault = async () => {
+    if (walletProvider) {
+      setIsDownloading(false);
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
+
+      const VaultFactoryContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+        VaultFactoryABI.abi,
+        signer
+      );
+
+      const tx = await VaultFactoryContract.burnVault(vaultAddress);
+      console.log("tx", tx);
+      toast.success("Removed the vault successfully!");
+      setIsDownloading(true);
+      router.push("/myVaults");
     } else {
       toast.error("Please connect the wallet.");
     }
@@ -381,7 +414,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                 type="text"
                 id="simple-search"
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                placeholder={`Search ` + vaultMoments + ` moments`}
+                placeholder={`Search ` + vaultMoments.length + ` moments`}
                 required
               />
             </div>
@@ -432,6 +465,16 @@ export default function Page({ params }: { params: { slug: string } }) {
               Create Moment
             </button>
           </Link>
+          {process.env.NEXT_PUBLIC_SUPER_ADMIN_ADDRESS == address ? (
+            <button
+              onClick={() => handleRemoveVault()}
+              className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+            >
+              Remove vault
+            </button>
+          ) : (
+            ""
+          )}
           {vaultOwner !== address ? (
             <button
               onClick={() => handleLeaveVault()}
