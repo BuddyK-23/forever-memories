@@ -37,6 +37,7 @@ import toast, { Toaster } from "react-hot-toast";
 
 import "./index.css";
 import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
+
 // Define MIME type limits
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
@@ -405,29 +406,35 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
   };
 
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center bg-white h-[600px] dark:invert">
+    <div className="flex space-x-2 justify-center items-center bg-black h-[600px] dark:invert">
       <span className="sr-only">Loading...</span>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce"></div>
+      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+      <div className="h-8 w-8 bg-white rounded-full animate-bounce"></div>
     </div>
   ) : (
-    <div className="flex justify-center bg-gray-200 w-full">
-      <div className="flex justify-center main-content gap-x-1 mt-4 mb-20 w-full">
-        <div className="rounded-lg border p-5 bg-white ml-4 mr-2 shadow-lg shadow-gray-500/50 w-1/2">
-          <h4 className="text-xl mb-2 font-bold">Mint Moment</h4>
+    <main
+      className="relative min-h-screen overflow-hidden bg-black"
+      style={{
+        background: "radial-gradient(circle at top left, #121212, #000000)",
+      }}
+    >
+    <div className="container mx-auto max-w-6xl pt-32">
+      <div className="flex justify-center main-content gap-x-1 mb-20 w-full">
+        <div className="w-2/3">
+          <h4 className="mb-2 text-3xl font-bold text-gray-200">Create a moment</h4>
           <div>
             <div className="mb-4">
               <div className="flex items-center justify-center w-full">
                 <label
                   htmlFor="dropzone-file"
-                  className="flex flex-col items-center justify-center w-full h-[500px] border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600 shadow-lg shadow-gray-500/50"
+                  className="flex flex-col items-center justify-center w-full h-[300px] md:h-[500px] border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50/75 dark:bg-gray-700/75 hover:bg-gray-100/90 dark:hover:bg-gray-600/90 shadow-md shadow-gray-700/40"
                 >
                   {imagePreview && (
                     <img
                       src={imagePreview}
                       alt="Preview"
-                      className="w-full h-[500px] rounded-lg"
+                      className="w-full h-full object-cover rounded-xl"
                     />
                   )}
 
@@ -435,14 +442,14 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                     <video
                       src={videoPreview}
                       controls
-                      className="w-full h-[500px] rounded-lg"
+                      className="w-full h-full object-cover rounded-xl"
                     />
                   )}
 
                   {!videoPreview && !imagePreview && (
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <svg
-                        className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400"
+                        className="w-8 h-8 mb-4 text-gray-400 dark:text-gray-300"
                         aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
@@ -456,7 +463,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                           d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
                         />
                       </svg>
-                      <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                      <p className="mb-2 text-sm text-gray-600 dark:text-gray-300">
                         <span className="font-semibold">Click to upload</span>{" "}
                         or drag and drop
                       </p>
@@ -574,9 +581,9 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
               <button
                 type="submit"
                 onClick={handleMintMoment}
-                className="mt-4 bg-blue-500 text-white py-2 px-4 rounded shadow-lg shadow-gray-500/50"
+                className="mt-4 bg-primary-600 hover:bg-primary-500 text-gray-200 font-medium px-6 py-3 rounded shadow-lg shadow-gray-500/50"
               >
-                {uploading ? "Minting..." : "Mint Moment"}
+                {uploading ? "Storing on chain..." : "Create Moment"}
               </button>
             </div>
           </div>
@@ -584,5 +591,6 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
       </div>
       <Toaster />
     </div>
+    </main>
   );
 }

@@ -7,6 +7,7 @@ import { useWeb3ModalAccount } from "@web3modal/ethers5/react";
 import { walletConnectInstance } from "@/components/WalletContext";
 import { getUniversalProfileCustomName } from "@/utils/format";
 import { convertIpfsUriToUrl } from "@/utils/format";
+import { useRouter } from "next/router";
 import "./index.css";
 
 const Navbar = () => {
@@ -18,6 +19,16 @@ const Navbar = () => {
   const [bannerUrl, setBannerUrl] = useState("/default-banner.png");
   const [lyxBalance, setLyxBalance] = useState("0.00");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  // const [currentPath, setCurrentPath] = useState(""); // Store the current path
+
+  // const router = useRouter();
+
+  // useEffect(() => {
+  //   // Ensure this runs only on the client
+  //   if (typeof window !== "undefined") {
+  //     setCurrentPath(router.pathname); // Get the current path from the router
+  //   }
+  // }, [router.pathname]);
 
   const handleConnect = async () => {
     await walletConnectInstance.open();
@@ -90,9 +101,9 @@ const Navbar = () => {
         {/* Logo */}
         <Link href="/" className="flex items-center z-50">
           <img
-            src="/logo_icon_foreverMoments.png"
+            src="/logo_icon_foreverMoments.svg"
             alt="Forever Moments"
-            className="h-16 w-16"
+            className="w-[50px] h-[37px] object-contain"
           />
         </Link>
 
@@ -102,14 +113,19 @@ const Navbar = () => {
             <Link
               key={id}
               href={link}
-              className="hover:text-primary-100 transition-colors duration-200"
+              className="hover:text-primary-300 text-gray-200 transition-colors duration-200"
+              // className={`transition-colors duration-200 ${
+              //   currentPath === link
+              //     ? "text-primary-700"
+              //     : "hover:text-primary-100 text-gray-200"
+              // }`}
             >
               {title}
             </Link>
           ))}
           {!isConnected ? (
             <button
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded"
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded"
               onClick={handleConnect}
             >
               Connect
@@ -190,7 +206,15 @@ const Navbar = () => {
           <ul className="absolute top-16 left-0 w-full bg-black text-white flex flex-col items-center space-y-4 py-4 z-50">
             {links.map(({ id, title, link }) => (
               <li key={id}>
-                <Link href={link} onClick={() => setNav(false)}>
+                <Link 
+                  href={link} 
+                  onClick={() => setNav(false)}
+                  // className={`transition-colors duration-200 ${
+                  //   currentPath === link
+                  //     ? "text-primary-700"
+                  //     : "hover:text-primary-100 text-gray-200"
+                  // }`}
+                >
                   {title}
                 </Link>
               </li>

@@ -9,8 +9,7 @@
 
 .swiper-slide {
   text-align: center;
-  font-size: 18px;
-  background: #fff;
+  font-size: 16px;
 
   /* Center slide text vertically */
   display: flex;
@@ -41,26 +40,26 @@
 
 .swiper-button-prev,
 .swiper-button-next {
-  width: 20px;
-  height: 20px;
-  --tw-bg-opacity: 1;
-  background-color: rgb(229 231 235 / var(--tw-bg-opacity)) !important;
+  width: 32px;
+  height: 32px;
+  --tw-bg-opacity: 0.8;
+  background-color: rgba(55, 65, 81, var(--tw-bg-opacity)); /* gray-700 with slight opacity */
   border-radius: 100%;
   top: 50%;
   transform: translateY(-50%);
   margin-top: 0;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); /* Add subtle shadow */
 }
 
 .swiper-button-prev::after,
 .swiper-button-next::after {
-  font-size: 20px;
+  font-size: 16px;
+  color: white; /* Keep arrow content white */
 }
 
-.bg-gray-200 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(229 231 235 / var(--tw-bg-opacity)) !important;
-}
-
-.bg-blue-500 {
-  background-color: rgb(59 130 246 / var(--tw-bg-opacity)) !important;
+.swiper-button-prev:hover,
+.swiper-button-next:hover {
+  background-color: rgba(31, 41, 55, 1); /* gray-800 on hover */
+  color: white; /* Arrow content remains white */
+  cursor: pointer;
 }
