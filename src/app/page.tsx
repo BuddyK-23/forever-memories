@@ -28,20 +28,20 @@ export default function Home() {
       {/* Content */}
       <div className="container mx-auto max-w-6xl h-screen px-2 flex flex-col justify-center relative z-10">
         <div className="text-white">
-          <h2 className="text-5xl font-bold mb-6">Create your digital legacy</h2>
+          <h2 className="text-5xl text-gray-200 font-bold mb-6">Capture today, inspire tomorrow</h2>
           <p className="text-xl text-gray-300 mb-10">
-            A new way to save and share life’s special moments
+            A social platform to save, share, and shape our collective history.
           </p>
           <div className="space-x-4">
             <a
               href="/createVault"
-              className="px-6 py-3 bg-primary-600 text-white rounded-lg shadow-md hover:bg-primary-700"
+              className="px-6 py-3 bg-primary-600 text-gray-200 rounded-lg shadow-md hover:bg-primary-500"
             >
-              New private collection →
+              Create a private collection →
             </a>
             <a
               href="/explore"
-              className="px-6 py-3 bg-gray-700 text-white rounded-lg shadow-md hover:bg-gray-600"
+              className="px-6 py-3 bg-gray-700 text-gray-200 rounded-lg shadow-md hover:bg-gray-600"
             >
               Explore public collections
             </a>
@@ -49,7 +49,7 @@ export default function Home() {
         </div>
 
         <div className="mt-16 max-w-lg">
-          <h3 className="text-lg text-gray-400 mb-4">Trending</h3>
+          <h3 className="text-lg text-gray-400 mb-4">Popular collections</h3>
           <div className="flex flex-wrap gap-3">
             {[
               "Daily Selfie",

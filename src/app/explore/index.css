@@ -63,12 +63,3 @@
   color: white; /* Arrow content remains white */
   cursor: pointer;
 }
-
-.bg-gray-200 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(229 231 235 / var(--tw-bg-opacity)) !important;
-}
-
-.bg-blue-500 {
-  background-color: rgb(74 108 229 / var(--tw-bg-opacity)) !important;
-}

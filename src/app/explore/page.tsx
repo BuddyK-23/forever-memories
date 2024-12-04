@@ -214,11 +214,11 @@ export default function Explore() {
   };
 
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center bg-white h-screen dark:invert">
+    <div className="flex space-x-2 justify-center items-center bg-black h-screen dark:invert">
       <span className="sr-only">Loading...</span>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce"></div>
+      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+      <div className="h-8 w-8 bg-white rounded-full animate-bounce"></div>
     </div>
   ) : (
     <main
@@ -228,14 +228,6 @@ export default function Explore() {
       }}
     >
       <div className="container mx-auto max-w-6xl">
-        {/* <div className="pt-6 flex justify-between items-center">
-          <Link href={"/createVault"}>
-            <button className="px-6 py-3 bg-primary-600 text-white rounded-lg shadow-md hover:bg-primary-700">
-              Create Collection
-            </button>
-          </Link>
-        </div> */}
-
         <div className="pt-6 flex gap-2">
           <Swiper
             slidesPerView={"auto"}
@@ -273,7 +265,41 @@ export default function Explore() {
           ))}
         </div>
 
-        {!vaultData.length && <div className="text-center text-white mt-10">No Vaults Found</div>}
+        {/* {!vaultData.length && (
+          <div className="text-base text-center text-white mt-10">
+            <div>No collections found</div>
+            <div className="pt-6 flex justify-center items-center">
+              <Link href={"/createVault"}>
+                <button className="px-6 py-3 bg-primary-600 text-white text-base rounded-lg shadow-md hover:bg-primary-700">
+                  Create new collection
+                </button>
+              </Link>
+            </div>
+          </div>
+        )} */}
+
+        {!vaultData.length && (
+          <div className="text-center text-white mt-10 space-y-6">
+            <div>
+              <img 
+                // src="https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"
+                src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExc2hzb2RqdmV3MnNkNzdkdmx1ZGFxZ2c2cnJuZ2ZlMTZwNnN3NnV1YyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xUPJPzcdlbvaFUrF7y/giphy.gif"
+                alt="Oh no Spongbob gif" 
+                className="mx-auto w-96 h-auto"
+              />
+            </div>
+            <div className="text-xl font-bold">There are no collections here yet!</div>
+            <div className="text-base">Create a new one to get the party started 🎉</div>
+            <div className="pt-6 flex justify-center items-center">
+              <Link href={"/createVault"}>
+                <button className="px-6 py-3 bg-primary-600 text-white rounded-lg shadow-md hover:bg-primary-700">
+                  Create new collection
+                </button>
+              </Link>
+            </div>
+          </div>
+        )}
+
       </div>
     </main>
   );

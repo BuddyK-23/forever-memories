@@ -68,7 +68,7 @@ const VaultCard: React.FC<VaultCardProps> = ({ vault, href }) => {
       <div className="absolute bottom-0 p-4 w-full text-white group-hover:bg-black/70 transition-all duration-300">
         <h3 className="font-bold text-lg truncate">{vault.name}</h3>
         <div className="flex justify-between items-center mt-2 text-sm">
-        {/* Avatar */}
+          
           <div
             className="relative"
             onMouseEnter={() => setShowName(true)}
@@ -89,11 +89,11 @@ const VaultCard: React.FC<VaultCardProps> = ({ vault, href }) => {
 
           <div className="flex space-x-4">
             <div className="flex items-center space-x-1">
-            <span className="text-sm">👥</span> {/* fa-users */}
+            <span className="text-sm">👥</span> 
               <span>{vault.members}</span>
             </div>
             <div className="flex items-center space-x-1">
-              <span className="text-sm">🖼️</span> {/* fa-image */}
+              <span className="text-sm">🖼️</span> 
               <span>{vault.moments.toString()}</span>
             </div>
           </div>
@@ -112,11 +112,11 @@ const VaultCard: React.FC<VaultCardProps> = ({ vault, href }) => {
       </div>
 
       {/* Ribbon for Owned Vaults */}
-      {vault.owner === address && (
-        <div className="absolute top-3 right-3 bg-pink-400 text-white text-xs font-semibold px-2 py-1 rounded-full shadow">
-          Your collection
+      {/* {vault.owner === address && (
+        <div className="absolute top-3 left-3 bg-pink-400 text-white text-xs font-semibold px-2 py-1 rounded-full shadow">
+          Owner
         </div>
-      )}
+      )} */}
     </Link>
   );
 };
