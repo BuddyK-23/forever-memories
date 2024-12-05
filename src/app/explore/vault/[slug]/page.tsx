@@ -48,13 +48,19 @@ interface VaultMember {
   generatedName: string;
 }
 
+interface VaultMoment {
+  name: string;
+  tokenId: string;
+  timestamp: Date;
+}
+
 export default function Page({ params }: { params: { slug: string } }) {
   const vaultAddress = params.slug;
 
   const [vaultTitle, setVaultTitle] = useState<string>();
   const [vaultDescription, setVaultDescription] = useState<string>();
   const [vaultMembers, setVaultMembers] = useState<VaultMember[]>();
-  const [vaultMoments, setVaultMoments] = useState<number>();
+  const [vaultMoments, setVaultMoments] = useState<VaultMoment[]>([]);
   const [vaultMode, setVaultMode] = useState<number>(0);
   const [vaultOwner, setVaultOwner] = useState<string>();
   const { address, isConnected } = useWeb3ModalAccount();
@@ -193,26 +199,26 @@ export default function Page({ params }: { params: { slug: string } }) {
         for (let i = 0; i < allMoments.length; i++) {
           // Get the total number of comments
           const _commentCnt = await VaultAssistContract.getCommentCount(
-            allMoments[i]
+            allMoments[i].tokenId
           );
           const commentCnt = parseInt(_commentCnt.toString(), 10); // Convert BigNumber to number
 
           // get the encryption key from encryptedEncryptionKey of Vault Contract
           const combinedEncryptedData_ = await VaultContract.getEncryptedKey(
-            bytes32ToAddress(allMoments[i])
+            bytes32ToAddress(allMoments[i].tokenId)
           );
           const combinedEncryptedData = hexStringToUint8Array(
             combinedEncryptedData_
           );
           console.log("combinedEncryptedData", combinedEncryptedData);
-          const creator = await VaultContract.momentOwners(allMoments[i]);
+          const creator = await VaultContract.momentOwners(allMoments[i].tokenId);
 
           const decryptedKey_ = await fetchDecryptedKey(combinedEncryptedData);
           const decryptedKey = Buffer.from(decryptedKey_);
 
           // if (hexToDecimal(balance._hex) == 0) continue;
           const tokenIdMetadata = await VaultContract.getDataForTokenId(
-            allMoments[i],
+            allMoments[i].tokenId,
             ERC725YDataKeys.LSP4["LSP4Metadata"]
           );
           const erc725js = new ERC725(lsp4Schema);
@@ -246,7 +252,7 @@ export default function Page({ params }: { params: { slug: string } }) {
 
           const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
           const objectURL = URL.createObjectURL(blob);
-          const likes_ = await VaultAssistContract.getLikes(allMoments[i]);
+          const likes_ = await VaultAssistContract.getLikes(allMoments[i].tokenId);
           const attributes = metadata.attributes;
           let fileType: string = "image";
           if (attributes.length > 0) {
@@ -260,7 +266,7 @@ export default function Page({ params }: { params: { slug: string } }) {
             likes: likes_.length,
             comments: commentCnt,
             owner: creator,
-            momentAddress: allMoments[i],
+            momentAddress: allMoments[i].tokenId,
           });
         }
       }
