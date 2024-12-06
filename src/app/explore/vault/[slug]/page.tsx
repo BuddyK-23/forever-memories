@@ -15,6 +15,7 @@ import {
   getValueByKey,
   getUniversalProfileCustomName,
   convertIpfsUriToUrl,
+  checkCID,
 } from "@/utils/format"; // Adjust the import path as necessary
 import { ERC725 } from "@erc725/erc725.js";
 import lsp4Schema from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
@@ -178,11 +179,11 @@ export default function Page({ params }: { params: { slug: string } }) {
       const memberList = await VaultFactoryContract.getVaultMembers(
         vaultAddress
       );
+      console.log("memberList", memberList);
       let vaultMembers_: VaultMember[] = [];
       if (memberList.length > 0)
         for (let i = 0; i < memberList.length; i++) {
           const generatedVaultMember = await fetchProfileName(memberList[i]);
-          console.log("generatedVaultMember", generatedVaultMember);
           vaultMembers_.push({
             name: memberList[i],
             generatedName: generatedVaultMember.generatedName,
@@ -191,7 +192,6 @@ export default function Page({ params }: { params: { slug: string } }) {
         }
 
       setVaultMembers(vaultMembers_);
-
       let moments_: Moment[] = [];
 
       // NFT info
@@ -211,7 +211,9 @@ export default function Page({ params }: { params: { slug: string } }) {
             combinedEncryptedData_
           );
           console.log("combinedEncryptedData", combinedEncryptedData);
-          const creator = await VaultContract.momentOwners(allMoments[i].tokenId);
+          const creator = await VaultContract.momentOwners(
+            allMoments[i].tokenId
+          );
 
           const decryptedKey_ = await fetchDecryptedKey(combinedEncryptedData);
           const decryptedKey = Buffer.from(decryptedKey_);
@@ -252,7 +254,9 @@ export default function Page({ params }: { params: { slug: string } }) {
 
           const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
           const objectURL = URL.createObjectURL(blob);
-          const likes_ = await VaultAssistContract.getLikes(allMoments[i].tokenId);
+          const likes_ = await VaultAssistContract.getLikes(
+            allMoments[i].tokenId
+          );
           const attributes = metadata.attributes;
           let fileType: string = "image";
           if (attributes.length > 0) {
@@ -312,52 +316,57 @@ export default function Page({ params }: { params: { slug: string } }) {
       }}
     >
       <div className="container mx-auto max-w-6xl pt-32">
-      {/* Vault Name and Join Button */}
-      <div className="flex justify-between items-center">
-        <div className="font-bold text-3xl text-gray-200">{vaultTitle}</div>
-        <button
-          onClick={() => handleJoinVault()}
-          className="px-5 py-2 bg-gray-700 text-gray-200 rounded-lg shadow-md hover:bg-gray-600"
-        >
-          Join collection
-        </button>
-      </div>
-
-      {/* Vault Description */}
-      <div className="pt-2 text-gray-200">{vaultDescription}</div>
-
-      {/* Vault Owner, Members, and Moments */}
-      <div className="flex items-center gap-4 pt-4">
-        <div className="flex items-center gap-2">
-          <img
-            className="rounded-lg h-[30px] w-[30px]"
-            src={vaultProfileCid}
-            alt="Profile"
-          />
-          <div className="text-sm text-gray-200">{vaultProfileName || "Loading..."}</div>
-        </div>
-        <div className="flex gap-2 text-gray-400 hover:text-gray-300">
-          <div
-            className="hover:cursor-pointer"
-            onClick={() => setOpenMembersModal(true)}
+        {/* Vault Name and Join Button */}
+        <div className="flex justify-between items-center">
+          <div className="font-bold text-3xl text-gray-200">{vaultTitle}</div>
+          <button
+            onClick={() => handleJoinVault()}
+            className="px-5 py-2 bg-gray-700 text-gray-200 rounded-lg shadow-md hover:bg-gray-600"
           >
-            {vaultMembers?.length} member{vaultMembers?.length !== 1 ? "s" : ""}
+            Join collection
+          </button>
+        </div>
+
+        {/* Vault Description */}
+        <div className="pt-2 text-gray-200">{vaultDescription}</div>
+
+        {/* Vault Owner, Members, and Moments */}
+        <div className="flex items-center gap-4 pt-4">
+          <div className="flex items-center gap-2">
+            <img
+              className="rounded-lg h-[30px] w-[30px]"
+              src={vaultProfileCid}
+              alt="Profile"
+            />
+            <div className="text-sm text-gray-200">
+              {vaultProfileName || "Loading..."}
+            </div>
           </div>
-          <div>|</div>
-          <div>{moments?.length || 0} moment{moments?.length !== 1 ? "s" : ""}</div>
+          <div className="flex gap-2 text-gray-400 hover:text-gray-300">
+            <div
+              className="hover:cursor-pointer"
+              onClick={() => setOpenMembersModal(true)}
+            >
+              {vaultMembers?.length} member
+              {vaultMembers?.length !== 1 ? "s" : ""}
+            </div>
+            <div>|</div>
+            <div>
+              {moments?.length || 0} moment{moments?.length !== 1 ? "s" : ""}
+            </div>
+          </div>
+        </div>
+
+        {/* Moments Grid */}
+        <div className="py-10 grid grid-cols-5 gap-4">
+          {moments &&
+            moments.map((moment, index) => (
+              <div key={index}>
+                <MomentCard moment={moment} />
+              </div>
+            ))}
         </div>
       </div>
-
-      {/* Moments Grid */}
-      <div className="py-10 grid grid-cols-5 gap-4">
-        {moments &&
-          moments.map((moment, index) => (
-            <div key={index}>
-              <MomentCard moment={moment} />
-            </div>
-          ))}
-      </div>
-    </div>
 
       <Toaster />
       <Modal

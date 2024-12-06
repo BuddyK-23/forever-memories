@@ -72,6 +72,21 @@ export function getCategoryOptions(): CategoryOption[] {
   return Categories;
 }
 
+export function anonymousAddress(address: string): string {
+  // Ensure the address has a valid length and starts with "0x"
+  if (!address.startsWith("0x") || address.length < 10) {
+    throw new Error("Invalid address format");
+  }
+  // Return the formatted string
+  return `${address.slice(0, 10)}...${address.slice(-8)}`;
+}
+
+export function checkCID(ipfsString: string): boolean {
+  const ipfsPrefix = "ipfs://";
+  // Check if the string starts with the IPFS prefix
+  if (!ipfsString.startsWith(ipfsPrefix)) return false;
+  else return true;
+}
 
 export async function getUniversalProfileCustomName(
   address: string
@@ -88,10 +103,12 @@ export async function getUniversalProfileCustomName(
   const profileData = await erc725js.fetchData("LSP3Profile");
   const decodedProfileMetadata =
     profileData as unknown as DecodedProfileMetadata;
-  const addressPrefix = address.slice(2, 6);
   const profile: LSP3Profile = decodedProfileMetadata.value.LSP3Profile;
+  const addressPrefix = address.slice(2, 6);
   const description = profile.description;
-  const profileName = `@${profile.name}#${addressPrefix}`;
+  let profileName;
+  if (!profile.name) profileName = anonymousAddress(address);
+  else profileName = `@${profile.name}#${addressPrefix}`;
   const cid = profile?.profileImage ? profile.profileImage[0]?.url : "";
 
   // Return the Universal Profile name
@@ -171,6 +188,11 @@ export function convertIpfsUriToUrl(
   ipfsUri: string,
   gateway: string = "https://ipfs.io/ipfs/"
 ): string {
+  // Validate that ipfsUri is provided and is a string
+  if (typeof ipfsUri !== "string") {
+    return process.env.NEXT_PUBLIC_DEFAULT_UP_ICON as string;
+  }
+
   // Check if the IPFS URI starts with "ipfs://"
   if (ipfsUri.startsWith("ipfs://")) {
     // Remove the "ipfs://" prefix and append the hash to the gateway URL
@@ -178,8 +200,8 @@ export function convertIpfsUriToUrl(
     return `${gateway}${ipfsHash}`;
   }
 
-  // If the IPFS URI doesn't have the "ipfs://" prefix, return it as-is or handle it accordingly
-  throw new Error("Invalid IPFS URI");
+  // If the IPFS URI doesn't have the "ipfs://" prefix, throw an error
+  throw new Error("Invalid IPFS URI: It must start with 'ipfs://'.");
 }
 
 // Convert Uint8Array to bytes
