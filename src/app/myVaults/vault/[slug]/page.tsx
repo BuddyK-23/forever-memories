@@ -364,15 +364,21 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center h-[600px] dark:invert">
+    <div className="flex space-x-2 justify-center items-center bg-black h-screen dark:invert">
       <span className="sr-only">Loading...</span>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce"></div>
+      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+      <div className="h-8 w-8 bg-white rounded-full animate-bounce"></div>
     </div>
   ) : (
-    <div className="px-6 bg-white pt-10 h-[800px]">
-      <div className="font-bold text-3xl">{vaultTitle}</div>
+    <main
+      className="relative min-h-screen overflow-hidden bg-black"
+      style={{
+        background: "radial-gradient(circle at top left, #121212, #000000)",
+      }}
+    >
+    <div className="container mx-auto max-w-6xl pt-32">
+      <div className="font-medium text-gray-200 text-3xl">{vaultTitle}</div>
       <div className="pt-1">
         <div className="flex gap-2 pt-1 items-center">
           <img
@@ -641,5 +647,6 @@ export default function Page({ params }: { params: { slug: string } }) {
         </>
       ) : null}
     </div>
+    </main>
   );
 }

@@ -195,34 +195,36 @@ export default function Profile() {
 
       let vaultList: string[] = []; // Initialize with an empty array
 
+      // Determine which vaults to fetch based on permissionFlag and ownerFlag
       // Private, owner
       if (permissionflag && ownerflag) {
+        // Private vaults owned by the user
         vaultList = await VaultFactoryContract.getVaultsOwnedByUser(
           address,
-          false
+          false // `false` indicates private vaults
         );
-        // Private, non-owner
       } else if (permissionflag && !ownerflag) {
+        // Private vaults the user has access to but does not own
         const nonOwnedVaultList = await VaultFactoryContract.getVaultsByUser(
           address,
-          false
+          false // `false` indicates private vaults
         );
         const ownedVaultList = await VaultFactoryContract.getVaultsOwnedByUser(
           address,
           false
         );
         vaultList = [...nonOwnedVaultList, ...ownedVaultList];
-        // Public, owner
       } else if (!permissionflag && ownerflag) {
+        // Public vaults owned by the user
         vaultList = await VaultFactoryContract.getVaultsOwnedByUser(
           address,
-          true
+          true // `true` indicates public vaults
         );
-        // Public, non-owner
       } else if (!permissionflag && !ownerflag) {
+        // Public vaults the user has access to but does not own
         const nonOwnedVaultList = await VaultFactoryContract.getVaultsByUser(
           address,
-          true
+          true // `true` indicates public vaults
         );
         const ownedVaultList = await VaultFactoryContract.getVaultsOwnedByUser(
           address,
@@ -230,17 +232,18 @@ export default function Profile() {
         );
         vaultList = [...nonOwnedVaultList, ...ownedVaultList];
       }
-
+      
+      // Update vault counts
       const prJoinedVaultList = await VaultFactoryContract.getVaultsByCategory(
         0,
         address,
-        1,
+        1, // `1` for private
         true
       );
       const puJoinedVaultList = await VaultFactoryContract.getVaultsByCategory(
         0,
         address,
-        0,
+        0, // `0` for public
         true
       );
 
@@ -276,11 +279,11 @@ export default function Profile() {
     // public
     if (index === 0) {
       setPermissionFlag(false);
-      fetchVaultsByPermissionAndOwner(false, ownerFlag);
-      // private
+      await fetchVaultsByPermissionAndOwner(false, ownerFlag);
+    // private
     } else {
       setPermissionFlag(true);
-      fetchVaultsByPermissionAndOwner(true, ownerFlag);
+      await fetchVaultsByPermissionAndOwner(true, ownerFlag);
     }
   };
 
@@ -310,34 +313,34 @@ export default function Profile() {
       }}
     >
       <div className="container mx-auto max-w-6xl pt-32">
-        <div className="font-bold text-gray-200 text-3xl">Your collections</div>
+        <div className="font-medium text-gray-200 text-3xl">Your collections</div>
         
         <div className="flex items-center justify-between pt-4">
         {/* Tabs Section */}
           <div className="flex gap-4">
             <div
-              onClick={() => handleGetVaultsByPermissionFlag(0)}
+              onClick={() => handleGetVaultsByPermissionFlag(1)}
               className={
                 permissionFlag
-                  ? `${permissionStyle} text-gray-200`
-                  : `${permissionStyle} text-primary-600 border-b-2 border-primary-600`
+                  ? `${permissionStyle} text-primary-600 border-b-2 border-primary-600`
+                  : `${permissionStyle} text-gray-200`
               }
             >
               <div className="text-base">Private collections</div>
-              <div className="ml-2 bg-gray-600 text-white text-sm font-bold rounded-full w-6 h-6 flex items-center justify-center">
+              <div className="ml-2 bg-gray-600 text-gray-200 text-sm font-medium rounded-full w-6 h-6 flex items-center justify-center">
                 {privateVaultCount}
               </div>
             </div>
             <div
-              onClick={() => handleGetVaultsByPermissionFlag(1)}
+              onClick={() => handleGetVaultsByPermissionFlag(0)}
               className={
                 !permissionFlag
-                  ? `${permissionStyle} text-gray-200`
-                  : `${permissionStyle} text-primary-600 border-b-2 border-primary-600`
+                  ? `${permissionStyle} text-primary-600 border-b-2 border-primary-600`
+                  : `${permissionStyle} text-gray-200`
               }
             >
               <div className="text-base">Public collections</div>
-              <div className="ml-2 bg-gray-600 text-white text-sm font-bold rounded-full w-6 h-6 flex items-center justify-center">
+              <div className="ml-2 bg-gray-600 text-gray-200 text-sm font-medium rounded-full w-6 h-6 flex items-center justify-center">
                 {publicVaultCount}
               </div>
             </div>
