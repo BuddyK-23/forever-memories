@@ -331,7 +331,7 @@ export default function CreateVault() {
               <button
                 type="submit"
                 disabled={isSubmitting} // Disable button during submission
-                className={`w-full py-3 rounded-lg ${
+                className={`w-full py-3 rounded-lg px-6 shadow-md ${
                   isSubmitting ? "bg-gray-600" : "bg-primary-600 hover:bg-primary-500"
                 } text-gray-200 text-lg font-medium flex justify-center items-center`}
               >

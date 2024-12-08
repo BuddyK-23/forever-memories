@@ -315,7 +315,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         background: "radial-gradient(circle at top left, #121212, #000000)",
       }}
     >
-      <div className="container mx-auto max-w-6xl pt-32">
+      <div className="container mx-auto max-w-6xl pt-32 pb-32">
         {/* Vault Name and Join Button */}
         <div className="flex justify-between items-center">
           <div className="font-bold text-3xl text-gray-200">{vaultTitle}</div>
@@ -334,7 +334,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         <div className="flex items-center gap-4 pt-4">
           <div className="flex items-center gap-2">
             <img
-              className="rounded-lg h-[30px] w-[30px]"
+              className="rounded-full object-cover w-8 h-8"
               src={vaultProfileCid}
               alt="Profile"
             />
@@ -357,14 +357,37 @@ export default function Page({ params }: { params: { slug: string } }) {
           </div>
         </div>
 
-        {/* Moments Grid */}
-        <div className="py-10 grid grid-cols-5 gap-4">
-          {moments &&
-            moments.map((moment, index) => (
-              <div key={index}>
-                <MomentCard moment={moment} />
+        <div className="div">
+          {!moments.length ? (
+            <div className="text-center text-gray-200 mt-2 space-y-6 ">
+              <div>
+                <img 
+                  // src="https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"
+                  src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExazJkdG1uOHR0cTI5ZWltY3YzdTc0anVsMmluMGpybTJmajdtMzc1ciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ISOckXUybVfQ4/giphy.gif"
+                  alt="Oh no Spongbob gif" 
+                  className="mx-auto w-96 h-auto"
+                />
               </div>
-            ))}
+              <div className="text-xl font-bold">There are no moments in this collection yet!</div>
+              <div className="text-base">Add a moment to get the collection started</div>
+              <div className="pt-6 flex justify-center items-center">
+                <Link href={"/addMoment"}>
+                  <button className="px-6 py-3 bg-primary-600 text-white rounded-lg shadow-md hover:bg-primary-700">
+                    Add moment
+                  </button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-8">
+            {moments &&
+              moments.map((moment, index) => (
+                <div key={index}>
+                  <MomentCard moment={moment} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

@@ -433,275 +433,282 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center bg-white h-[600px] dark:invert">
+    <div className="flex space-x-2 justify-center items-center bg-black h-screen dark:invert">
       <span className="sr-only">Loading...</span>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce"></div>
+      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+      <div className="h-8 w-8 bg-white rounded-full animate-bounce"></div>
     </div>
   ) : (
-    <div className="w-full bg-gray-200 py-10">
-      <div className="w-3/4 mx-auto bg-white">
-        <div className="px-2 flex justify-between py-4">
-          <div className="flex gap-2">
-            <div>
-              <Link href={"/myVaults/vault/" + vaultAddress}>
-                <Button color="gray" className="text-blue-500">
-                  <MdClose />
-                </Button>{" "}
-              </Link>
+    <main
+      className="relative min-h-screen overflow-hidden bg-black"
+      style={{
+        background: "radial-gradient(circle at top left, #121212, #000000)",
+      }}
+    >
+      <div className="container mx-auto max-w-6xl pt-32 pb-32">
+        <div className="w-full mx-auto">
+          <div className="px-2 flex justify-between py-4">
+            <div className="flex gap-2">
+              <div>
+                <Link href={"/myVaults/vault/" + vaultAddress}>
+                  <Button color="gray" className="text-blue-500">
+                    <MdClose />
+                  </Button>{" "}
+                </Link>
+              </div>
+              <div className="text-sm">
+                <div className="font-bold">{momentHeadline}</div>
+                <div>{mintedDate} GMT</div>
+              </div>
             </div>
-            <div className="text-sm">
-              <div className="font-bold">{momentHeadline}</div>
-              <div>{mintedDate} GMT</div>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <div>
-              <Link href={"/addMoment"}>
+            <div className="flex gap-2">
+              <div>
+                <Link href={"/addMoment"}>
+                  <Button color="gray" className="text-blue-500">
+                    Mint Moment
+                  </Button>
+                </Link>
+              </div>
+              <div>
                 <Button color="gray" className="text-blue-500">
-                  Mint Moment
+                  ...
                 </Button>
-              </Link>
-            </div>
-            <div>
-              <Button color="gray" className="text-blue-500">
-                ...
-              </Button>
-            </div>
-          </div>
-        </div>
-        <div className="px-10 pb-4">
-          <div className="flex gap-4">
-            {fileType == "image" && (
-              <img
-                src={cid}
-                alt="Preview"
-                className="carousel-item w-full h-[584px]"
-              />
-            )}
-
-            {fileType == "video" && (
-              <video
-                src={cid}
-                controls
-                className="carousel-item w-full h-[584px]"
-              />
-            )}
-          </div>
-
-          <div className="flex justify-between pt-4">
-            <div className="flex gap-2">
-              <div className="flex items-center gap-2  py-1  px-2 rounded-lg bg-pink-200 text-pink-400 font-semibold">
-                <div>
-                  <AiOutlineLike />
-                </div>
-                <div className="">{!vaultMode ? "Public" : "Private"}</div>
-              </div>
-              <div className="flex items-center gap-2 bg-gray-300  py-1  px-2 rounded-lg font-semibold">
-                {vaultName}
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <div className="flex items-center gap-2 bg-gray-300 py-1  px-2 rounded-lg">
-                <div>
-                  <BsChatRightTextFill />
-                </div>
-                <div>{commentCnt}</div>
-              </div>
-              <div
-                onClick={() => setShowLikeModal(true)}
-                className="flex items-center gap-2 bg-gray-300  py-1  px-2 rounded-lg cursor-pointer"
-              >
-                <div>
-                  <AiOutlineLike />
-                </div>
-                <div>{momentLikes.length}</div>
-              </div>
-              <div
-                onClick={() => setShowDislikeModal(true)}
-                className="flex items-center gap-2 bg-gray-300  py-1  px-2 rounded-lg cursor-pointer"
-              >
-                <div>
-                  <AiOutlineDislike />
-                </div>
-                <div>{momentDislikes.length}</div>
               </div>
             </div>
           </div>
+          <div className="px-10 pb-4">
+            <div className="flex gap-4">
+              {fileType == "image" && (
+                <img
+                  src={cid}
+                  alt="Preview"
+                  className="carousel-item w-full h-[584px]"
+                />
+              )}
 
-          <div className="mt-10 p-3">
-            <div className="text-3xl font-bold">{momentHeadline}</div>
-            <div className="">{momentDescription}</div>
-            <div className="flex gap-2 pt-1 items-center">
-              <img
-                className="rounded-lg h-[25px] w-[25px]"
-                src={profileCid}
-                alt="Profile"
-              />
-              <div className="text-sm justify-center item-center">
-                {profileName || "Loading..."}
-              </div>
+              {fileType == "video" && (
+                <video
+                  src={cid}
+                  controls
+                  className="carousel-item w-full h-[584px]"
+                />
+              )}
             </div>
-            {/* <div className="flex gap-2 pt-5">
-              <div className="px-2 py-1 bg-gray-200 rounded sm">Selfie</div>
-              <div className="px-2 py-1 bg-gray-200 rounded sm">Daily Log</div>
-              <div className="px-2 py-1 bg-gray-200 rounded sm">Baby</div>
-            </div> */}
-          </div>
 
-          <div className="comments h-[auto] p-3">
-            <div>
-              <div className="text-xl font-bold">Notepad</div>
-              <div>{momentNotes}</div>
-            </div>
-            <div>
-              <CommentComponent
-                tokenId={tokenId}
-                isMember={isMember}
-                onMessageToParent={handleChildAction}
-              />
-            </div>
-          </div>
-        </div>
-
-        {showLikeModal ? (
-          <>
-            <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-              <div className="relative w-auto my-6 mx-auto max-w-3xl">
-                {/*content*/}
-                <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
-                  {/*header*/}
-                  <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
-                    <h3 className="text-3xl font-semibold">Liked Members</h3>
-                    <button
-                      className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
-                      onClick={() => setShowLikeModal(false)}
-                    >
-                      <span className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
-                        ×
-                      </span>
-                    </button>
+            <div className="flex justify-between pt-4">
+              <div className="flex gap-2">
+                <div className="flex items-center gap-2  py-1  px-2 rounded-lg bg-pink-200 text-pink-400 font-semibold">
+                  <div>
+                    <AiOutlineLike />
                   </div>
-                  {/*body*/}
-                  <div className="relative p-6 flex-auto max-h-[600px] w-[400px]">
-                    {momentLikes.length
-                      ? momentLikes.map((mlike, index) => (
-                          <div key={index} className="commentPanelItem my-2">
-                            <div className="p-1 flex items-center space-x-3 hover:cursor-pointer">
-                              <img
-                                src={mlike.cid}
-                                alt="Andrew Alfred"
-                                className="w-10 h-10 rounded-full"
-                              />
-                              <div>
-                                <h3 className="text-sm font-medium">
-                                  {mlike.generatedName}
-                                </h3>
+                  <div className="">{!vaultMode ? "Public" : "Private"}</div>
+                </div>
+                <div className="flex items-center gap-2 bg-gray-300  py-1  px-2 rounded-lg font-semibold">
+                  {vaultName}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <div className="flex items-center gap-2 bg-gray-300 py-1  px-2 rounded-lg">
+                  <div>
+                    <BsChatRightTextFill />
+                  </div>
+                  <div>{commentCnt}</div>
+                </div>
+                <div
+                  onClick={() => setShowLikeModal(true)}
+                  className="flex items-center gap-2 bg-gray-300  py-1  px-2 rounded-lg cursor-pointer"
+                >
+                  <div>
+                    <AiOutlineLike />
+                  </div>
+                  <div>{momentLikes.length}</div>
+                </div>
+                <div
+                  onClick={() => setShowDislikeModal(true)}
+                  className="flex items-center gap-2 bg-gray-300  py-1  px-2 rounded-lg cursor-pointer"
+                >
+                  <div>
+                    <AiOutlineDislike />
+                  </div>
+                  <div>{momentDislikes.length}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-10 p-3">
+              <div className="text-3xl font-bold">{momentHeadline}</div>
+              <div className="">{momentDescription}</div>
+              <div className="flex gap-2 pt-1 items-center">
+                <img
+                  className="rounded-lg h-[25px] w-[25px]"
+                  src={profileCid}
+                  alt="Profile"
+                />
+                <div className="text-sm justify-center item-center">
+                  {profileName || "Loading..."}
+                </div>
+              </div>
+              {/* <div className="flex gap-2 pt-5">
+                <div className="px-2 py-1 bg-gray-200 rounded sm">Selfie</div>
+                <div className="px-2 py-1 bg-gray-200 rounded sm">Daily Log</div>
+                <div className="px-2 py-1 bg-gray-200 rounded sm">Baby</div>
+              </div> */}
+            </div>
+
+            <div className="comments h-[auto] p-3">
+              <div>
+                <div className="text-xl font-bold">Notepad</div>
+                <div>{momentNotes}</div>
+              </div>
+              <div>
+                <CommentComponent
+                  tokenId={tokenId}
+                  isMember={isMember}
+                  onMessageToParent={handleChildAction}
+                />
+              </div>
+            </div>
+          </div>
+
+          {showLikeModal ? (
+            <>
+              <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
+                <div className="relative w-auto my-6 mx-auto max-w-3xl">
+                  {/*content*/}
+                  <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+                    {/*header*/}
+                    <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
+                      <h3 className="text-3xl font-semibold">Liked Members</h3>
+                      <button
+                        className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
+                        onClick={() => setShowLikeModal(false)}
+                      >
+                        <span className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
+                          ×
+                        </span>
+                      </button>
+                    </div>
+                    {/*body*/}
+                    <div className="relative p-6 flex-auto max-h-[600px] w-[400px]">
+                      {momentLikes.length
+                        ? momentLikes.map((mlike, index) => (
+                            <div key={index} className="commentPanelItem my-2">
+                              <div className="p-1 flex items-center space-x-3 hover:cursor-pointer">
+                                <img
+                                  src={mlike.cid}
+                                  alt="Andrew Alfred"
+                                  className="w-10 h-10 rounded-full"
+                                />
+                                <div>
+                                  <h3 className="text-sm font-medium">
+                                    {mlike.generatedName}
+                                  </h3>
+                                </div>
                               </div>
                             </div>
+                          ))
+                        : "No Data"}
+                    </div>
+                    {/*footer*/}
+                    <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
+                      <button
+                        className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                        type="button"
+                        onClick={() => setShowLikeModal(false)}
+                      >
+                        Close
+                      </button>
+                      <button
+                        className="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                        type="button"
+                        onClick={() => handleLike()}
+                      >
+                        <div className="flex items-center gap-2 cursor-pointer">
+                          <div>
+                            <AiOutlineLike />
                           </div>
-                        ))
-                      : "No Data"}
-                  </div>
-                  {/*footer*/}
-                  <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
-                    <button
-                      className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                      type="button"
-                      onClick={() => setShowLikeModal(false)}
-                    >
-                      Close
-                    </button>
-                    <button
-                      className="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                      type="button"
-                      onClick={() => handleLike()}
-                    >
-                      <div className="flex items-center gap-2 cursor-pointer">
-                        <div>
-                          <AiOutlineLike />
+                          <div>Like</div>
                         </div>
-                        <div>Like</div>
-                      </div>
-                    </button>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
-          </>
-        ) : null}
+              <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
+            </>
+          ) : null}
 
-        {showDislikeModal ? (
-          <>
-            <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-              <div className="relative w-auto my-6 mx-auto max-w-3xl">
-                {/*content*/}
-                <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
-                  {/*header*/}
-                  <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
-                    <h3 className="text-3xl font-semibold">Disliked Members</h3>
-                    <button
-                      className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
-                      onClick={() => setShowDislikeModal(false)}
-                    >
-                      <span className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
-                        ×
-                      </span>
-                    </button>
-                  </div>
-                  {/*body*/}
-                  <div className="relative p-6 flex-auto max-h-[600px] w-[400px]">
-                    {momentDislikes.length
-                      ? momentDislikes.map((mdlike, index) => (
-                          <div key={index} className="commentPanelItem my-2">
-                            <div className="p-1 flex items-center space-x-3 hover:cursor-pointer">
-                              <img
-                                src={mdlike.cid}
-                                alt="Andrew Alfred"
-                                className="w-10 h-10 rounded-full"
-                              />
-                              <div>
-                                <h3 className="text-sm font-medium">
-                                  {mdlike.generatedName}
-                                </h3>
+          {showDislikeModal ? (
+            <>
+              <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
+                <div className="relative w-auto my-6 mx-auto max-w-3xl">
+                  {/*content*/}
+                  <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+                    {/*header*/}
+                    <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
+                      <h3 className="text-3xl font-semibold">Disliked Members</h3>
+                      <button
+                        className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
+                        onClick={() => setShowDislikeModal(false)}
+                      >
+                        <span className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
+                          ×
+                        </span>
+                      </button>
+                    </div>
+                    {/*body*/}
+                    <div className="relative p-6 flex-auto max-h-[600px] w-[400px]">
+                      {momentDislikes.length
+                        ? momentDislikes.map((mdlike, index) => (
+                            <div key={index} className="commentPanelItem my-2">
+                              <div className="p-1 flex items-center space-x-3 hover:cursor-pointer">
+                                <img
+                                  src={mdlike.cid}
+                                  alt="Andrew Alfred"
+                                  className="w-10 h-10 rounded-full"
+                                />
+                                <div>
+                                  <h3 className="text-sm font-medium">
+                                    {mdlike.generatedName}
+                                  </h3>
+                                </div>
                               </div>
                             </div>
+                          ))
+                        : "No Data"}
+                    </div>
+                    {/*footer*/}
+                    <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
+                      <button
+                        className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                        type="button"
+                        onClick={() => setShowDislikeModal(false)}
+                      >
+                        Close
+                      </button>
+                      <button
+                        className="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                        type="button"
+                        onClick={() => handleDislike()}
+                      >
+                        <div className="flex items-center gap-2 cursor-pointer">
+                          <div>
+                            <AiOutlineDislike />
                           </div>
-                        ))
-                      : "No Data"}
-                  </div>
-                  {/*footer*/}
-                  <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
-                    <button
-                      className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                      type="button"
-                      onClick={() => setShowDislikeModal(false)}
-                    >
-                      Close
-                    </button>
-                    <button
-                      className="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                      type="button"
-                      onClick={() => handleDislike()}
-                    >
-                      <div className="flex items-center gap-2 cursor-pointer">
-                        <div>
-                          <AiOutlineDislike />
+                          <div>Dislike</div>
                         </div>
-                        <div>Dislike</div>
-                      </div>
-                    </button>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
-          </>
-        ) : null}
+              <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
+            </>
+          ) : null}
+        </div>
+        <Toaster />
       </div>
-      <Toaster />
-    </div>
+    </main>
   );
 }

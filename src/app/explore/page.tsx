@@ -276,10 +276,10 @@ export default function Explore() {
               </Link>
             </div>
           </div>
-        )} */}
+        )} */} 
 
         {!vaultData.length && (
-          <div className="text-center text-white mt-10 space-y-6">
+          <div className="text-center text-gray-200 mt-10 space-y-6">
             <div>
               <img 
                 // src="https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"
