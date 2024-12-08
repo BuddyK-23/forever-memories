@@ -8,6 +8,8 @@ import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
 } from "@web3modal/ethers5/react";
+import { useRouter } from "next/navigation";
+
 import {
   bytes32ToAddress,
   hexToDecimal,
@@ -15,7 +17,7 @@ import {
   getValueByKey,
   getUniversalProfileCustomName,
   convertIpfsUriToUrl,
-  checkCID,
+  isAddressInList,
 } from "@/utils/format"; // Adjust the import path as necessary
 import { ERC725 } from "@erc725/erc725.js";
 import lsp4Schema from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
@@ -57,6 +59,7 @@ interface VaultMoment {
 
 export default function Page({ params }: { params: { slug: string } }) {
   const vaultAddress = params.slug;
+  const router = useRouter();
 
   const [vaultTitle, setVaultTitle] = useState<string>();
   const [vaultDescription, setVaultDescription] = useState<string>();
@@ -72,6 +75,7 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [openMembersModal, setOpenMembersModal] = useState(false);
   const [vaultProfileName, setVaultProfileName] = useState<string>("");
   const [vaultProfileCid, setVaultProfileCid] = useState<string>("");
+  const [isJoinedVault, setIsJoinedVault] = useState<boolean>(false);
 
   useEffect(() => {
     init();
@@ -179,6 +183,14 @@ export default function Page({ params }: { params: { slug: string } }) {
       const memberList = await VaultFactoryContract.getVaultMembers(
         vaultAddress
       );
+      if (isAddressInList(memberList, address as string)) {
+        console.log(true);
+        setIsJoinedVault(true);
+      } else {
+        console.log(false);
+        setIsJoinedVault(false);
+      }
+
       console.log("memberList", memberList);
       let vaultMembers_: VaultMember[] = [];
       if (memberList.length > 0)
@@ -294,7 +306,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         signer
       );
       const tx = await VaultFactoryContract.joinVault(vaultAddress);
-      init();
+      router.push("/myVaults/" + vaultAddress);
       toast.success("Joint to vault successfully.");
     } else {
       toast.error("Please connect the wallet.");
@@ -319,12 +331,16 @@ export default function Page({ params }: { params: { slug: string } }) {
         {/* Vault Name and Join Button */}
         <div className="flex justify-between items-center">
           <div className="font-bold text-3xl text-gray-200">{vaultTitle}</div>
-          <button
-            onClick={() => handleJoinVault()}
-            className="px-5 py-2 bg-gray-700 text-gray-200 rounded-lg shadow-md hover:bg-gray-600"
-          >
-            Join collection
-          </button>
+          {!isJoinedVault ? (
+            <button
+              onClick={() => handleJoinVault()}
+              className="px-5 py-2 bg-gray-700 text-gray-200 rounded-lg shadow-md hover:bg-gray-600"
+            >
+              Join collection
+            </button>
+          ) : (
+            ""
+          )}
         </div>
 
         {/* Vault Description */}

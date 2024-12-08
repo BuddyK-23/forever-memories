@@ -132,17 +132,13 @@ export default function CreateVault() {
           categories
         );
         console.log("tx", tx);
+        console.log("Transaction sent:", tx.hash);
 
-        // // Wait for the transaction to be mined
-        // const receipt = await tx.wait();
-        // console.log("Transaction mined:", receipt);
-
-        toast.success("Collection created successfully!");
-
-        // Redirect to the newly created vault's page using the transaction hash
-        // router.push("/myVaults/vault/${tx.hash}");
-        router.push("/myVaults")
-
+        // Wait for the transaction to be mined
+        const receipt = await tx.wait();
+        const vaultAddress = receipt.events[2].args[0];
+        router.push("/myVaults/vault/" + vaultAddress);
+        toast.success("Vault is created successfully!");
         setImagePreview(null);
         setIsDownloading(true);
       }
