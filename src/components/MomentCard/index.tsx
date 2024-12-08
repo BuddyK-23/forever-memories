@@ -14,7 +14,7 @@ interface Moment {
   fileType: string;
   cid: string;
   likes: number;
-  dislikes: number;
+  // dislikes: number;
   comments: number;
   owner: string;
   momentAddress: string;
@@ -94,10 +94,10 @@ const MomentCard: React.FC<MomentCardProps> = ({ moment }) => {
               <span>👍</span>
               <span>{moment.likes}</span>
             </div>
-            <div className="flex items-center space-x-1">
+            {/* <div className="flex items-center space-x-1">
               <span>👎</span>
               <span>{moment.dislikes}</span>
-            </div>
+            </div> */}
             <div className="flex items-center space-x-1">
               <span>💬</span>
               <span>{moment.comments}</span>
