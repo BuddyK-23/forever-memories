@@ -126,8 +126,13 @@ export default function CreateVault() {
           categories
         );
         console.log("tx", tx);
+        console.log("Transaction sent:", tx.hash);
+
+        // Wait for the transaction to be mined
+        const receipt = await tx.wait();
+        const vaultAddress = receipt.events[2].args[0];
+        router.push("/myVaults/vault/" + vaultAddress);
         toast.success("Vault is created successfully!");
-        router.push("/myVaults");
         setImagePreview(null);
         setIsDownloading(true);
       }

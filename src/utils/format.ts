@@ -178,6 +178,16 @@ export function hexToDecimal(hexString: string): number {
 }
 
 /**
+ * Function to check if an address exists in the memberList.
+ * @param memberList - Array of addresses to search in.
+ * @param address - The address to compare.
+ * @returns True if the address is found, otherwise false.
+ */
+export function isAddressInList(memberList: string[], address: string): boolean {
+  return memberList.some((member) => member.toLowerCase() === address.toLowerCase());
+}
+
+/**
  * Converts an IPFS URI to a URL using a specified gateway.
  *
  * @param {string} ipfsUri - The IPFS URI, e.g., "ipfs://Qm...".
