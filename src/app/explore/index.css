@@ -10,12 +10,10 @@
 .swiper-slide {
   text-align: center;
   font-size: 16px;
-
   /* Center slide text vertically */
   display: flex;
   justify-content: center;
   align-items: center;
-
   width: max-content !important;
 }
 

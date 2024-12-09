@@ -222,13 +222,13 @@ export default function Explore() {
     </div>
   ) : (
     <main
-      className="relative min-h-screen overflow-hidden bg-black pt-20"
+      className="relative min-h-screen overflow-hidden bg-black"
       style={{
         background: "radial-gradient(circle at top left, #121212, #000000)",
       }}
     >
-      <div className="container mx-auto max-w-6xl">
-        <div className="pt-6 flex gap-2">
+      <div className="container mx-auto max-w-6xl pt-32">
+        <div className="flex gap-2">
           <Swiper
             slidesPerView={"auto"}
             spaceBetween={8}
