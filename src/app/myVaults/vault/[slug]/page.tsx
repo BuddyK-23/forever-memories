@@ -377,276 +377,233 @@ export default function Page({ params }: { params: { slug: string } }) {
         background: "radial-gradient(circle at top left, #121212, #000000)",
       }}
     >
-    <div className="container mx-auto max-w-6xl pt-32">
-      <div className="font-medium text-gray-200 text-3xl">{vaultTitle}</div>
-      <div className="pt-1">
-        <div className="flex gap-2 pt-1 items-center">
-          <img
-            className="rounded-lg h-[25px] w-[25px]"
-            src={vaultProfileCid}
-            alt="Profile"
-          />
-          <div className="text-sm justify-center item-center">
-            {vaultProfileName || "Loading..."}
-          </div>
-        </div>
-      </div>
-      <div className="pt-1 mb-4">{vaultDescription}</div>
-      <div className="flex justify-between">
-        <div className="flex justify-between gap-4 items-center">
-          <div className="flex items-center max-w-sm mx-auto">
-            <label htmlFor="simple-search" className="sr-only">
-              Search
-            </label>
-            <div className="relative w-full">
-              <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                <svg
-                  className="w-4 h-4 text-gray-500 dark:text-gray-400"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-                  />
-                </svg>
-              </div>
-              <input
-                type="text"
-                id="simple-search"
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                placeholder={`Search ` + vaultMoments.length + ` moments`}
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="p-2.5 ms-2 text-sm font-medium text-white bg-blue-700 rounded-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-            >
-              <svg
-                className="w-4 h-4"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-                />
-              </svg>
-              <span className="sr-only">Search</span>
-            </button>
-          </div>
-
-          <div
-            className="max-w-md hover:cursor-pointer"
-            onClick={() => setOpenMembersModal(true)}
-          >
-            {vaultMembers?.length} member{!vaultMembers?.length ? "" : "s"}
-          </div>
-        </div>
-        <div>
-          {vaultMode === 1 ? (
-            <button
-              type="button"
-              onClick={() => setOpenInvitationModal(true)}
-              className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-            >
-              Invite member
-            </button>
-          ) : (
-            ""
-          )}
-          <Link href={"/addMoment"}>
-            <button className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
-              Create Moment
-            </button>
-          </Link>
-          {process.env.NEXT_PUBLIC_SUPER_ADMIN_ADDRESS == address ? (
-            <button
-              onClick={() => handleRemoveVault()}
-              className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-            >
-              Remove vault
-            </button>
-          ) : (
-            ""
-          )}
-          {vaultOwner !== address ? (
-            <button
-              onClick={() => handleLeaveVault()}
-              className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-            >
-              Leave vault
-            </button>
-          ) : (
-            ""
-          )}
-        </div>
-      </div>
-
-      <div className="div">
-        {!moments.length ? (
-          <div className="pt-4 text-xl">
-            There are no moments in this vault yet. Please add a moment!
-          </div>
-        ) : (
-          <div className="py-10 grid grid-cols-5 gap-4">
-            {moments.map((moment, index) => (
-              <div key={index}>
-                <MomentCard moment={moment} />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      <Toaster />
-      <Modal
-        show={openModal}
-        size="md"
-        onClose={() => setOpenModal(false)}
-        popup
-      >
-        <Modal.Header />
-        <Modal.Body>
-          <div className="text-center">
-            <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
-            <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-              Are you sure you want to leave this vault? You will no longer have
-              access to the moments in this vault.
-            </h3>
-            <div className="flex justify-center gap-4">
-              <Button
-                className="bg-red-500"
-                onClick={() => setOpenModal(false)}
-              >
-                Yes, I&#39;m sure
-              </Button>
-              <Button
-                className="bg-white text-black"
-                onClick={() => setOpenModal(false)}
-              >
-                No, cancel
-              </Button>
-            </div>
-          </div>
-        </Modal.Body>
-      </Modal>
-      <Modal
-        show={openInvitationModal}
-        size="md"
-        onClose={() => setOpenInvitationModal(false)}
-        popup
-      >
-        {/* <Modal.Header /> */}
-        <Modal.Body>
-          <div className="text-center">
-            <HiOutlineUserAdd className="mx-auto mt-8 mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
-            <TextInput
-              id="invitationAddress"
-              type="text"
-              value={invitationAddress}
-              onChange={(e) => setInvitationAddress(e.target.value)}
-              placeholder="Input the address"
-              className="pt-2 pb-8"
-              required
+      <div className="container mx-auto max-w-6xl pt-32">
+        <div className="font-medium text-gray-200 text-3xl">{vaultTitle}</div>
+        <div className="pt-1">
+          <div className="flex gap-2 pt-1 items-center">
+            <img
+              className="rounded-lg h-[25px] w-[25px]"
+              src={vaultProfileCid}
+              alt="Profile"
             />
-            <div className="flex justify-center gap-4">
-              <Button
-                className={invitationAddress ? "bg-blue-600" : "bg-blue-400"}
-                onClick={() => handleInvitationMember()}
-              >
-                Invite
-              </Button>
-              <Button
-                className="bg-red-400 text-white"
-                onClick={() => setOpenInvitationModal(false)}
-              >
-                Cancel
-              </Button>
+            <div className="text-sm justify-center item-center">
+              {vaultProfileName || "Loading..."}
             </div>
           </div>
-        </Modal.Body>
-      </Modal>
 
-      {openMembersModal ? (
-        <>
-          <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-            <div className="relative w-auto my-6 mx-auto max-w-3xl">
-              {/*content*/}
-              <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
-                {/*header*/}
-                <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
-                  <h3 className="text-3xl font-semibold">Members</h3>
-                  <button
-                    className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
-                    onClick={() => setOpenMembersModal(false)}
-                  >
-                    <span className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
-                      ×
-                    </span>
-                  </button>
-                </div>
-                {/*body*/}
-                <div className="relative p-6 flex-auto max-h-[400px] w-[400px] overflow-y-auto ">
-                  {vaultMembers &&
-                    vaultOwner == address &&
-                    vaultMembers.map((member, index) => (
-                      <div
-                        className="p-1 flex items-center space-x-3"
-                        key={index}
-                      >
-                        <img
-                          src={member.cid}
-                          alt={member.name}
-                          className="w-10 h-10 rounded-full"
-                        />
-                        <div>
-                          <h3 className="text-sm font-medium">
-                            {member.generatedName}
-                          </h3>
-                        </div>
-                        {vaultOwner == address ? (
-                          <div className="flex justify-center gap-4">
-                            <Button
-                              className="bg-red-400 text-white"
-                              onClick={() => handleRemoveMember(member.name)}
-                            >
-                              Remove
-                            </Button>
-                          </div>
-                        ) : (
-                          ""
-                        )}
-                      </div>
-                    ))}
-                </div>
-                {/*footer*/}
-                <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
-                  <button
-                    className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                    type="button"
-                    onClick={() => setOpenMembersModal(false)}
-                  >
-                    Close
-                  </button>
-                </div>
+          {/* Vault Description */}
+          <div className="pt-2 text-gray-200">{vaultDescription}</div>
+
+          {/* Vault Owner, Members, and Moments */}
+          <div className="flex items-center gap-4 pt-4">
+            <div className="flex items-center gap-2">
+              <img
+                className="rounded-full object-cover w-8 h-8"
+                src={vaultProfileCid}
+                alt="Profile"
+              />
+              <div className="text-sm text-gray-200">
+                {vaultProfileName || "Loading..."}
+              </div>
+            </div>
+            <div className="flex gap-2 text-gray-400 hover:text-gray-300">
+              <div
+                className="hover:cursor-pointer"
+                onClick={() => setOpenMembersModal(true)}
+              >
+                {vaultMembers?.length} member
+                {vaultMembers?.length !== 1 ? "s" : ""}
+              </div>
+              <div>|</div>
+              <div>
+                {moments?.length || 0} moment{moments?.length !== 1 ? "s" : ""}
               </div>
             </div>
           </div>
-          <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
-        </>
-      ) : null}
-    </div>
+
+          {/* Moments */}
+
+          <div className="div">
+            {!moments.length ? (
+              <div className="text-center text-gray-200 mt-2 space-y-6">
+                <div>
+                  <img
+                    // src="https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"
+                    src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExazJkdG1uOHR0cTI5ZWltY3YzdTc0anVsMmluMGpybTJmajdtMzc1ciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ISOckXUybVfQ4/giphy.gif"
+                    alt="Oh no Spongbob gif"
+                    className="mx-auto w-96 h-auto"
+                  />
+                </div>
+                <div className="text-xl font-bold">
+                  There are no moments in this collection yet!
+                </div>
+                <div className="text-base">
+                  Add a moment to get the collection started
+                </div>
+                <div className="pt-6 flex justify-center items-center">
+                  <Link href={"/addMoment"}>
+                    <button className="px-6 py-3 bg-primary-600 text-white rounded-lg shadow-md hover:bg-primary-700">
+                      Add moment
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-8">
+                {moments &&
+                  moments.map((moment, index) => (
+                    <div key={index}>
+                      <MomentCard moment={moment} />
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+
+          <Toaster />
+
+          <Modal
+            show={openModal}
+            size="md"
+            onClose={() => setOpenModal(false)}
+            popup
+          >
+            <Modal.Header />
+            <Modal.Body>
+              <div className="text-center">
+                <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
+                <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+                  Are you sure you want to leave this vault? You will no longer
+                  have access to the moments in this vault.
+                </h3>
+                <div className="flex justify-center gap-4">
+                  <Button
+                    className="bg-red-500"
+                    onClick={() => setOpenModal(false)}
+                  >
+                    Yes, I&#39;m sure
+                  </Button>
+                  <Button
+                    className="bg-white text-black"
+                    onClick={() => setOpenModal(false)}
+                  >
+                    No, cancel
+                  </Button>
+                </div>
+              </div>
+            </Modal.Body>
+          </Modal>
+          <Modal
+            show={openInvitationModal}
+            size="md"
+            onClose={() => setOpenInvitationModal(false)}
+            popup
+          >
+            {/* <Modal.Header /> */}
+            <Modal.Body>
+              <div className="text-center">
+                <HiOutlineUserAdd className="mx-auto mt-8 mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
+                <TextInput
+                  id="invitationAddress"
+                  type="text"
+                  value={invitationAddress}
+                  onChange={(e) => setInvitationAddress(e.target.value)}
+                  placeholder="Input the address"
+                  className="pt-2 pb-8"
+                  required
+                />
+                <div className="flex justify-center gap-4">
+                  <Button
+                    className={
+                      invitationAddress ? "bg-blue-600" : "bg-blue-400"
+                    }
+                    onClick={() => handleInvitationMember()}
+                  >
+                    Invite
+                  </Button>
+                  <Button
+                    className="bg-red-400 text-white"
+                    onClick={() => setOpenInvitationModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </Modal.Body>
+          </Modal>
+
+          {openMembersModal ? (
+            <>
+              <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
+                <div className="relative w-auto my-6 mx-auto max-w-3xl">
+                  {/*content*/}
+                  <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+                    {/*header*/}
+                    <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
+                      <h3 className="text-3xl font-semibold">Members</h3>
+                      <button
+                        className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
+                        onClick={() => setOpenMembersModal(false)}
+                      >
+                        <span className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
+                          ×
+                        </span>
+                      </button>
+                    </div>
+                    {/*body*/}
+                    <div className="relative p-6 flex-auto max-h-[400px] w-[400px] overflow-y-auto ">
+                      {vaultMembers &&
+                        vaultOwner == address &&
+                        vaultMembers.map((member, index) => (
+                          <div
+                            className="p-1 flex items-center space-x-3"
+                            key={index}
+                          >
+                            <img
+                              src={member.cid}
+                              alt={member.name}
+                              className="w-10 h-10 rounded-full"
+                            />
+                            <div>
+                              <h3 className="text-sm font-medium">
+                                {member.generatedName}
+                              </h3>
+                            </div>
+                            {vaultOwner == address ? (
+                              <div className="flex justify-center gap-4">
+                                <Button
+                                  className="bg-red-400 text-white"
+                                  onClick={() =>
+                                    handleRemoveMember(member.name)
+                                  }
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            ) : (
+                              ""
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                    {/*footer*/}
+                    <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
+                      <button
+                        className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                        type="button"
+                        onClick={() => setOpenMembersModal(false)}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
+            </>
+          ) : null}
+        </div>
+      </div>
     </main>
   );
 }

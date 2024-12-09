@@ -14,6 +14,7 @@ interface Moment {
   fileType: string;
   cid: string;
   likes: number;
+  // dislikes: number;
   comments: number;
   owner: string;
   momentAddress: string;
@@ -31,11 +32,10 @@ const MomentCard: React.FC<MomentCardProps> = ({ moment }) => {
     const fetchProfileName = async () => {
       try {
         const profile = await getUniversalProfileCustomName(moment.owner);
-        setProfileName(profile.profileName);
-        console.log("profileCid", convertIpfsUriToUrl(profile.cid));
+        setProfileName(profile.profileName || "Unknown");
         setProfileCid(convertIpfsUriToUrl(profile.cid));
       } catch (error) {
-        console.error("Error fetching profile name:", error);
+        console.error("Error fetching owner profile:", error);
         setProfileName("Unknown");
       }
     };
@@ -44,13 +44,19 @@ const MomentCard: React.FC<MomentCardProps> = ({ moment }) => {
   }, []);
 
   return (
-    <Link className="w-full h-[300px]" href={`/nft/` + moment.momentAddress}>
-      <div className="w-full">
+    <Link 
+      className="block relative group rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-gray-900" 
+      href={`/nft/${moment.momentAddress}`}
+    >
+      {/* Moment Image */}
+
+      <div className="relative w-full h-[300px]">
         {moment.fileType == "image" && (
           <img
             src={moment.cid}
-            alt="Preview"
-            className="w-full rounded-lg h-[300px]"
+            alt={moment.headline}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => (e.currentTarget.src = "/fallback-image.jpg")}
           />
         )}
 
@@ -58,24 +64,46 @@ const MomentCard: React.FC<MomentCardProps> = ({ moment }) => {
           <video
             src={moment.cid}
             controls
-            className="w-full rounded-lg h-[300px]"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => (e.currentTarget.src = "/fallback-image.jpg")}
           />
         )}
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-300"></div>
       </div>
-      <div className="flex gap-2 text-xs pt-2">
-        <div>Likes: {moment.likes}</div>
-        <div>Comments: {moment.comments}</div>
-      </div>
-      <div className="font-bold">{moment.headline}</div>
-      <div className="">{moment.description}</div>
 
-      <div className="flex gap-2 pt-1 items-center">
-        <img
-          className="rounded-lg h-[25px] w-[25px]"
-          src={profileCid}
-          alt="moment.name"
-        />
-        <div className="text-sm justify-center item-center">{profileName}</div>
+      {/* Moment Details */}
+      <div className="absolute bottom-0 p-4 w-full text-white group-hover:bg-black/70 transition-all duration-300">
+        <h3 className="font-bold text-lg truncate">{moment.headline}</h3>
+        <p className="text-sm truncate overflow-hidden whitespace-nowrap">{moment.description}</p>
+
+        <div className="flex justify-between items-center mt-2 text-sm">
+          {/* Owner Info */}
+          <div className="relative">
+            <img
+              className="rounded-full h-8 w-8 object-cover"
+              src={profileCid || "/default-avatar.png"}
+              alt="Owner Profile"
+            />
+            <span className="text-xs ml-2">{profileName || "Loading..."}</span>
+          </div>
+
+          {/* Likes, Dislikes, and Comments */}
+          <div className="flex space-x-4">
+            <div className="flex items-center space-x-1">
+              <span>👍</span>
+              <span>{moment.likes}</span>
+            </div>
+            {/* <div className="flex items-center space-x-1">
+              <span>👎</span>
+              <span>{moment.dislikes}</span>
+            </div> */}
+            <div className="flex items-center space-x-1">
+              <span>💬</span>
+              <span>{moment.comments}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </Link>
   );

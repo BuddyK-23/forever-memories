@@ -19,6 +19,7 @@ const Navbar = () => {
   const [bannerUrl, setBannerUrl] = useState("/default-banner.png");
   const [lyxBalance, setLyxBalance] = useState("0.00");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
   // const [currentPath, setCurrentPath] = useState(""); // Store the current path
 
   // const router = useRouter();
@@ -29,6 +30,19 @@ const Navbar = () => {
   //     setCurrentPath(router.pathname); // Get the current path from the router
   //   }
   // }, [router.pathname]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Set state based on scroll position
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   const handleConnect = async () => {
     await walletConnectInstance.open();
@@ -96,7 +110,9 @@ const Navbar = () => {
   ];
 
   return (
-    <header className="fixed top-0 left-0 w-full h-16 px-6 flex items-center justify-center text-white z-50">
+    <header className={`fixed top-0 left-0 w-full h-16 px-6 flex items-center justify-center text-white z-50 transition-colors duration-300 ${
+      isScrolled ? "bg-black/90" : "bg-transparent"
+    }`}>
       <div className="container mx-auto max-w-6xl flex justify-between items-center">
         {/* Logo */}
         <Link href="/" className="flex items-center z-50">

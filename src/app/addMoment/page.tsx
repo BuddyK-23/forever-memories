@@ -109,7 +109,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
   const [notes, setNotes] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [copies, setCopies] = useState<number>(3); // Default to 3 copies
-  const [vault, setVault] = useState<Vault>();
+  const [vault, setVault] = useState<Vault | undefined>(undefined);
   const [file, setFile] = useState<File | null>(null);
   const [cid, setCid] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -406,7 +406,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
   };
 
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center bg-black h-[600px] dark:invert">
+    <div className="flex space-x-2 justify-center items-center bg-black min-h-screen dark:invert">
       <span className="sr-only">Loading...</span>
       <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></div>
       <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></div>
@@ -419,16 +419,16 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         background: "radial-gradient(circle at top left, #121212, #000000)",
       }}
     >
-    <div className="container mx-auto max-w-6xl pt-32">
+    <div className="container mx-auto max-w-2xl pt-32 pb-32">
       <div className="flex justify-center main-content gap-x-1 mb-20 w-full">
-        <div className="w-2/3">
-          <h4 className="mb-2 text-3xl font-bold text-gray-200">Create a moment</h4>
+        <div className="w-full">
+          <h4 className="text-3xl text-gray-200 font-medium mb-6">Add a moment</h4>
           <div>
             <div className="mb-4">
               <div className="flex items-center justify-center w-full">
                 <label
                   htmlFor="dropzone-file"
-                  className="flex flex-col items-center justify-center w-full h-[300px] md:h-[500px] border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50/75 dark:bg-gray-700/75 hover:bg-gray-100/90 dark:hover:bg-gray-600/90 shadow-md shadow-gray-700/40"
+                  className="flex flex-col items-center justify-center w-full h-[300px] md:h-[500px] border-2 border-gray-600 border-dashed rounded-xl cursor-pointer bg-gray-700  hover:bg-gray-700/90"
                 >
                   {imagePreview && (
                     <img
@@ -449,7 +449,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                   {!videoPreview && !imagePreview && (
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <svg
-                        className="w-8 h-8 mb-4 text-gray-400 dark:text-gray-300"
+                        className="w-8 h-8 mb-4 text-gray-200"
                         aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
@@ -463,11 +463,11 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                           d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
                         />
                       </svg>
-                      <p className="mb-2 text-sm text-gray-600 dark:text-gray-300">
-                        <span className="font-semibold">Click to upload</span>{" "}
+                      <p className="mb-2 text-base text-gray-200">
+                        <span className="font-medium">Click to upload</span>{" "}
                         or drag and drop
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-sm text-gray-400 ">
                         Max. File Size: 20MB
                       </p>
                     </div>
@@ -482,23 +482,16 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                 </label>
               </div>
             </div>
-            <div className="mb-4">
+            {/* <div className="mb-4">
               <label
                 htmlFor="vault"
-                className="block mb-2 text-sm font-medium text-gray-900 dark:text-white flex justify-between"
+                className="block mb-2 text-gray-200 flex justify-between"
               >
                 <div>Select a vault</div>
-                <div>
-                  {vault?.vaultMode === 0 ? (
-                    <span className="text-blue-500 font-bold">Public</span>
-                  ) : (
-                    <span className="text-red-500 font-bold">Private</span>
-                  )}
-                </div>
               </label>
               <select
                 id="vault"
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                className="w-full px-3 py-2 rounded-md bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 value={vault?.name} // Set the value to vault.label
                 onChange={(e) => {
                   const selectedOption = vaultData.find(
@@ -515,20 +508,70 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                   </option>
                 ))}
               </select>
+              <div>
+                  {vault?.vaultMode === 0 ? (
+                    <span className="text-blue-500 font-bold">Public collection</span>
+                  ) : (
+                    <span className="text-red-500 font-bold">Private collection</span>
+                  )}
+                </div>
+            </div> */}
+
+            <div className="mb-4">
+              <label
+                htmlFor="vault"
+                className="block mb-2 text-gray-200 flex justify-between"
+              >
+                <div>Select a collection</div>
+              </label>
+              <div className="relative">
+                <select
+                  id="vault"
+                  className="w-full px-3 py-2 rounded-md bg-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none"
+                  value={vault?.name || ''} // show placeholder if vault is undefined
+                  onChange={(e) => {
+                    const selectedOption = vaultData.find(
+                      (option) => option.name === e.target.value
+                    );
+                    setVault(selectedOption || undefined); // Update vault state
+                  }}
+                >
+                  <option value="" disabled>
+                    Select a collection
+                  </option>
+                  {vaultData.map((option, index) => (
+                    <option key={index} value={option.name}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+                {vault?.vaultMode !== undefined && (
+                  <span
+                    className={`absolute top-1/2 right-9 transform -translate-y-1/2 px-2 py-1 text-sm rounded-md ${
+                      vault.vaultMode === 0
+                        ? 'bg-gray-600 text-gray-200'
+                        : 'bg-gray-800 text-gray-200'
+                    }`}
+                  >
+                    {vault.vaultMode === 0 ? 'Public collection' : 'Private collection'}
+                  </span>
+                )}
+              </div>
             </div>
+
 
             <div className="mb-4">
               <label
                 htmlFor="headline"
-                className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                className="block mb-2 text-gray-200"
               >
-                Headline
+                Moment title
               </label>
               <input
                 id="headline"
                 type="text"
-                className="rounded p-2 w-full border-solid border-black-500"
-                placeholder="Input the headline"
+                className="w-full px-3 py-2 rounded-md bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-200"
+                placeholder="Enter moment title"
                 value={headline}
                 onChange={(e) => setHeadline(e.target.value)}
               />
@@ -537,20 +580,20 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
             <div className="mb-4">
               <label
                 htmlFor="description"
-                className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                className="block mb-2 text-gray-200"
               >
-                Description
+                Moment description
               </label>
               <textarea
                 id="description"
-                className="resize-y rounded-md w-full h-20 p-2"
-                placeholder="Input the description"
+                className="w-full px-3 py-2 rounded-md bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-200"
+                placeholder="Enter description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
 
-            <div className="mb-4">
+            {/* <div className="mb-4">
               <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                 Select Tags
               </label>
@@ -576,14 +619,21 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
-            </div>
+            </div> */}
             <div className="w-full flex justify-center">
               <button
                 type="submit"
+                disabled={uploading} // Disable button during submission
                 onClick={handleMintMoment}
-                className="mt-4 bg-primary-600 hover:bg-primary-500 text-gray-200 font-medium px-6 py-3 rounded shadow-lg shadow-gray-500/50"
+                className={`w-full py-3 rounded-lg px-6 shadow-md ${
+                  uploading ? "bg-gray-600" : "bg-primary-600 hover:bg-primary-500"
+                } text-gray-200 text-lg font-medium flex justify-center items-center`}
               >
-                {uploading ? "Storing on chain..." : "Create Moment"}
+                {uploading ? (
+                  <span className="animate-spin h-5 w-5 border-4 border-t-transparent border-gray-200 rounded-full"></span>
+                ) : (
+                  "Add moment"
+                )}
               </button>
             </div>
           </div>
