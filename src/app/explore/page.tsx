@@ -41,7 +41,7 @@ export default function Explore() {
   const selectedCategoryButtonStyle =
     "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-gray-300 hover:bg-gray-200 text-gray-800 relative";
   const categoryButtonStyle =
-    "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-white relative";
+    "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-gray-200 relative";
   
   // // Fetch vault counts for all categories
   // useEffect(() => {
@@ -214,17 +214,37 @@ export default function Explore() {
   };
 
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center bg-black h-screen dark:invert">
-      <span className="sr-only">Loading...</span>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce"></div>
+    <div className="flex flex-col justify-center items-center bg-black min-h-screen text-gray-200"> 
+      <div className="flex space-x-2 justify-center items-center">
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+      </div>
+      <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
+        <p className="text-lg mt-8">Loading</p>
+        {/* <p className="text-base mt-2 italic">"Every moment is a memory in the making"</p> */}
+      </div>
     </div>
   ) : (
     <main
       className="relative min-h-screen overflow-hidden bg-black"
       style={{
-        background: "radial-gradient(circle at top left, #121212, #000000)",
+        background: "radial-gradient(circle at top left, #041420, #000000)",
       }}
     >
       <div className="container mx-auto max-w-6xl pt-32">
@@ -279,7 +299,7 @@ export default function Explore() {
         )} */} 
 
         {!vaultData.length && (
-          <div className="text-center text-gray-200 mt-10 space-y-6">
+          <div className="text-center text-gray-200 mt-10 space-y-4">
             <div>
               <img 
                 // src="https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"
@@ -288,11 +308,11 @@ export default function Explore() {
                 className="mx-auto w-96 h-auto"
               />
             </div>
-            <div className="text-xl font-bold">There are no collections here yet!</div>
+            <div className="text-xl font-medium">There are no collections here yet!</div>
             <div className="text-base">Create a new one to get the party started 🎉</div>
-            <div className="pt-6 flex justify-center items-center">
+            <div className="pt-3 flex justify-center items-center">
               <Link href={"/createVault"}>
-                <button className="px-6 py-3 bg-primary-600 text-white rounded-lg shadow-md hover:bg-primary-700">
+                <button className="px-6 py-3 bg-primary-600 text-white rounded-lg shadow-md hover:bg-primary-500">
                   Create new collection
                 </button>
               </Link>

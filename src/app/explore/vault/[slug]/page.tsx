@@ -3,6 +3,7 @@
 import { Button, Modal, TextInput } from "flowbite-react";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
+import { AiOutlinePlusCircle } from "react-icons/ai";
 import { ethers } from "ethers";
 import {
   useWeb3ModalAccount,
@@ -76,6 +77,11 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [vaultProfileName, setVaultProfileName] = useState<string>("");
   const [vaultProfileCid, setVaultProfileCid] = useState<string>("");
   const [isJoinedVault, setIsJoinedVault] = useState<boolean>(false);
+
+  const [isExpanded, setIsExpanded] = useState(false);
+  const toggleDescription = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   useEffect(() => {
     init();
@@ -314,23 +320,52 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center bg-black h-screen dark:invert">
-      <span className="sr-only">Loading...</span>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce"></div>
+    <div className="flex flex-col justify-center items-center bg-black min-h-screen text-gray-200"> 
+      <div className="flex space-x-2 justify-center items-center">
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+      </div>
+      <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
+        <p className="text-lg mt-8">Loading collection</p>
+        <p className="text-base mt-2 italic">"Each moment tells a story; together, they create a legacy."</p>
+      </div>
     </div>
   ) : (
     <main
       className="relative min-h-screen overflow-hidden bg-black"
       style={{
-        background: "radial-gradient(circle at top left, #121212, #000000)",
+        background: "radial-gradient(circle at top left, #041420, #000000)",
       }}
     >
       <div className="container mx-auto max-w-6xl pt-32 pb-32">
         {/* Vault Name and Join Button */}
         <div className="flex justify-between items-center">
-          <div className="font-bold text-3xl text-gray-200">{vaultTitle}</div>
+          <div className="flex items-center gap-2 pl-2 pr-3 border border-gray-900/80 py-1 bg-gray-900/80 rounded-full shadow-sm">
+            <img
+              className="rounded-full object-cover w-8 h-8"
+              src={vaultProfileCid}
+              alt="Profile"
+            />
+            <div className="text-base text-gray-200">
+              {vaultProfileName || "Loading..."}
+            </div>
+          </div>
           {!isJoinedVault ? (
             <button
               onClick={() => handleJoinVault()}
@@ -343,24 +378,32 @@ export default function Page({ params }: { params: { slug: string } }) {
           )}
         </div>
 
+        {/* Vault Title & Description */}
+        <div className="font-bold text-3xl text-gray-200 pt-3 mb-3">{vaultTitle}</div>
         {/* Vault Description */}
-        <div className="pt-2 text-gray-200">{vaultDescription}</div>
+        <div className="text-gray-200 mb-3">
+          <div
+            className={`overflow-hidden ${isExpanded ? '' : 'line-clamp-2'}`}
+            style={{ display: '-webkit-box', WebkitLineClamp: isExpanded ? 'unset' : '2', WebkitBoxOrient: 'vertical' }}
+          >
+            {vaultDescription}
+          </div>
+          {vaultDescription.length > 100 && (
+            <button
+              onClick={toggleDescription}
+              className="text-gray-600 hover:text-gray-500 text-sm"
+            >
+              {isExpanded ? 'Hide full description' : 'Expand description'}
+            </button>
+          )}
+        </div>
+        {/* <div className="pt-2 pb-2 text-gray-200">{vaultDescription}</div> */}
 
         {/* Vault Owner, Members, and Moments */}
-        <div className="flex items-center gap-4 pt-4">
-          <div className="flex items-center gap-2">
-            <img
-              className="rounded-full object-cover w-8 h-8"
-              src={vaultProfileCid}
-              alt="Profile"
-            />
-            <div className="text-sm text-gray-200">
-              {vaultProfileName || "Loading..."}
-            </div>
-          </div>
-          <div className="flex gap-2 text-gray-400 hover:text-gray-300">
+        <div className="flex items-center gap-4">
+          <div className="flex gap-2 text-gray-200">
             <div
-              className="hover:cursor-pointer"
+              className="hover:cursor-pointer hover:text-primary-300"
               onClick={() => setOpenMembersModal(true)}
             >
               {vaultMembers?.length} member
@@ -375,7 +418,7 @@ export default function Page({ params }: { params: { slug: string } }) {
 
         <div className="div">
           {!moments.length ? (
-            <div className="text-center text-gray-200 mt-2 space-y-6 ">
+            <div className="text-center text-gray-200 mt-10 space-y-4 ">
               <div>
                 <img 
                   // src="https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"
@@ -384,7 +427,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                   className="mx-auto w-96 h-auto"
                 />
               </div>
-              <div className="text-xl font-bold">There are no moments in this collection yet!</div>
+              <div className="text-xl font-medium">There are no moments in this collection yet!</div>
               <div className="text-base">Add a moment to get the collection started</div>
               <div className="pt-6 flex justify-center items-center">
                 <Link href={"/addMoment"}>

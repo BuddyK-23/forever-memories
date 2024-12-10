@@ -39,8 +39,8 @@ import "./index.css";
 import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
 
 // Define MIME type limits
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
-const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_IMAGE_SIZE = 8 * 1024 * 1024; // 8MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
 
 interface TagOption {
   value: number;
@@ -83,13 +83,13 @@ const getFileTypeAndCheckSize = (
     fileType = 1; // Image type
     if (file.size > MAX_IMAGE_SIZE) {
       isValid = false;
-      toast.error("Image file size exceeds the 10MB limit.");
+      toast.error("Image file size exceeds the 8MB limit.");
     }
   } else if (mimeType === "video/mp4" || mimeType === "video/avi") {
     fileType = 2; // Video type
     if (file.size > MAX_VIDEO_SIZE) {
       isValid = false;
-      toast.error("Video file size exceeds the 20MB limit.");
+      toast.error("Video file size exceeds the 50MB limit.");
     }
   } else {
     isValid = false;
@@ -115,83 +115,92 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
-
-  const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const [loadingStage, setLoadingStage] = useState(''); // Tracks which stage is currently active
+  const [isDownloading, setIsDownloading] = useState<boolean>(true);
   const [vaultData, setVaultData] = useState<Vault[]>([]);
   const [fileType, setFileType] = useState<number>(1); // 1 for image, 2 for video
 
   useEffect(() => {
     const init = async () => {
       if (walletProvider && address) {
-        // Ensuring both are available
-        const ethersProvider = new ethers.providers.Web3Provider(
-          walletProvider,
-          "any"
-        );
-        const signer = ethersProvider.getSigner(address);
+        try {
+          const ethersProvider = new ethers.providers.Web3Provider(
+            walletProvider,
+            "any"
+          );
+          const signer = ethersProvider.getSigner(address);
 
-        const VaultContract = new ethers.Contract(
-          process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
-          VaultABI.abi,
-          signer
-        );
-
-        const VaultFactoryContract = new ethers.Contract(
-          process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-          VaultFactoryABI.abi,
-          signer
-        );
-        const nonOwnedPublicVaultList =
-          await VaultFactoryContract.getVaultsByUser(address, true);
-        const nonOwnedPrivateVaultList =
-          await VaultFactoryContract.getVaultsByUser(address, false);
-        const ownedPublicVaultList =
-          await VaultFactoryContract.getVaultsOwnedByUser(address, true);
-        const ownedPrivateVaultList =
-          await VaultFactoryContract.getVaultsOwnedByUser(address, false);
-        // // get all vault list
-        // const ownedPrivateVaultList =
-        //   await VaultFactoryContract.getPrivateVaultsOwnedByUser(address);
-        // const nonOwnedPrivateVaultList =
-        //   await VaultFactoryContract.getPrivateVaultsByUser(address);
-        // const ownedPublicVaultList =
-        //   await VaultFactoryContract.getPublicVaultsOwnedByUser(address);
-        // const nonOwnedPublicVaultList =
-        //   await VaultFactoryContract.getPublicVaultsByUser(address);
-        const vaultList = [
-          ...ownedPrivateVaultList,
-          ...nonOwnedPrivateVaultList,
-          ...ownedPublicVaultList,
-          ...nonOwnedPublicVaultList,
-        ];
-
-        const vaults: Vault[] = [];
-        for (let i = 0; i < vaultList.length; i++) {
-          const data = await VaultFactoryContract.getVaultMetadata(
-            vaultList[i]
+          const VaultContract = new ethers.Contract(
+            process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+            VaultABI.abi,
+            signer
           );
 
-          const momentCount = await VaultContract.getNFTcounts(vaultList[i]);
-          console.log("data.vaultMode", data.vaultMode);
-          const _vault = {
-            name: data.title,
-            description: data.description,
-            cid: data.imageURI,
-            moments: hexToDecimal(momentCount._hex),
-            members: hexToDecimal(data.memberCount._hex),
-            owner: data.vaultOwner,
-            vaultAddress: vaultList[i],
-            vaultMode: data.vaultMode,
-          };
-          vaults.push(_vault);
+          const VaultFactoryContract = new ethers.Contract(
+            process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+            VaultFactoryABI.abi,
+            signer
+          );
 
-          if (i == 0) {
-            setVault(_vault);
+          //Fetch all vaults
+          const nonOwnedPublicVaultList =
+            await VaultFactoryContract.getVaultsByUser(address, true);
+          const nonOwnedPrivateVaultList =
+            await VaultFactoryContract.getVaultsByUser(address, false);
+          const ownedPublicVaultList =
+            await VaultFactoryContract.getVaultsOwnedByUser(address, true);
+          const ownedPrivateVaultList =
+            await VaultFactoryContract.getVaultsOwnedByUser(address, false);
+          // // get all vault list
+          // const ownedPrivateVaultList =
+          //   await VaultFactoryContract.getPrivateVaultsOwnedByUser(address);
+          // const nonOwnedPrivateVaultList =
+          //   await VaultFactoryContract.getPrivateVaultsByUser(address);
+          // const ownedPublicVaultList =
+          //   await VaultFactoryContract.getPublicVaultsOwnedByUser(address);
+          // const nonOwnedPublicVaultList =
+          //   await VaultFactoryContract.getPublicVaultsByUser(address);
+          const vaultList = [
+            ...ownedPrivateVaultList,
+            ...nonOwnedPrivateVaultList,
+            ...ownedPublicVaultList,
+            ...nonOwnedPublicVaultList,
+          ];
+
+          const vaults: Vault[] = [];
+          for (let i = 0; i < vaultList.length; i++) {
+            const data = await VaultFactoryContract.getVaultMetadata(
+              vaultList[i]
+            );
+            const momentCount = await VaultContract.getNFTcounts(vaultList[i]);
+            //console.log("data.vaultMode", data.vaultMode);
+            const _vault = {
+              name: data.title,
+              description: data.description,
+              cid: data.imageURI,
+              moments: hexToDecimal(momentCount._hex),
+              members: hexToDecimal(data.memberCount._hex),
+              owner: data.vaultOwner,
+              vaultAddress: vaultList[i],
+              vaultMode: data.vaultMode,
+            };
+            vaults.push(_vault);
+
+            if (i == 0) {
+              setVault(_vault);
+            }
           }
-        }
 
-        setVaultData(vaults);
-        setIsDownloading(true);
+          setVaultData(vaults);
+          //setVault(vaults[0] || undefined); // Default to the first vault
+        } catch (e) {
+          console.log("Initialisation error:", e);
+          toast.error("Error fetching collection data");
+        } finally {
+          setIsDownloading(false); // Ensure this is always called
+        }
+      } else {
+        setIsDownloading(false); // Handles case where walletProvider or address is undefined
       }
     };
 
@@ -244,185 +253,323 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
 
   const handleMintMoment = async (e: FormEvent) => {
     e.preventDefault();
-    setIsDownloading(false);
-    /////////////////////////////////////////////////////////
-    if (address && walletProvider && vaultData.length) {
-      try {
-        let vaultAddress: string = "";
-        if (!vault?.vaultAddress) {
-          vaultAddress = vaultData[0].vaultAddress;
-        } else {
-          vaultAddress = vault.vaultAddress;
-        }
-        setUploading(true);
-        const formData = new FormData();
+    
+    if (!address || !walletProvider || !vaultData.length) {
+      toast.error("Connect your wallet");
+      return;
+    }
+    
+    try {
+      // Ensure vaultAddress is correctly set
+      let vaultAddress: string = "";
+      if (!vault?.vaultAddress) {
+        vaultAddress = vaultData[0].vaultAddress;
+      } else {
+        vaultAddress = vault.vaultAddress;
+      }
 
-        !file ? "" : formData.append("file", file); // FormData keys are called fields
-        const { type, error } = detectFileType(file as File);
+      // Start the uploading process
+      setUploading(true);
 
-        const currentTimestamp = Date.now();
+      // Stage 1: Connecting to the UP browser extension
+      setLoadingStage('connecting');
+      const ethersProvider = new ethers.providers.Web3Provider(walletProvider, 'any');
+      const signer = await ethersProvider.getSigner(address);
 
-        formData.append(
-          "momentMetadata",
-          vault?.vaultAddress + headline + address + currentTimestamp
-        );
-        const resAssetData_ = await fetch("/api/uploadAssetsToIPFS", {
-          method: "POST",
-          body: formData,
-        });
+      // Simulate connecting to the UP browser extension
+      await new Promise(resolve => setTimeout(resolve, 8000));
+      setLoadingStage('connected'); // User confirmed connection
 
-        const resAssetData = await resAssetData_.json();
-        const ipfsHash = resAssetData.ipfsHash;
-        const combinedEncryptedData = resAssetData.combinedEncryptedData;
+      // Stage 2: Preparing data
+      const formData = new FormData();
+      !file ? "" : formData.append("file", file); // FormData keys are called fields
+      const { type, error } = detectFileType(file as File);
+      
+      const currentTimestamp = Date.now();
+      formData.append(
+        'momentMetadata',
+        vault?.vaultAddress + headline + address + currentTimestamp
+      );
 
-        setCid(ipfsHash);
+      // Upload assets to IPFS
+      const resAssetData_ = await fetch('/api/uploadAssetsToIPFS', {
+        method: 'POST',
+        body: formData,
+      });
+      const resAssetData = await resAssetData_.json();
+      const ipfsHash = resAssetData.ipfsHash;
+      const combinedEncryptedData = resAssetData.combinedEncryptedData;
+      setCid(ipfsHash);
 
-        const ethersProvider = new ethers.providers.Web3Provider(
-          walletProvider,
-          "any"
-        );
-        const signer = await ethersProvider.getSigner(address);
+      setLoadingStage('confirmingTransaction'); // Awaiting transaction confirmation
 
-        const VaultContract = new ethers.Contract(
-          process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
-          VaultABI.abi,
-          signer
-        );
+      // Stage 3: Minting moment on chain
+      const VaultContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+        VaultABI.abi,
+        signer
+      );
 
-        const _lastClaimed = await VaultContract.lastClaimed(address);
-        const lastClaimed = hexToDecimal(_lastClaimed._hex);
-        const timestamp: number = Date.now();
-        // first mint or over 24 hours
-        // if (lastClaimed == 0 || timestamp / 1000 - lastClaimed > 86400) {
-        ///////////// mint function logic
-
-        const momentMetadata = {
-          LSP4Metadata: {
-            name: process.env.NEXT_PUBLIC_LSP8COLLECTION_NAME,
-            headline,
-            ipfsHash,
-            description,
-            links: [{ title: "Twitter", url: "https://twitter.com/" }],
-            tags: [],
-            icons: [
+      const momentMetadata = {
+        LSP4Metadata: {
+          name: process.env.NEXT_PUBLIC_LSP8COLLECTION_NAME,
+          headline,
+          ipfsHash,
+          description,
+          links: [{ title: "Twitter", url: "https://twitter.com/" }],
+          tags: [],
+          icons: [
+            {
+              width: 256,
+              height: 256,
+              url: "ipfs://" + process.env.NEXT_PUBLIC_MOMENT_DEFAULT_IMAGE,
+              verification: {
+                method: "keccak256(bytes)",
+                data: "0xdd6b5fb6dc984fda0222fb6f6e96b471c0667b12f03b1e804f7b5e6ab62acdb0",
+              },
+            },
+          ],
+          images: [
+            [
               {
-                width: 256,
-                height: 256,
+                width: 1024,
+                height: 974,
                 url: "ipfs://" + process.env.NEXT_PUBLIC_MOMENT_DEFAULT_IMAGE,
                 verification: {
                   method: "keccak256(bytes)",
-                  data: "0xdd6b5fb6dc984fda0222fb6f6e96b471c0667b12f03b1e804f7b5e6ab62acdb0",
+                  data: "0x951bf983a4b7bcebc5c0b00a5e783630dcb788e95ee9e44b0b7d4bde4a0b4d81",
                 },
               },
             ],
-            images: [
-              [
-                {
-                  width: 1024,
-                  height: 974,
-                  url: "ipfs://" + process.env.NEXT_PUBLIC_MOMENT_DEFAULT_IMAGE,
-                  verification: {
-                    method: "keccak256(bytes)",
-                    data: "0x951bf983a4b7bcebc5c0b00a5e783630dcb788e95ee9e44b0b7d4bde4a0b4d81",
-                  },
-                },
-              ],
-            ],
-            assets: [],
-            // fileType, // 1: image, 2: video
-            attributes: [
-              { key: "FileType", value: FileTypes[type], type: "string" },
-            ],
+          ],
+          assets: [],
+          // fileType, // 1: image, 2: video
+          attributes: [
+            { key: "FileType", value: FileTypes[type], type: "string" },
+          ],
+        },
+      };
+
+      const resMetadata_ = await fetch("/api/uploadMetadataToIPFS", {
+        method: "POST",
+        body: JSON.stringify(momentMetadata),
+      });
+      const resMetadata = await resMetadata_.json();
+
+      const momentCID = ipfsHash;
+      const erc725 = new ERC725(LSP4DigitalAsset, "", "", {});
+      const encodedMetadataURI = erc725.encodeData([
+        {
+          keyName: "LSP4Metadata",
+          value: {
+            json: momentMetadata,
+            url: resMetadata.metadataHash,
           },
-        };
-        const resMetadata_ = await fetch("/api/uploadMetadataToIPFS", {
-          method: "POST",
-          body: JSON.stringify(momentMetadata),
-        });
+        },
+      ]);
 
-        const resMetadata = await resMetadata_.json();
+      //console.log("vaultAddress", vaultAddress);
 
-        const momentCID = ipfsHash;
-        // const erc725 = new ERC725(schema);
-        const erc725 = new ERC725(LSP4DigitalAsset, "", "", {});
-        const encodedMetadataURI = erc725.encodeData([
-          {
-            keyName: "LSP4Metadata",
-            value: {
-              json: momentMetadata,
-              url: resMetadata.metadataHash,
-            },
-          },
-        ]);
+      const LSP4MetadataKey = ERC725YDataKeys.LSP4["LSP4Metadata"];
+      const vaultTx = await VaultContract.mintMoment(
+        vaultAddress,
+        LSP4MetadataKey,
+        encodedMetadataURI.values[0],
+        combinedEncryptedData,
+        notes
+      );
 
-        console.log("vaultAddress", vaultAddress);
+      //console.log("vaultTx", vaultTx);
+      console.log("Transaction sent! Waiting for confirmation...");
+      setLoadingStage('storingOnBlockchain'); // Inform user the data is being stored on the blockchain
+      const receipt = await vaultTx.wait(); // Wait for the transaction to be mined
+      const tokenId = receipt.events[2].args[0];
 
-        const LSP4MetadataKey = ERC725YDataKeys.LSP4["LSP4Metadata"];
-        const vaultTx = await VaultContract.mintMoment(
-          vaultAddress,
-          LSP4MetadataKey,
-          encodedMetadataURI.values[0],
-          combinedEncryptedData,
-          notes
-        );
+      //**************************** */
+      //////////// send reward token logic
+      // const gasLimit = 100000;
+      // const rewardAmount = await ForeverMemoryContract.rewardAmount();
+      // const mWalletOwner = await FMTContract.owner();
+      // console.log("mWalletOwner:", mWalletOwner);
+      // const decimals = await FMTContract.balanceOf(mWalletOwner);
+      // console.log("decimals:", decimals);
+      // const amount = ethers.utils.parseUnits(rewardAmount, 18);
+      // console.log("amount:", amount);
+      // const txt = await FMTContract.transfer(
+      //   mWalletOwner,
+      //   owner,
+      //   amount,
+      //   false,
+      //   "0x",
+      //   { gasLimit: gasLimit }
+      // );
 
-        console.log("vaultTx", vaultTx);
-
-        console.log("Transaction sent! Waiting for confirmation...");
-        const receipt = await vaultTx.wait(); // Wait for the transaction to be mined\
-        const tokenId = receipt.events[2].args[0];
-
-        //**************************** */
-        //////////// send reward token logic
-        // const gasLimit = 100000;
-        // const rewardAmount = await ForeverMemoryContract.rewardAmount();
-        // const mWalletOwner = await FMTContract.owner();
-        // console.log("mWalletOwner:", mWalletOwner);
-        // const decimals = await FMTContract.balanceOf(mWalletOwner);
-        // console.log("decimals:", decimals);
-        // const amount = ethers.utils.parseUnits(rewardAmount, 18);
-        // console.log("amount:", amount);
-        // const txt = await FMTContract.transfer(
-        //   mWalletOwner,
-        //   owner,
-        //   amount,
-        //   false,
-        //   "0x",
-        //   { gasLimit: gasLimit }
-        // );
-
-        setUploading(false);
-        toast.success("You minted one memory successfully!");
-        router.push("/nft/" + tokenId);
-      } catch (e) {
-        console.log("error", e);
-        setUploading(false);
-        toast.error("Trouble uploading file");
-      }
-    } else {
-      toast.error("Connect your wallet");
+      // Stage 4: Success
+      setUploading(false);
+      router.push("/nft/" + tokenId);
+    } catch (e) {
+      console.log("Error", e);
+      setUploading(false);
+      setLoadingStage('');
+      toast.error("Trouble uploading file");
     }
-    setIsDownloading(true);
   };
 
-  return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center bg-black min-h-screen dark:invert">
-      <span className="sr-only">Loading...</span>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce"></div>
+  return uploading ? (
+    // Loading screens during the minting process
+    <div className="flex flex-col justify-center items-center bg-black min-h-screen text-white">
+      {loadingStage === 'connecting' && (
+        <div>
+          <div className="flex space-x-2 justify-center items-center">
+            <div
+              className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
+              style={{
+                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+              }}
+            ></div>
+            <div
+              className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
+              style={{
+                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+              }}
+            ></div>
+            <div
+              className="h-8 w-8 rounded-full animate-bounce"
+              style={{
+                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+              }}
+            ></div>
+          </div>
+          <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
+            <p className="text-lg mt-8">We're encrypting your Moment</p>
+            <p className="text-base text-gray-400 mt-2">This can take a few seconds</p>
+          </div>
+        </div>
+      )}
+      {loadingStage === 'connected' && (
+        <div>
+          <div className="flex space-x-2 justify-center items-center">
+            <div
+              className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
+              style={{
+                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+              }}
+            ></div>
+            <div
+              className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
+              style={{
+                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+              }}
+            ></div>
+            <div
+              className="h-8 w-8 rounded-full animate-bounce"
+              style={{
+                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+              }}
+            ></div>
+          </div>
+          <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
+            <p className="text-lg mt-8">We're encrypting your Moment</p>
+            <p className="text-base text-gray-400 mt-2">Almost done! ...</p>
+          </div>
+        </div>
+      )}
+      {loadingStage === 'confirmingTransaction' && (
+        <div>
+          <div className="flex space-x-2 justify-center items-center">
+            <div
+              className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
+              style={{
+                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+              }}
+            ></div>
+            <div
+              className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
+              style={{
+                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+              }}
+            ></div>
+            <div
+              className="h-8 w-8 rounded-full animate-bounce"
+              style={{
+                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+              }}
+            ></div>
+          </div>
+          <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
+            <p className="text-lg mt-8">Done. Let's store your Moment!</p>
+            <p className="text-base text-gray-400 mt-2">Confirm the transaction in your Universal Profile to proceed. It should pop up automatically.</p>
+            <p className="text-base text-gray-400 mt-2"></p>
+          </div>
+        </div>
+      )}
+      {loadingStage === 'storingOnBlockchain' && (
+        <div>
+          <div className="flex space-x-2 justify-center items-center">
+            <div
+              className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
+              style={{
+                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+              }}
+            ></div>
+            <div
+              className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
+              style={{
+                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+              }}
+            ></div>
+            <div
+              className="h-8 w-8 rounded-full animate-bounce"
+              style={{
+                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+              }}
+            ></div>
+          </div>
+          <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
+            <p className="text-lg font-semibold mt-8">Storing your Moment to last forever</p>
+            <p className="text-base mt-2">Great things take time. Your Forever Moment token will be ready soon.</p>
+          </div>
+        </div>
+      )}
     </div>
+  ) : isDownloading ? (
+    // Initial loading screen when user enters the page
+    <div className="flex flex-col justify-center items-center bg-black min-h-screen text-gray-200">
+      <div className="flex space-x-2">
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+      </div>
+      <p className="text-lg mt-8">Loading</p>
+    </div>
+
   ) : (
+    // Main content (moment creation form)
     <main
       className="relative min-h-screen overflow-hidden bg-black"
       style={{
-        background: "radial-gradient(circle at top left, #121212, #000000)",
+        background: "radial-gradient(circle at top left, #041420, #000000)",
       }}
     >
     <div className="container mx-auto max-w-2xl pt-32 pb-32">
       <div className="flex justify-center main-content gap-x-1 mb-20 w-full">
         <div className="w-full">
-          <h4 className="text-3xl text-gray-200 font-medium mb-6">Add a moment</h4>
+          <h4 className="text-3xl text-gray-200 font-medium mb-6">Create a Moment</h4>
           <div>
             <div className="mb-4">
               <div className="flex items-center justify-center w-full">
@@ -434,7 +581,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                     <img
                       src={imagePreview}
                       alt="Preview"
-                      className="w-full h-full object-cover rounded-xl"
+                      className="w-full h-full object-contain rounded-xl"
                     />
                   )}
 
@@ -442,7 +589,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                     <video
                       src={videoPreview}
                       controls
-                      className="w-full h-full object-cover rounded-xl"
+                      className="w-full h-full object-contain rounded-xl"
                     />
                   )}
 
@@ -468,7 +615,10 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                         or drag and drop
                       </p>
                       <p className="text-sm text-gray-400 ">
-                        Max. File Size: 20MB
+                        JPG, PNG or GIF up to 8MB
+                      </p>
+                      <p className="text-sm text-gray-400 ">
+                        MP4 up to 50MB
                       </p>
                     </div>
                   )}
@@ -482,40 +632,6 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                 </label>
               </div>
             </div>
-            {/* <div className="mb-4">
-              <label
-                htmlFor="vault"
-                className="block mb-2 text-gray-200 flex justify-between"
-              >
-                <div>Select a vault</div>
-              </label>
-              <select
-                id="vault"
-                className="w-full px-3 py-2 rounded-md bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                value={vault?.name} // Set the value to vault.label
-                onChange={(e) => {
-                  const selectedOption = vaultData.find(
-                    (option) => option.name === e.target.value
-                  );
-                  if (selectedOption) {
-                    handleVaultChange(selectedOption); // Call the handler with the selected option
-                  }
-                }}
-              >
-                {vaultData.map((option, index) => (
-                  <option key={index} value={option.name}>
-                    {option.name}
-                  </option>
-                ))}
-              </select>
-              <div>
-                  {vault?.vaultMode === 0 ? (
-                    <span className="text-blue-500 font-bold">Public collection</span>
-                  ) : (
-                    <span className="text-red-500 font-bold">Private collection</span>
-                  )}
-                </div>
-            </div> */}
 
             <div className="mb-4">
               <label
@@ -586,7 +702,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
               </label>
               <textarea
                 id="description"
-                className="w-full px-3 py-2 rounded-md bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-200"
+                className="w-full px-3 py-2 min-h-[160px] rounded-md bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-200"
                 placeholder="Enter description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -620,6 +736,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                 onChange={(e) => setNotes(e.target.value)}
               />
             </div> */}
+
             <div className="w-full flex justify-center">
               <button
                 type="submit"
@@ -632,7 +749,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                 {uploading ? (
                   <span className="animate-spin h-5 w-5 border-4 border-t-transparent border-gray-200 rounded-full"></span>
                 ) : (
-                  "Add moment"
+                  "Create Moment"
                 )}
               </button>
             </div>

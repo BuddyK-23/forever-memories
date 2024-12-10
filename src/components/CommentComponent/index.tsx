@@ -168,21 +168,21 @@ const CommentComponent: React.FC<CommentComponentProps> = ({
   };
 
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center bg-white h-[300px] dark:invert">
+    <div className="flex space-x-2 justify-center items-center bg-black h-[300px] dark:invert">
       <span className="sr-only">Loading...</span>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce"></div>
+      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+      <div className="h-8 w-8 bg-white rounded-full animate-bounce"></div>
     </div>
   ) : (
     <div className="pb-8">
-      <div className="text-xl font-bold py-4">Comments ({commentCnt})</div>
+      <div className="text-base font-semibold pb-2">Comments ({commentCnt})</div>
       <div className="postPanel">
         <div className="mb-6">
-          <div className="py-2 px-4 mb-4 bg-white rounded-lg rounded-t-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+          <div className="py-2 px-4 mb-4 rounded-lg rounded-t-lg border bg-gray-800 border-gray-700 z-50">
             <textarea
               id="comment"
-              className="px-0 w-full text-sm text-gray-900 border-0 focus:ring-0 focus:outline-none dark:text-white dark:placeholder-gray-400 dark:bg-gray-800"
+              className="px-0 w-full text-base border-0 focus:ring-0 focus:outline-none text-gray-400 placeholder-gray-400 bg-gray-800 z-50"
               placeholder="Write a comment..."
               value={commentInput}
               onChange={(e) => setCommentInput(e.target.value)}
@@ -192,9 +192,9 @@ const CommentComponent: React.FC<CommentComponentProps> = ({
           <button
             onClick={postComment}
             disabled={loading}
-            className="inline-flex items-center py-2.5 px-4 text-xs font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800"
+            className="inline-flex items-center py-3 px-3 text-base text-center text-gray-200 bg-gray-700 rounded-lg hover:bg-gray-600 z-50"
           >
-            {loading ? "Posting..." : "Post comment"}
+            {loading ? "Posting..." : "Add comment"}
           </button>
         </div>
       </div>
@@ -211,11 +211,11 @@ const CommentComponent: React.FC<CommentComponentProps> = ({
                 />
               </div>
 
-              <div className="font-semibold">{comment.username}</div>
-              <div className="text-gray-500">{comment.date}</div>
+              <div className="font-medium">{comment.username}</div>
+              <div className="text-gray-400 text-sm">{comment.date}</div>
             </div>
             <div className="full gap-2 justify-end flex">
-              <div className="w-full bg-gray-200 rounded px-2 py-1 flex items-center my-2">
+              <div className="w-full bg-gray-900 rounded px-2 py-1 flex items-center my-2">
                 {comment.content}
               </div>
             </div>

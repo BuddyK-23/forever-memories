@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Button, Modal } from "flowbite-react";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { AiOutlinePlusCircle } from "react-icons/ai";
 import { ethers } from "ethers";
 import {
   useWeb3ModalAccount,
@@ -34,7 +35,7 @@ interface Vault {
 }
 
 const permissionStyle =
-  "flex justify-center gap-1 hover:text-primary-500 cursor-pointer text-base py-2 hover:border-primary-500";
+  "flex justify-center gap-1 hover:text-primary-300 cursor-pointer text-base py-2 hover:border-primary-300";
 
 export default function Profile() {
   const [isDownloading, setIsDownloading] = useState<boolean>(true);
@@ -309,7 +310,7 @@ export default function Profile() {
     <main
       className="relative min-h-screen overflow-hidden bg-black"
       style={{
-        background: "radial-gradient(circle at top left, #121212, #000000)",
+        background: "radial-gradient(circle at top left, #041420, #000000)",
       }}
     >
       <div className="container mx-auto max-w-6xl pt-32">
@@ -366,9 +367,14 @@ export default function Profile() {
             <Link href={"/createVault"}>
               <button
                 type="button"
-                className="px-6 py-3 bg-primary-600 text-gray-200 rounded-lg shadow-md hover:bg-primary-500"
+                className="px-4 py-2 bg-primary-600 text-gray-200 rounded-lg shadow-md hover:bg-primary-500"
               >
-                Create new collection
+                <div className="flex items-center gap-2 cursor-pointer">
+                  <div>
+                    <AiOutlinePlusCircle className="text-xl" />
+                  </div>
+                  <div>New collection</div>
+                </div>
               </button>
             </Link>
           </div>

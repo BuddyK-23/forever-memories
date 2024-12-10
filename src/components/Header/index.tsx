@@ -20,16 +20,6 @@ const Navbar = () => {
   const [lyxBalance, setLyxBalance] = useState("0.00");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
-  // const [currentPath, setCurrentPath] = useState(""); // Store the current path
-
-  // const router = useRouter();
-
-  // useEffect(() => {
-  //   // Ensure this runs only on the client
-  //   if (typeof window !== "undefined") {
-  //     setCurrentPath(router.pathname); // Get the current path from the router
-  //   }
-  // }, [router.pathname]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -115,11 +105,11 @@ const Navbar = () => {
     }`}>
       <div className="container mx-auto max-w-6xl flex justify-between items-center">
         {/* Logo */}
-        <Link href="/" className="flex items-center z-50">
+        <Link href="/" className="flex items-center pl-0 z-50">
           <img
-            src="/logo_icon_foreverMoments.svg"
+            src="/fm-logo-main.svg"
             alt="Forever Moments"
-            className="w-[50px] h-[37px] object-contain"
+            className="object-cover w-[164px] h-[30px] sm:w-[164px] sm:h-[30px] w-[110px] h-[20px]"
           />
         </Link>
 
@@ -141,7 +131,7 @@ const Navbar = () => {
           ))}
           {!isConnected ? (
             <button
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded"
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg shadow-md"
               onClick={handleConnect}
             >
               Connect
@@ -158,10 +148,10 @@ const Navbar = () => {
 
               {/* Popover Dropdown */}
               {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl text-black overflow-hidden backdrop-blur-md z-50">
+                <div className="absolute right-0 mt-2 w-80 bg-gray-700 border-gray-600 border rounded-lg shadow-xl text-gray-200 overflow-hidden backdrop-blur-md z-50">
                   {/* Banner */}
                   <div
-                    className="h-24 bg-cover bg-center"
+                    className="h-24 bg-cover bg-center relative"
                     style={{ backgroundImage: `url(${bannerUrl})` }}
                   ></div>
 
@@ -171,34 +161,34 @@ const Navbar = () => {
                       <img
                         src={avatarUrl}
                         alt="User Avatar"
-                        className="w-16 h-16 rounded-full border-2 border-gray-200 object-cover"
+                        className="w-16 h-16 rounded-full border border-gray-600 object-cover"
                       />
                       <div>
-                        <div className="text-lg font-bold">{profileName}</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-base font-medium">{profileName}</div>
+                        <div className="text-sm text-gray-400">
                           {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ""}
                         </div>
                       </div>
                     </div>
 
                     {/* Balance */}
-                    <div className="mt-4 text-sm">
-                      <span className="font-semibold">Balance:</span>{" "}
-                      <span className="text-lg font-bold">{lyxBalance} LYX</span>
-                    </div>
+                    {/* <div className="mt-4 text-gray-200">
+                      <span className="">Balance:</span>{" "}
+                      <span className="text-base">{lyxBalance} LYX</span>
+                    </div> */}
                   </div>
 
                   {/* Buttons */}
-                  <div className="flex flex-col space-y-2 p-4 border-t border-gray-200">
+                  <div className="flex flex-col space-y-2 pl-4 pr-4 pb-4">
                     <Link
                       href="/profile"
-                      className="w-full text-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md"
+                      className="w-full bg-primary-600 text-gray-200 hover:bg-primary-500 rounded-lg shadow-sm px-4 py-2 text-base text-center"
                     >
                       View Profile
                     </Link>
                     <button
                       onClick={handleDisconnect}
-                      className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-md"
+                      className="w-full bg-gray-600 text-gray-200 hover:bg-gray-500 rounded-lg shadow-sm px-4 py-2 text-center"
                     >
                       Disconnect
                     </button>

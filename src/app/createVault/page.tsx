@@ -161,7 +161,7 @@ export default function CreateVault() {
       <main
         className="relative min-h-screen overflow-hidden bg-black text-gray-200"
         style={{
-          background: "radial-gradient(circle at top left, #121212, #000000)",
+          background: "radial-gradient(circle at top left, #041420, #000000)",
         }}
       >
       <div className="container mx-auto max-w-2xl pt-32 pb-32">
@@ -215,7 +215,7 @@ export default function CreateVault() {
 
             <button
               onClick={toggleAccordion}
-              className="text-primary-500 underline hover:text-primary-400 text-base mb-4"
+              className="text-primary-600 underline hover:text-primary-500 text-base mb-4"
             >
               How do collections work?
             </button>
