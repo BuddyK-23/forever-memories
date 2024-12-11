@@ -3,6 +3,7 @@
 import { Button, Modal, TextInput } from "flowbite-react";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
+import { AiOutlinePlusCircle } from "react-icons/ai";
 import { ethers } from "ethers";
 import {
   useWeb3ModalAccount,
@@ -56,7 +57,7 @@ export default function Page({ params }: { params: { slug: string } }) {
   const router = useRouter();
 
   const [vaultTitle, setVaultTitle] = useState<string>();
-  const [vaultDescription, setVaultDescription] = useState<string>();
+  const [vaultDescription, setVaultDescription] = useState<string>("");
   const [vaultMembers, setVaultMembers] = useState<VaultMember[]>();
   const [vaultMoments, setVaultMoments] = useState<VaultMoment[]>([]);
   const [vaultMode, setVaultMode] = useState<number>(0);
@@ -391,7 +392,7 @@ export default function Page({ params }: { params: { slug: string } }) {
       </div>
       <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
         <p className="text-lg mt-8">Loading collection</p>
-        <p className="text-base mt-2 italic">"Each moment tells a story; together, they create a legacy."</p>
+        <p className="text-base mt-2 italic">&quot;Each moment tells a story; together, they create a legacy.&quot;</p>
       </div>
     </div>
   ) : (
@@ -464,9 +465,9 @@ export default function Page({ params }: { params: { slug: string } }) {
               className={`overflow-hidden ${isExpanded ? '' : 'line-clamp-2'}`}
               style={{ display: '-webkit-box', WebkitLineClamp: isExpanded ? 'unset' : '2', WebkitBoxOrient: 'vertical' }}
             >
-              {vaultDescription}
+              {vaultDescription  || ''}
             </div>
-            {vaultDescription.length > 100 && (
+            {(vaultDescription.length || 0) > 100 && (
               <button
                 onClick={toggleDescription}
                 className="text-gray-600 hover:text-gray-500 text-sm"

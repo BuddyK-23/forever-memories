@@ -373,6 +373,11 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   const handleDownload = () => {
+    if (!cid) {
+      console.error("CID is undefined, cannot download.");
+      return;
+    }
+    
     const link = document.createElement("a");
     link.href = cid;
     link.download = "moment.jpg";
@@ -472,7 +477,7 @@ export default function Page({ params }: { params: { slug: string } }) {
       </div>
       <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
         <p className="text-lg mt-8">Taking you to the moment</p>
-        <p className="text-base mt-2 italic">"Every moment is a memory in the making"</p>
+        <p className="text-base mt-2 italic">&quot;Every moment is a memory in the making&quot;</p>
       </div>
     </div>
   ) : (

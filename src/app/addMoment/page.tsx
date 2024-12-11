@@ -441,7 +441,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
             ></div>
           </div>
           <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
-            <p className="text-lg mt-8">We're encrypting your Moment</p>
+            <p className="text-lg mt-8">We&apos;re encrypting your Moment</p>
             <p className="text-base text-gray-400 mt-2">This can take a few seconds</p>
           </div>
         </div>
@@ -469,7 +469,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
             ></div>
           </div>
           <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
-            <p className="text-lg mt-8">We're encrypting your Moment</p>
+            <p className="text-lg mt-8">We&apos;re encrypting your Moment</p>
             <p className="text-base text-gray-400 mt-2">Almost done! ...</p>
           </div>
         </div>
@@ -497,7 +497,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
             ></div>
           </div>
           <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
-            <p className="text-lg mt-8">Done. Let's store your Moment!</p>
+            <p className="text-lg mt-8">Done. Let&apos;s store your Moment!</p>
             <p className="text-base text-gray-400 mt-2">Confirm the transaction in your Universal Profile to proceed. It should pop up automatically.</p>
             <p className="text-base text-gray-400 mt-2"></p>
           </div>
