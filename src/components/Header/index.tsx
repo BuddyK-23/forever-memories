@@ -21,6 +21,7 @@ const Navbar = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
+
   useEffect(() => {
     const handleScroll = () => {
       // Set state based on scroll position
@@ -94,9 +95,9 @@ const Navbar = () => {
   }, []);
 
   const links = [
-    { id: 1, title: "Explore Collections", link: "/explore" },
-    { id: 2, title: "Your Collections", link: "/myVaults" },
-    { id: 3, title: "Add Moment", link: "/addMoment" },
+    { id: 1, title: "Explore", link: "/explore" },
+    { id: 2, title: "Collections", link: "/myVaults" },
+    { id: 3, title: "New Moment", link: "/addMoment" },
   ];
 
   return (

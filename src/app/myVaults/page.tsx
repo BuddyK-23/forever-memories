@@ -51,6 +51,9 @@ export default function Profile() {
   const [categoryVaultList, setCategoryVaultList] = useState<string[]>([]);
   const [permissionVaultList, setPermissionVaultList] = useState<string[]>([]);
 
+  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const toggleAccordion = () => setIsAccordionOpen(!isAccordionOpen);
+
   const categories = getCategoryOptions();
 
   const selectedCategoryButtonStyle =
@@ -300,11 +303,31 @@ export default function Profile() {
   };
 
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center bg-black h-screen dark:invert">
-      <span className="sr-only">Loading...</span>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce"></div>
+    <div className="flex flex-col space-x-2 justify-center items-center bg-black h-screen dark:invert text-gray-200">
+      <div className="flex space-x-2 justify-center items-center">
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+      </div>
+      <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
+        <p className="text-lg mt-8">Loading</p>
+        {/* <p className="text-base mt-2 italic">"Every moment is a memory in the making"</p> */}
+      </div>
     </div>
   ) : (
     <main
@@ -314,7 +337,7 @@ export default function Profile() {
       }}
     >
       <div className="container mx-auto max-w-6xl pt-32">
-        <div className="font-medium text-gray-200 text-3xl">Your collections</div>
+        <div className="font-medium text-gray-200 text-3xl">Collections</div>
         
         <div className="flex items-center justify-between pt-4">
         {/* Tabs Section */}
@@ -327,8 +350,9 @@ export default function Profile() {
                   : `${permissionStyle} text-gray-200`
               }
             >
-              <div className="text-base">Private collections</div>
-              <div className="ml-2 bg-gray-600 text-gray-200 text-sm font-medium rounded-full w-6 h-6 flex items-center justify-center">
+              <div className="text-base">Private</div>
+              {/* <div className="ml-2 bg-gray-600 text-gray-200 text-sm font-medium rounded-full w-6 h-6 flex items-center justify-center"> */}
+              <div className="ml-1 items-center justify-center">
                 {privateVaultCount}
               </div>
             </div>
@@ -340,8 +364,9 @@ export default function Profile() {
                   : `${permissionStyle} text-gray-200`
               }
             >
-              <div className="text-base">Public collections</div>
-              <div className="ml-2 bg-gray-600 text-gray-200 text-sm font-medium rounded-full w-6 h-6 flex items-center justify-center">
+              <div className="text-base">Public</div>
+              {/* <div className="ml-2 bg-gray-600 text-gray-200 text-sm font-medium rounded-full w-6 h-6 flex items-center justify-center"> */}
+              <div className="ml-1 items-center justify-center">
                 {publicVaultCount}
               </div>
             </div>
@@ -349,7 +374,7 @@ export default function Profile() {
 
           {/* Toggle and CTA Section */}
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <label className="inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
@@ -363,7 +388,7 @@ export default function Profile() {
                   Show owned only
                 </span>
               </label>
-            </div>
+            </div> */}
             <Link href={"/createVault"}>
               <button
                 type="button"
@@ -464,14 +489,85 @@ export default function Profile() {
             </div>
           </div>
         </div> */}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-8">
-          {vaultData.map((vault, index) => (
-            <div key={index}>
-              <VaultCard vault={vault} href="myVaults" />
+        {vaultData.length === 0 ? (
+          <>
+            <div className="flex flex-col items-center justify-start items-center gap-1 mt-12 mb-4">
+              <div className="text-xl font-medium text-left text-gray-200">No collections here yet!</div>
+              <button
+                onClick={toggleAccordion}
+                className="text-primary-600 underline hover:text-primary-500 text-base"
+              >
+                What are collections?
+              </button>
             </div>
-          ))}
-        </div>
+            {isAccordionOpen && (
+              <div className="container mx-auto text-gray-200">
+                {/* Main Title */}
+              <div className="text-base mb-4 text-center max-w-[800px] mx-auto">Collections are at the heart of the Forever Moments ecosystem. Simply put, they group Moments together. Collections can be private, for you or a group; or public, where anyone can join and contribute.</div>
+                <div className="text-base mb-6 text-left"></div>
+                    
+                {/* Two Columns for Private and Public Collections */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Private Collections */}
+                  <div className="flex flex-col p-6 bg-gray-900/80 rounded-lg shadow-sm-light border border-gray-800/70">
+                    <h2 className="text-xl font-medium mb-2">Private Collections</h2>
+                    <p className="text-base mb-4">Totally private, just for you or invite a select group of members.</p>
+                    <div className="mb-4">
+                      <h3 className="text-base pb-2 font-medium">Best for:</h3>
+                      <ul className="list-disc pl-4 space-y-2 text-base">
+                        <li>Family photo albums shared securely among loved ones</li>
+                        <li>Collaborative workspaces for community or team projects and milestones</li>
+                        <li>Personal journals or time capsules to pass down legacies</li>
+                      </ul>
+                    </div>
+                  </div>
+              
+                  {/* Public Collections */}
+                  <div className="flex flex-col p-6 bg-gray-900/80 rounded-lg shadow-sm-light border border-gray-800/70">
+                    <h2 className="text-xl font-medium mb-2">Public Collections</h2>
+                    <p className="text-base mb-4">Open to everyone, anyone can join and contribute.</p>
+                    <div className="mb-4">
+                      <h3 className="text-base pb-2 font-medium">Some ideas:</h3>
+                      <ul className="list-disc pl-4 space-y-2 text-base">
+                      <li>Digital time capsules that anyone can view and contribute to</li>
+                        <li>Community collaboration hubs</li>
+                        <li>Crowdsourced legacy projects for public causes or shared history logging</li>
+                      </ul>
+                    </div>
+                    
+                  </div>
+                </div>
+      
+                {/* Call to Action */}
+                <div className="mt-10 flex justify-center">
+                  <Link href={"/createVault"}>
+                    <button
+                      type="button"
+                      className="px-4 py-2 bg-primary-600 text-gray-200 rounded-lg shadow-md hover:bg-primary-500"
+                    >
+                      <div className="flex items-center gap-2 cursor-pointer">
+                        <div>
+                          <AiOutlinePlusCircle className="text-xl" />
+                        </div>
+                        <div>New collection</div>
+                      </div>
+                    </button>
+                  </Link>
+                </div>
+              </div> 
+
+            )}
+          </>      
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-8">
+            {vaultData.map((vault, index) => (
+              <div key={index}>
+                <VaultCard vault={vault} href="myVaults" />
+              </div>
+            ))}
+          </div>
+        )}
+
       </div>
       <Toaster />
     </main>

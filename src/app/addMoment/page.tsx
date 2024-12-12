@@ -40,7 +40,7 @@ import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
 
 // Define MIME type limits
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024; // 8MB
-const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
 
 interface TagOption {
   value: number;
@@ -752,6 +752,10 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                   "Create Moment"
                 )}
               </button>
+            </div>
+            <div className="flex flex-col mx-auto max-w-[480px] text-center">
+              <p className="text-sm text-gray-500 mt-8">Check all details, this is irreversible. Legal text here, Link to privacy policy. This app is in beta.</p>
+              {/* <p className="text-sm text-gray-500 mt-2">Legal text here, Link to privacy policy. This app is in beta.</p> */}
             </div>
           </div>
         </div>

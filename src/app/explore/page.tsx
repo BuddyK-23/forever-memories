@@ -42,45 +42,6 @@ export default function Explore() {
     "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-gray-300 hover:bg-gray-200 text-gray-800 relative";
   const categoryButtonStyle =
     "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-gray-200 relative";
-  
-  // // Fetch vault counts for all categories
-  // useEffect(() => {
-  //   const fetchCategoryCounts = async () => {
-  //     if (walletProvider && address) {
-  //       const ethersProvider = new ethers.providers.Web3Provider(
-  //         walletProvider,
-  //         "any"
-  //       );
-  //       const signer = ethersProvider.getSigner(address);
-  //       const VaultFactoryContract = new ethers.Contract(
-  //         process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-  //         VaultFactoryABI.abi,
-  //         signer
-  //       );
-
-  //       const counts = [];
-  //       for (let i = 0; i < categories.length; i++) {
-  //         const joinedVaults = await VaultFactoryContract.getVaultsByCategory(
-  //           i,
-  //           address,
-  //           0,
-  //           true
-  //         );
-  //         const unjoinedVaults = await VaultFactoryContract.getVaultsByCategory(
-  //           i,
-  //           address,
-  //           0,
-  //           false
-  //         );
-  //         counts.push(joinedVaults.length + unjoinedVaults.length);
-  //       }
-
-  //       setCategoryCounts(counts);
-  //     }
-  //   };
-
-  //   fetchCategoryCounts();
-  // }, [walletProvider, address]);
 
   useEffect(() => {
     const fetchVault = async () => {

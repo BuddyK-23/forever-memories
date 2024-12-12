@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, FormEvent } from "react";
+import { AiOutlinePlusCircle } from "react-icons/ai";
 import Select, { MultiValue } from "react-select";
 import { ethers } from "ethers";
 import {
@@ -164,12 +165,13 @@ export default function CreateVault() {
           background: "radial-gradient(circle at top left, #041420, #000000)",
         }}
       >
-      <div className="container mx-auto max-w-2xl pt-32 pb-32">
+      <div className="container mx-auto max-w-2xl pt-32 pb-[500px]">
         <div className="flex justify-center items-center">
           <div className="w-full">
             <h2 className="text-3xl font-medium mb-6">
-              Select collection type
+              Create a new collection
             </h2>
+            <label className="block mb-2">Choose type:</label>
             <div className="grid grid-cols-2 gap-4 w-full mb-4">
               <button
                 onClick={() => handleVaultModeChange(1)}
@@ -179,15 +181,16 @@ export default function CreateVault() {
                     : "border-4 border-transparent hover:border-primary-400"
                 }`}
                 style={{
-                  height: "240px",
-                  backgroundImage: "url('/private_collection_header.jpg')",
+                  height: "160px",
+                  // backgroundImage: "url('/private_collection_header.jpg')",
                   opacity: 1.0,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
+                  backgroundColor: "#111827",
                 }}
               >
               <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-              <span className="absolute text-gray-200 font-bold text-lg text-left bottom-3">
+              <span className="absolute text-gray-200 font-bold text-xl text-left bottom-3">
                 Private Collection
               </span>
             </button>
@@ -195,15 +198,16 @@ export default function CreateVault() {
               onClick={() => handleVaultModeChange(0)}
               className={`relative flex flex-col items-start p-4 rounded-lg shadow-md overflow-hidden ${
                 formValues.vaultMode === 0
-                  ? "border-2 border-primary-500"
-                  : "border-2 border-transparent hover:border-primary-400"
+                  ? "border-4 border-primary-500"
+                  : "border-4 border-transparent hover:border-primary-400"
               }`}
               style={{
-                height: "240px",
-                backgroundImage: "url('/public_collection_header.jpg')",
+                height: "160px",
+                // backgroundImage: "url('/public_collection_header.jpg')",
                 opacity: 1.0,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
+                backgroundColor: "#111827",
               }}
             >
               <div className="absolute inset-0 bg-black bg-opacity-30"></div>
@@ -219,23 +223,48 @@ export default function CreateVault() {
             >
               How do collections work?
             </button>
+
             {isAccordionOpen && (
-              <div className="w-full text-gray-400 mb-4">
-                <p className="mb-4 text-base">
-                  <strong>Private Collections:</strong> Only you or authorized members
-                  can view and contribute. Ideal for personal memories or close groups.
-                  <br />
-                  <strong>Public Collections:</strong> Open to the community for viewing
-                  and contributions, great for sharing moments with a wider audience.
-                </p>
-                {/* <button
-                  onClick={toggleAccordion}
-                  className="mt-2 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-400"
-                >
-                  Got it
-                </button> */}
-              </div>
+              <div className="container flex flex-col pb-10 text-gray-200">
+                {/* Main Title */}
+                <div className="flex text-base mb-4 text-left max-w-[800px] mx-auto">Collections are at the heart of the Forever Moments ecosystem. Simply put, they group Moments together. Collections can be private, for you or a group; or public, where anyone can join and contribute.</div>
+                    
+                {/* Two Columns for Private and Public Collections */}
+                <div className="flex flex-col gap-4">
+                  {/* Private Collections */}
+                  <div className="p-6 bg-gray-900/80 rounded-lg shadow-sm-light border border-gray-800/70">
+                    <h2 className="text-xl font-medium mb-2">Private Collections</h2>
+                    <p className="text-base mb-4">Totally private, just for you or invite a select group of members.</p>
+                    <div className="mb-4">
+                      <h3 className="text-base pb-2 font-medium">Best for:</h3>
+                      <ul className="list-disc pl-4 space-y-2 text-base">
+                        <li>Family photo albums shared securely among loved ones</li>
+                        <li>Collaborative workspaces for community or team projects and milestones</li>
+                        <li>Personal journals or time capsules to pass down legacies</li>
+                      </ul>
+                    </div>
+                  </div>
+              
+                  {/* Public Collections */}
+                  <div className="p-6 bg-gray-900/80 rounded-lg shadow-sm-light border border-gray-800/70">
+                    <h2 className="text-xl font-medium mb-2">Public Collections</h2>
+                    <p className="text-base mb-4">Open to everyone, anyone can join and contribute.</p>
+                    <div className="mb-4">
+                      <h3 className="text-base pb-2 font-medium">Some ideas:</h3>
+                      <ul className="list-disc pl-4 space-y-2 text-base">
+                        <li>Digital time capsules that anyone can view and contribute to</li>
+                        <li>Community collaboration hubs</li>
+                        <li>Crowdsourced legacy projects for public causes or shared history logging</li>
+                      </ul>
+                    </div>
+                    
+                  </div>
+                </div>
+              </div> 
+
             )}
+
+            
             
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
@@ -337,6 +366,10 @@ export default function CreateVault() {
                   "Create Collection"
                 )}
               </button>
+              <div className="flex flex-col mx-auto max-w-[500px] text-center">
+                <p className="text-sm text-gray-500 mt-8">Please check all details carefully before proceeding. By creating this collection, you agree to our terms and conditions.</p>
+                {/* <p className="text-sm text-gray-500 mt-2">Legal text here, Link to privacy policy. This app is in beta.</p> */}
+              </div>
             </form>
           </div>
         </div>
