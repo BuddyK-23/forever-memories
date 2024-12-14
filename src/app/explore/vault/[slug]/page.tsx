@@ -383,7 +383,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         {/* Vault Description */}
         <div className="text-gray-200 mb-3">
           <div
-            className={`overflow-hidden ${isExpanded ? '' : 'line-clamp-2'}`}
+            className={`overflow-hidden whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-2'}`}
             style={{ display: '-webkit-box', WebkitLineClamp: isExpanded ? 'unset' : '2', WebkitBoxOrient: 'vertical' }}
           >
             {vaultDescription  || ''}
@@ -485,44 +485,49 @@ export default function Page({ params }: { params: { slug: string } }) {
 
       {openMembersModal ? (
         <>
-          <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-            <div className="relative w-auto my-6 mx-auto max-w-3xl">
+          <div className="justify-center items-start flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 shadow-md-light">
+            <div className="relative w-auto my-6 mx-auto max-w-4xl mt-32">
               {/*content*/}
-              <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
-                {/*header*/}
-                <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
-                  <h3 className="text-3xl font-semibold">Members</h3>
+              <div className="rounded-lg shadow-md relative flex flex-col w-full bg-gray-700 border-solid border-gray-600 border-2">
+                    {/*header*/}
+                    <div className="flex text-gray-100 items-start justify-between p-6 border-b border-solid border-gray-500 rounded-t-lg">
+                  <h3 className="text-xl">
+                        {vaultMembers?.length} member
+                        {vaultMembers?.length !== 1 ? "s" : ""}
+                      </h3>
                   <button
-                    className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
+                    className="ml-auto bg-transparent border-0 float-right leading-none outline-none focus:outline-none"
                     onClick={() => setOpenMembersModal(false)}
                   >
-                    <span className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
+                    <span className="bg-transparent h-6 w-6 text-2xl outline-none focus:outline-none">
                       ×
                     </span>
                   </button>
                 </div>
                 {/*body*/}
-                <div className="relative p-6 flex-auto max-h-[400px] w-[400px] overflow-y-auto ">
+                <div className="relative p-6 flex-auto max-h-[600px] sm:w-[600px] w-full overflow-y-auto ">
                   {vaultMembers &&
                     vaultMembers.map((member, index) => (
                       <div
-                        className="p-1 flex items-center space-x-3"
+                        className="p-1 flex items-center justify-between  space-x-3"
                         key={index}
                       >
-                        <img
-                          src={member.cid}
-                          alt={member.name}
-                          className="w-10 h-10 rounded-full"
-                        />
-                        <div>
-                          <h3 className="text-sm font-medium">
-                            {member.generatedName}
-                          </h3>
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={member.cid}
+                            alt={member.name}
+                            className="rounded-full h-8 w-8 object-cover"
+                          />
+                          <div>
+                            <h3 className="text-base text-gray-200">
+                              {member.generatedName}
+                            </h3>
+                          </div>
                         </div>
                         {vaultOwner == address ? (
                           <div className="flex justify-center gap-4">
                             <Button
-                              className="bg-red-400 text-white"
+                              className="bg-gray-800/50 hover:bg-gray-700/80 rounded-lg shadow-sm py-1"
                               onClick={() => handleRemoveMember(member.name)}
                             >
                               Remove
@@ -533,16 +538,6 @@ export default function Page({ params }: { params: { slug: string } }) {
                         )}
                       </div>
                     ))}
-                </div>
-                {/*footer*/}
-                <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
-                  <button
-                    className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                    type="button"
-                    onClick={() => setOpenMembersModal(false)}
-                  >
-                    Close
-                  </button>
                 </div>
               </div>
             </div>

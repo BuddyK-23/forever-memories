@@ -38,6 +38,8 @@ export default function CreateVault() {
   const { walletProvider } = useWeb3ModalProvider();
   const [isDownloading, setIsDownloading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [loadingStage, setLoadingStage] = useState(''); // Tracks which stage is currently active
   const [formValues, setFormValues] = useState<FormValues>({
     vaultName: "",
     metadataUriImage: null,
@@ -45,6 +47,7 @@ export default function CreateVault() {
     rewardAmount: 0,
     vaultMode: 1, // Default to Private
   });
+  
 
   const categories = getCategoryOptions();
   const handleCategoryChange = (
@@ -117,7 +120,7 @@ export default function CreateVault() {
           "any"
         );
         const signer = ethersProvider.getSigner(address);
-        setIsDownloading(false);
+        setUploading(true);
         const VaultFactoryContract = new ethers.Contract(
           process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
           VaultFactoryABI.abi,
@@ -135,6 +138,7 @@ export default function CreateVault() {
         console.log("tx", tx);
         console.log("Transaction sent:", tx.hash);
 
+        setLoadingStage('Creating collection');
         // Wait for the transaction to be mined
         const receipt = await tx.wait();
         const vaultAddress = receipt.events[2].args[0];
@@ -152,11 +156,64 @@ export default function CreateVault() {
   };
 
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center h-[600px] dark:invert">
-      <span className="sr-only">Loading...</span>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce"></div>
+    <div className="flex flex-col space-x-2 justify-center items-center bg-black h-screen dark:invert text-gray-200">
+      <div className="flex space-x-2 justify-center items-center">
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+      </div>
+      <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
+        <p className="text-lg mt-8">Let&apos;s create your collection!</p>
+        <p className="text-base mt-2">Confirm the transaction in your Universal Profile to proceed. It should pop up automatically.</p>
+      </div>
+    </div>
+
+    ) : uploading ? (
+    
+    <div className="flex flex-col justify-center items-center bg-black h-screen text-gray-200">
+      {loadingStage === 'Creating collection' && (
+      <div>
+        <div className="flex space-x-2 justify-center items-center">
+          <div
+            className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
+            style={{
+              backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+           }}
+          ></div>
+          <div
+            className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
+            style={{
+              backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            }}
+          ></div>
+          <div
+            className="h-8 w-8 rounded-full animate-bounce"
+            style={{
+              backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            }}
+          ></div>
+        </div>
+        <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
+          <p className="text-lg mt-8">Creating your collection!</p>
+          <p className="text-base mt-2">This can take several seconds</p>
+        </div>
+      </div>
+      )}
     </div>
     ) : (
       <main

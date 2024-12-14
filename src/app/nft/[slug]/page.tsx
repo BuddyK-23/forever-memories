@@ -4,7 +4,7 @@ import { Button } from "flowbite-react";
 import React, { useState, useEffect } from "react";
 import { FaHeart, FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 import { BsChatLeftTextFill, BsFillShareFill, BsChatLeftText } from "react-icons/bs";
-import { AiOutlineLike, AiOutlineDislike } from "react-icons/ai";
+import { AiOutlineLike, AiOutlineDislike, AiOutlineComment } from "react-icons/ai";
 import { BsChatRightTextFill } from "react-icons/bs";
 import { MdClose, MdFullscreen, MdDownload, MdInsertComment } from "react-icons/md";
 import VaultFactoryABI from "@/artifacts/VaultFactory.json";
@@ -329,7 +329,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         const likes = await VaultAssistContract.getLikes(tokenId);
         init();
         setShowLikeModal(false);
-        toast.success("Like Success");
+        toast.success("Like added to Moment");
       }
     } else {
       toast.error("Connect the wallet");
@@ -364,7 +364,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         const dislikes = await VaultAssistContract.dislike(tokenId);
         init();
         setShowDislikeModal(false);
-        toast.success("Dislike Success");
+        toast.success("Dislike added to Moment");
       }
     } else {
       toast.error("Connect the wallet");
@@ -545,9 +545,9 @@ export default function Page({ params }: { params: { slug: string } }) {
             </Button> */}
           </div>
           <div className="absolute top-4 right-4 flex items-center space-x-2">
-            <Button onClick={toggleFullScreen} className="bg-gray-800/50 hover:bg-gray-700/80 rounded-full py-2">
+            {/* <Button onClick={toggleFullScreen} className="bg-gray-800/50 hover:bg-gray-700/80 rounded-full py-2">
               <MdFullscreen size={20} />
-            </Button>
+            </Button> */}
             <Button onClick={handleDownload} className="bg-gray-800/50 hover:bg-gray-700/80 rounded-full py-2">
               <MdDownload size={20} />
             </Button>
@@ -555,123 +555,117 @@ export default function Page({ params }: { params: { slug: string } }) {
         </div>
 
         {/* Right Section: Details */}
-        <div className="flex-grow basis-1/3 flex flex-col space-y-6 text-gray-200">
-          
-          <div className="flex flex-col space-y-2 gap-2 p-4 bg-gray-900 rounded-lg">
-            {/* Tags */}
-            <div className="flex space-x-2 justify-between">
-              <div className="flex space-x-2">
-                <span className="px-3 py-1 bg-gray-800 text-sm items-center rounded-md">{!vaultMode ? "Public" : "Private"}</span>
-                <span className="px-3 py-1 bg-gray-800 text-sm rounded-md items-center truncate">{vaultName}</span>
+        <div className="flex-grow basis-1/3 flex flex-col justify-between space-y-6 text-gray-200 p-4 bg-gray-900 rounded-lg md:min-h-[640px]">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col space-y-2 gap-2 ">
+              {/* Tags */}
+              <div className="flex space-x-2 justify-between">
+                <div className="flex space-x-2">
+                  <span className="flex px-3 py-1 bg-gray-800 text-sm items-center rounded-md">{!vaultMode ? "Public" : "Private"}</span>
+                  <span className="flex px-3 py-1 bg-gray-800 text-sm rounded-md items-center truncate">{vaultName}</span>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <img
+                    className="rounded-full h-8 w-8 object-cover"
+                    src={profileCid}
+                    alt="Profile"
+                  />
+                  {/* <div className=" text-gray-200 text-base">
+                    {profileName || "Loading..."}
+                  </div> */}
+                </div>
               </div>
-              <div className="flex gap-2 items-center">
-                <img
-                  className="rounded-full h-8 w-8 object-cover"
-                  src={profileCid}
-                  alt="Profile"
-                />
-                {/* <div className=" text-gray-200 text-base">
-                  {profileName || "Loading..."}
-                </div> */}
+              {/* Headline, Description and Owner */}
+              
+              
+              <div className="gap-1">
+                <h1 className="text-3xl text-balance font-bold">{momentHeadline}</h1>
+                <p className="text-sm text-gray-400 mb-4">Added on {mintedDate}</p>
+                <p className="text-wrap text-gray-200 whitespace-pre-wrap">{momentDescription}</p>
+                
               </div>
             </div>
-            {/* Headline, Description and Owner */}
-            
-            
-            <div className="gap-1">
-              <h1 className="text-3xl text-balance font-bold">{momentHeadline}</h1>
-              <p className="text-wrap text-gray-200">{momentDescription}</p>
-              <p className="text-sm text-gray-400">Added on {mintedDate}</p>
-            </div>
-          </div>
-        
-          {/* Description */}
-          
 
-          {/* Likes, Dislikes, Comments */}
-          <div className="flex space-x-2 items-center">
-            <div 
-              onClick={() => setShowLikeModal(true)}
-              className="flex items-center space-x-2 bg-gray-700 py-2 px-4 rounded-lg hover:cursor-pointer hover:bg-gray-600 z-50"
-            >
-              <AiOutlineLike />
-              <span>{momentLikes.length}</span>
+            {/* Likes, Dislikes, Comments */}
+            <div className="flex space-x-2 items-center border-t pt-5">
+              <div 
+                onClick={() => setShowLikeModal(true)}
+                className="flex items-center space-x-2 bg-gray-700 py-2 px-4 rounded-lg hover:cursor-pointer hover:bg-gray-600 z-50"
+              >
+                <AiOutlineLike />
+                <span>{momentLikes.length}</span>
+              </div>
+              <div 
+                className="flex items-center space-x-2 bg-gray-700 py-2 px-4 rounded-lg hover:cursor-pointer hover:bg-gray-600 z-50"
+                onClick={() => setShowDislikeModal(true)}
+              >
+                <AiOutlineDislike />
+                <span>{momentDislikes.length}</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-gray-700 py-2 px-4 rounded-lg">
+                <AiOutlineComment />
+                <span>{commentCnt}</span>
+              </div>
             </div>
-            <div 
-              className="flex items-center space-x-2 bg-gray-700 py-2 px-4 rounded-lg hover:cursor-pointer hover:bg-gray-600 z-50"
-              onClick={() => setShowDislikeModal(true)}
-            >
-              <AiOutlineDislike />
-              <span>{momentDislikes.length}</span>
-            </div>
-            {/* <div className="flex items-center space-x-2 bg-gray-700 py-2 px-4 rounded-lg">
-              <BsChatLeftText />
-              <span>{commentCnt}</span>
-            </div> */}
           </div>
 
           {/* Comments Section */}
-          <div className="z-50">
-            {/* <h2 className="text-xl font-bold mb-3">Comments</h2> */}
-            <CommentComponent 
-              tokenId={tokenId}
-              isMember={isMember}
-              onMessageToParent={handleChildAction}
-            />
+          <div className="w-full">
+            <div className="z-50">
+              {/* <h2 className="text-xl font-bold mb-3">Comments</h2> */}
+              <CommentComponent 
+                tokenId={tokenId}
+                isMember={isMember}
+                onMessageToParent={handleChildAction}
+              />
+            </div>
           </div>
 
           {/* <div>{momentNotes}</div> */}
 
           {showLikeModal ? (
             <>
-              <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-                <div className="relative w-auto my-6 mx-auto max-w-3xl">
+              <div className="justify-center items-start flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 shadow-md-light">
+                <div className="relative w-auto my-6 mx-auto max-w-4xl mt-32">
                   {/*content*/}
-                  <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+                  <div className="rounded-lg shadow-md relative flex flex-col w-full bg-gray-700 border-solid border-gray-600 border-2">
                     {/*header*/}
-                    <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
-                      <h3 className="text-3xl font-semibold">Liked Members</h3>
+                    <div className="flex text-gray-100 items-start items-center justify-between p-6 border-b border-solid border-gray-500 rounded-t-lg">
+                      <h3 className="text-xl">Likes</h3>
                       <button
-                        className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
+                        className="ml-auto bg-transparent border-0 float-right leading-none outline-none focus:outline-none"
                         onClick={() => setShowLikeModal(false)}
                       >
-                        <span className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
+                        <span className="bg-transparent h-6 w-6 text-2xl outline-none focus:outline-none">
                           ×
                         </span>
                       </button>
                     </div>
                     {/*body*/}
-                    <div className="relative p-6 flex-auto max-h-[600px] w-[400px]">
+                    <div className="relative p-6 flex-auto max-h-[600px] sm:w-[600px] w-full overflow-y-auto">
                       {momentLikes.length
                         ? momentLikes.map((mlike, index) => (
                             <div key={index} className="commentPanelItem my-2">
-                              <div className="p-1 flex items-center space-x-3 hover:cursor-pointer">
+                              <div className="p-1 flex items-center justify-start  space-x-3">
                                 <img
                                   src={mlike.cid}
-                                  alt="Andrew Alfred"
-                                  className="w-10 h-10 rounded-full"
+                                  alt="Universal Profile"
+                                  className="w-10 h-10 object-cover rounded-full"
                                 />
                                 <div>
-                                  <h3 className="text-sm font-medium">
+                                  <h3 className="text-base text-gray-200">
                                     {mlike.generatedName}
                                   </h3>
                                 </div>
                               </div>
                             </div>
                           ))
-                        : "No Data"}
+                        : "No likes yet"}
                     </div>
                     {/*footer*/}
-                    <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
+                    <div className="flex items-center justify-end p-6 border-t border-solid border-gray-500 rounded-b-lg">
                       <button
-                        className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                        type="button"
-                        onClick={() => setShowLikeModal(false)}
-                      >
-                        Close
-                      </button>
-                      <button
-                        className="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                        className="bg-primary-600 text-gray-200 hover:bg-primary-500 px-6 py-3 rounded-lg shadow-md"
                         type="button"
                         onClick={() => handleLike()}
                       >
@@ -686,60 +680,53 @@ export default function Page({ params }: { params: { slug: string } }) {
                   </div>
                 </div>
               </div>
-              <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
+              <div className="opacity-80 fixed inset-0 z-60 bg-black"></div>
             </>
           ) : null}
 
           {showDislikeModal ? (
             <>
-              <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-                <div className="relative w-auto my-6 mx-auto max-w-3xl">
+              <div className="justify-center items-start flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 shadow-md-light">
+                <div className="relative w-auto my-6 mx-auto max-w-4xl mt-32">
                   {/*content*/}
-                  <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+                  <div className="rounded-lg shadow-md relative flex flex-col w-full bg-gray-700 border-solid border-gray-600 border-2">
                     {/*header*/}
-                    <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
-                      <h3 className="text-3xl font-semibold">Disliked Members</h3>
+                    <div className="flex text-gray-100 items-start items-center justify-between p-6 border-b border-solid border-gray-500 rounded-t-lg">
+                      <h3 className="text-xl">Dislikes</h3>
                       <button
-                        className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
+                        className="ml-auto bg-transparent border-0 float-right leading-none outline-none focus:outline-none"
                         onClick={() => setShowDislikeModal(false)}
                       >
-                        <span className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
+                        <span className="bg-transparent h-6 w-6 text-2xl outline-none focus:outline-none">
                           ×
                         </span>
                       </button>
                     </div>
                     {/*body*/}
-                    <div className="relative p-6 flex-auto max-h-[600px] w-[400px]">
+                    <div className="relative p-6 flex-auto max-h-[600px] sm:w-[600px] w-full overflow-y-auto">
                       {momentDislikes.length
                         ? momentDislikes.map((mdlike, index) => (
                             <div key={index} className="commentPanelItem my-2">
-                              <div className="p-1 flex items-center space-x-3 hover:cursor-pointer">
+                              <div className="p-1 flex items-center justify-start  space-x-3">
                                 <img
                                   src={mdlike.cid}
-                                  alt="Andrew Alfred"
-                                  className="w-10 h-10 rounded-full"
+                                  alt="Universal Profile"
+                                  className="w-10 h-10 object-cover rounded-full"
                                 />
                                 <div>
-                                  <h3 className="text-sm font-medium">
+                                  <h3 className="text-base text-gray-200">
                                     {mdlike.generatedName}
                                   </h3>
                                 </div>
                               </div>
                             </div>
                           ))
-                        : "No Data"}
+                        : "No dislikes yet"}
                     </div>
                     {/*footer*/}
-                    <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
+                    <div className="flex items-center justify-end p-6 border-t border-solid border-gray-500 rounded-b-lg">
                       <button
-                        className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                        type="button"
-                        onClick={() => setShowDislikeModal(false)}
-                      >
-                        Close
-                      </button>
-                      <button
-                        className="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                        className="bg-primary-600 text-gray-200 hover:bg-primary-500 px-6 py-3 rounded-lg shadow-md"
                         type="button"
                         onClick={() => handleDislike()}
                       >
@@ -754,7 +741,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                   </div>
                 </div>
               </div>
-              <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
+              <div className="opacity-80 fixed inset-0 z-60 bg-black"></div>
             </>
           ) : null}
         </div>

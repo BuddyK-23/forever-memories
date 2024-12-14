@@ -462,7 +462,7 @@ export default function Page({ params }: { params: { slug: string } }) {
           {/* Vault Description */}
           <div className="text-gray-200 mb-3">
             <div
-              className={`overflow-hidden ${isExpanded ? '' : 'line-clamp-2'}`}
+              className={`overflow-hidden whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-2'}`}
               style={{ display: '-webkit-box', WebkitLineClamp: isExpanded ? 'unset' : '2', WebkitBoxOrient: 'vertical' }}
             >
               {vaultDescription  || ''}
