@@ -79,7 +79,7 @@ export default function Page({ params }: { params: { slug: string } }) {
 
   useEffect(() => {
     init();
-  }, [isConnected, address, walletProvider]);
+  }, [walletProvider]);
 
   const fetchProfileName = async (owner: string) => {
     const profile = await getUniversalProfileCustomName(owner);
@@ -191,7 +191,6 @@ export default function Page({ params }: { params: { slug: string } }) {
         setIsJoinedVault(false);
       }
 
-      console.log("memberList", memberList);
       let vaultMembers_: VaultMember[] = [];
       if (memberList.length > 0)
         for (let i = 0; i < memberList.length; i++) {
