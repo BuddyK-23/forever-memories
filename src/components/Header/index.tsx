@@ -101,7 +101,7 @@ const Navbar = () => {
   ];
 
   return (
-    <header className={`fixed top-0 left-0 w-full h-16 px-6 flex items-center justify-center text-white z-50 transition-colors duration-300 ${
+    <header className={`fixed top-0 left-0 w-full h-16 px-4 lg:px-0 flex items-center justify-center text-white z-50 transition-colors duration-300 ${
       isScrolled ? "bg-black/90" : "bg-transparent"
     }`}>
       <div className="container mx-auto max-w-6xl flex justify-between items-center">

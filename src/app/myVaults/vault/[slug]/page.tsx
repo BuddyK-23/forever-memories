@@ -3,7 +3,7 @@
 import { Button, Modal, TextInput } from "flowbite-react";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
-import { AiOutlinePlusCircle } from "react-icons/ai";
+import { AiOutlinePlusCircle, AiOutlineUser, AiOutlinePicture } from "react-icons/ai";
 import { ethers } from "ethers";
 import {
   useWeb3ModalAccount,
@@ -257,40 +257,66 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   const handleInvitationMember = async () => {
-    if (invitationAddress == address) {
-      toast.error("You cannot invite yourself!");
-      return;
-    }
-    if (vaultOwner !== address) {
-      toast.error("Only the collection owner can invite!");
-      return;
-    }
-    if (walletProvider) {
-      const ethersProvider = new ethers.providers.Web3Provider(
-        walletProvider,
-        "any"
-      );
-      const signer = ethersProvider.getSigner(address);
-      const VaultFactoryContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-        VaultFactoryABI.abi,
-        signer
-      );
-      setIsDownloading(false);
-      const tx = await VaultFactoryContract.inviteMember(
-        vaultAddress,
-        invitationAddress
-      );
-      console.log("tx", tx);
-      setIsDownloading(true);
-      init();
-      toast.success("Added to collection successfully.");
-      setOpenInvitationModal(false);
-    } else {
-      toast.error("Please connect your wallet.");
-      setIsDownloading(false);
+    try {
+      if (invitationAddress === address) {
+        toast.error("You cannot invite yourself!");
+        return;
+      }
+      if (vaultOwner !== address) {
+        toast.error("Only the collection owner can invite!");
+        return;
+      }
+      if (walletProvider) {
+        const ethersProvider = new ethers.providers.Web3Provider(
+          walletProvider,
+          "any"
+        );
+        const signer = ethersProvider.getSigner(address);
+  
+        const VaultFactoryContract = new ethers.Contract(
+          process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+          VaultFactoryABI.abi,
+          signer
+        );
+  
+        setIsDownloading(false);
+  
+        const tx = await VaultFactoryContract.inviteMember(
+          vaultAddress,
+          invitationAddress
+        );
+  
+        console.log("Transaction hash:", tx.hash);
+  
+        // Wait for the transaction to be mined
+        await tx.wait();
+  
+        // Call init() to refresh data
+        init();
+  
+        // Show success toast and extend visibility duration
+        toast.success("Added to collection successfully.", {
+          autoClose: 5000, // Stay visible for 5 seconds
+        });
+  
+        // Close the modal
+        setOpenInvitationModal(false);
+  
+        // Reload the page after a slight delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 5200); // Allow toast to finish showing before reload
+      } else {
+        toast.error("Please connect your wallet.");
+      }
+    } catch (error) {
+      console.error("Error inviting member:", error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsDownloading(false); // Always stop the loading state
     }
   };
+  
 
   const handleLeaveVault = async () => {
     if (walletProvider) {
@@ -402,7 +428,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         background: "radial-gradient(circle at top left, #041420, #000000)",
       }}
     >
-      <div className="container mx-auto max-w-6xl pt-32 pb-32">
+      <div className="container mx-auto max-w-6xl py-24 lg:py-32 px-4 lg:px-0">
         {/* Vault Name and Join Button */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2 pl-2 pr-3 border border-gray-900/80 py-1 bg-gray-900/80 rounded-full shadow-sm">
@@ -480,17 +506,22 @@ export default function Page({ params }: { params: { slug: string } }) {
 
           {/* Vault Owner, Members, and Moments */}
           <div className="flex items-center gap-4">
-            <div className="flex gap-2 text-gray-200">
-              <div
-                className="hover:cursor-pointer hover:text-primary-300"
-                onClick={() => setOpenMembersModal(true)}
-              >
-                {vaultMembers?.length} member
-                {vaultMembers?.length !== 1 ? "s" : ""}
+            <div className="flex gap-3 items-center text-gray-200">
+              <div className="flex gap-1 items-center">  
+                <AiOutlineUser />
+                <div
+                  className="hover:cursor-pointer hover:text-primary-300"
+                  onClick={() => setOpenMembersModal(true)}
+                >
+                  {vaultMembers?.length} member
+                  {vaultMembers?.length !== 1 ? "s" : ""}
+                </div>
               </div>
-              <div>|</div>
-              <div>
-                {moments?.length || 0} moment{moments?.length !== 1 ? "s" : ""}
+              <div className="flex gap-1 items-center">
+                <AiOutlinePicture />
+                <div>
+                  {moments?.length || 0} moment{moments?.length !== 1 ? "s" : ""}
+                </div>
               </div>
             </div>
           </div>

@@ -26,13 +26,13 @@ export default function Home() {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto max-w-6xl h-screen px-2 flex flex-col justify-center relative z-10">
+      <div className="container mx-auto max-w-6xl h-screen px-4 lg:px-0 flex flex-col justify-center relative z-10">
         <div className="text-white">
-          <h2 className="text-5xl text-gray-200 font-bold mb-6">Capture today, inspire tomorrow</h2>
-          <p className="text-xl text-gray-300 mb-10">
-            A social platform to save, share, and shape our collective history
+          <h2 className="text-5xl text-gray-200 font-bold mb-3">Own and control your digital legacy</h2>
+          <p className="text-xl text-gray-300 mb-10 max-w-[740px]">
+            Decentralised storage ensures your photos and videos are safe, resilient, and fully under your control — forever.
           </p>
-          <div className="space-x-4">
+          <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 mt-6">
             <a
               href="/createVault"
               className="px-6 py-3 bg-primary-600 text-gray-200 rounded-lg shadow-md hover:bg-primary-500"
@@ -48,7 +48,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mt-16 max-w-lg">
+        {/* <div className="mt-16 max-w-lg">
           <h3 className="text-lg text-gray-400 mb-4">Popular collections</h3>
           <div className="flex flex-wrap gap-3">
             {[
@@ -67,7 +67,7 @@ export default function Home() {
               </span>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
     </main>
   );

@@ -566,8 +566,8 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         background: "radial-gradient(circle at top left, #041420, #000000)",
       }}
     >
-    <div className="container mx-auto max-w-2xl pt-32 pb-32">
-      <div className="flex justify-center main-content gap-x-1 mb-20 w-full">
+    <div className="container mx-auto max-w-2xl py-24 lg:py-32 px-4 lg:px-0">
+      <div className="flex justify-center main-content gap-x-1 w-full">
         <div className="w-full">
           <h4 className="text-3xl text-gray-200 font-medium mb-6">Create a Moment</h4>
           <div>

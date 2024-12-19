@@ -494,7 +494,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         <div className="ball ball3"></div>
       </div>
 
-      <div className="container mx-auto max-w-6xl pt-32 pb-32 flex flex-col lg:flex-row lg:gap-6">
+      <div className="container mx-auto max-w-6xl py-24 lg:py-32 px-4 lg:px-0 flex flex-col lg:flex-row lg:gap-6">
       
       
         

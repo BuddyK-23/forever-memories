@@ -222,7 +222,7 @@ export default function CreateVault() {
           background: "radial-gradient(circle at top left, #041420, #000000)",
         }}
       >
-      <div className="container mx-auto max-w-2xl pt-32 pb-[500px]">
+      <div className="container mx-auto max-w-2xl py-24 lg:py-32 px-4 lg:px-0 pb-[500px]">
         <div className="flex justify-center items-center">
           <div className="w-full">
             <h2 className="text-3xl font-medium mb-6">
@@ -252,11 +252,12 @@ export default function CreateVault() {
               </span>
             </button>
             <button
+              disabled={true}
               onClick={() => handleVaultModeChange(0)}
-              className={`relative flex flex-col items-start p-4 rounded-lg shadow-md overflow-hidden ${
+              className={`relative flex flex-col items-start p-4 rounded-lg shadow-md overflow-hidden cursor-not-allowed ${
                 formValues.vaultMode === 0
                   ? "border-4 border-primary-500"
-                  : "border-4 border-transparent hover:border-primary-400"
+                  : "border-4 border-transparent hover:border-gray-900"
               }`}
               style={{
                 height: "160px",
@@ -267,8 +268,14 @@ export default function CreateVault() {
                 backgroundColor: "#111827",
               }}
             >
+              {/* Overlay for "Coming Soon" */}
+              <div className="absolute inset-0 bg-opacity-50 flex">
+                <span className="absolute text-gray-400 text-base left-4 bottom-10">Coming Soon</span>
+              </div>
+
+              {/* Content */}
               <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-              <span className="absolute bottom-3 text-gray-200 font-bold text-lg text-left">
+              <span className="absolute bottom-3 text-gray-400 font-bold text-lg text-left">
                 Public Collection
               </span>
             </button>

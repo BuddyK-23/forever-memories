@@ -197,8 +197,8 @@ export default function Explore() {
         ></div>
       </div>
       <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
-        <p className="text-lg mt-8">Loading</p>
-        {/* <p className="text-base mt-2 italic">"Every moment is a memory in the making"</p> */}
+        <p className="text-lg mt-8">Loading collections</p>
+        <p className="text-base mt-2">Make sure to connect your Universal Profile</p>
       </div>
     </div>
   ) : (
@@ -208,7 +208,7 @@ export default function Explore() {
         background: "radial-gradient(circle at top left, #041420, #000000)",
       }}
     >
-      <div className="container mx-auto max-w-6xl pt-32">
+      <div className="container mx-auto max-w-6xl py-24 lg:py-32 px-4 lg:px-0">
         <div className="flex gap-2">
           <Swiper
             slidesPerView={"auto"}
@@ -238,7 +238,7 @@ export default function Explore() {
           </Swiper>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6">
           {vaultData.map((vault, index) => (
             <div key={index}>
               <VaultCard vault={vault} href="explore" />
@@ -246,24 +246,10 @@ export default function Explore() {
           ))}
         </div>
 
-        {/* {!vaultData.length && (
-          <div className="text-base text-center text-white mt-10">
-            <div>No collections found</div>
-            <div className="pt-6 flex justify-center items-center">
-              <Link href={"/createVault"}>
-                <button className="px-6 py-3 bg-primary-600 text-white text-base rounded-lg shadow-md hover:bg-primary-700">
-                  Create new collection
-                </button>
-              </Link>
-            </div>
-          </div>
-        )} */} 
-
         {!vaultData.length && (
           <div className="text-center text-gray-200 mt-10 space-y-4">
             <div>
               <img 
-                // src="https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"
                 src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExc2hzb2RqdmV3MnNkNzdkdmx1ZGFxZ2c2cnJuZ2ZlMTZwNnN3NnV1YyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xUPJPzcdlbvaFUrF7y/giphy.gif"
                 alt="Oh no Spongbob gif" 
                 className="mx-auto w-96 h-auto"
