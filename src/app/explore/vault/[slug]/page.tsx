@@ -30,10 +30,6 @@ import VaultAssistABI from "@/artifacts/VaultAssist.json";
 import MomentCard from "@/components/MomentCard";
 import toast, { Toaster } from "react-hot-toast";
 import { HiOutlineExclamationCircle, HiOutlineUserAdd } from "react-icons/hi";
-import {
-  generateAESKey,
-  decryptEncryptedEncryptionKey,
-} from "@/utils/encryptKey";
 
 interface Moment {
   headline: string;
@@ -63,7 +59,7 @@ export default function Page({ params }: { params: { slug: string } }) {
   const router = useRouter();
 
   const [vaultTitle, setVaultTitle] = useState<string>();
-  const [vaultDescription, setVaultDescription] = useState<string>("");
+  const [vaultDescription, setVaultDescription] = useState<string>();
   const [vaultMembers, setVaultMembers] = useState<VaultMember[]>();
   const [vaultMoments, setVaultMoments] = useState<VaultMoment[]>([]);
   const [vaultMode, setVaultMode] = useState<number>(0);
@@ -77,7 +73,6 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [vaultProfileName, setVaultProfileName] = useState<string>("");
   const [vaultProfileCid, setVaultProfileCid] = useState<string>("");
   const [isJoinedVault, setIsJoinedVault] = useState<boolean>(false);
-
   const [isExpanded, setIsExpanded] = useState(false);
   const toggleDescription = () => {
     setIsExpanded(!isExpanded);
@@ -85,7 +80,33 @@ export default function Page({ params }: { params: { slug: string } }) {
 
   useEffect(() => {
     init();
-  }, [isConnected, address, walletProvider]);
+  }, []);
+
+  useEffect(() => {
+    const isMemberCheckFunc = async () => {
+      if (isConnected) {
+        const ethersProvider = new ethers.providers.JsonRpcProvider(
+          process.env.NEXT_PUBLIC_MAINNET_URL
+        );
+        const VaultFactoryContract = new ethers.Contract(
+          process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+          VaultFactoryABI.abi,
+          ethersProvider
+        );
+        const memberList = await VaultFactoryContract.getVaultMembers(
+          vaultAddress
+        );
+        if (isAddressInList(memberList, address as string)) {
+          console.log(true);
+          setIsJoinedVault(true);
+        } else {
+          console.log(false);
+          setIsJoinedVault(false);
+        }
+      }
+    };
+    isMemberCheckFunc();
+  }, [isConnected]);
 
   const fetchProfileName = async (owner: string) => {
     const profile = await getUniversalProfileCustomName(owner);
@@ -96,6 +117,10 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   const handleRemoveMember = async (memberAddress: string) => {
+    if ((vaultOwner as string) == memberAddress) {
+      toast.error("The vault owner cannot be removed");
+      return;
+    }
     if (walletProvider) {
       setIsDownloading(false);
       const ethersProvider = new ethers.providers.Web3Provider(
@@ -108,10 +133,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         VaultFactoryABI.abi,
         signer
       );
-      if (vaultOwner === memberAddress) {
-        toast.error("The vault owner cannot be removed");
-        return;
-      }
+
       const tx = await VaultFactoryContract.removeMember(
         vaultAddress,
         memberAddress
@@ -147,198 +169,186 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   const init = async () => {
-    if (walletProvider) {
-      setIsDownloading(false);
-      
-      const ethersProvider = new ethers.providers.Web3Provider(
-        walletProvider,
-        "any"
-      );
-      const signer = ethersProvider.getSigner(address);
+    setIsDownloading(false);
+    const ethersProvider = new ethers.providers.JsonRpcProvider(
+      process.env.NEXT_PUBLIC_MAINNET_URL
+    );
 
-      const VaultFactoryContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-        VaultFactoryABI.abi,
-        signer
-      );
+    const VaultFactoryContract = new ethers.Contract(
+      process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+      VaultFactoryABI.abi,
+      ethersProvider
+    );
 
-      const VaultContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
-        VaultABI.abi,
-        signer
-      );
+    const VaultContract = new ethers.Contract(
+      process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+      VaultABI.abi,
+      ethersProvider
+    );
 
-      const VaultAssistContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_ASSIST_CONTRACT_ADDRESS as string,
-        VaultAssistABI.abi,
-        signer
-      );
+    const VaultAssistContract = new ethers.Contract(
+      process.env.NEXT_PUBLIC_VAULT_ASSIST_CONTRACT_ADDRESS as string,
+      VaultAssistABI.abi,
+      ethersProvider
+    );
 
-      const data = await VaultFactoryContract.getVaultMetadata(vaultAddress);
-      setVaultMode(data.vaultMode);
+    const data = await VaultFactoryContract.getVaultMetadata(vaultAddress);
+    setVaultMode(data.vaultMode);
 
-      const allMoments = await VaultContract.getAllMoments(vaultAddress);
-      setVaultTitle(data.title as string);
-      setVaultDescription(data.description as string);
-      setVaultOwner(data.vaultOwner as string);
-      setVaultMoments(allMoments.length);
+    const allMoments = await VaultContract.getAllMoments(vaultAddress);
+    setVaultTitle(data.title as string);
+    setVaultDescription(data.description as string);
+    setVaultOwner(data.vaultOwner as string);
+    setVaultMoments(allMoments.length);
 
-      const ownerData = await fetchProfileName(data.vaultOwner);
-      setVaultProfileName(ownerData.generatedName);
-      setVaultProfileCid(ownerData.cid);
+    const ownerData = await fetchProfileName(data.vaultOwner);
+    setVaultProfileName(ownerData.generatedName);
+    setVaultProfileCid(ownerData.cid);
 
-      const memberList = await VaultFactoryContract.getVaultMembers(
-        vaultAddress
-      );
-      if (isAddressInList(memberList, address as string)) {
-        console.log(true);
-        setIsJoinedVault(true);
-      } else {
-        console.log(false);
-        setIsJoinedVault(false);
+    const memberList = await VaultFactoryContract.getVaultMembers(vaultAddress);
+
+    let vaultMembers_: VaultMember[] = [];
+    if (memberList.length > 0)
+      for (let i = 0; i < memberList.length; i++) {
+        const generatedVaultMember = await fetchProfileName(memberList[i]);
+        vaultMembers_.push({
+          name: memberList[i],
+          generatedName: generatedVaultMember.generatedName,
+          cid: generatedVaultMember.cid,
+        });
       }
+    setVaultMembers(vaultMembers_);
+    let moments_: Moment[] = [];
 
-      console.log("memberList", memberList);
-      let vaultMembers_: VaultMember[] = [];
-      if (memberList.length > 0)
-        for (let i = 0; i < memberList.length; i++) {
-          const generatedVaultMember = await fetchProfileName(memberList[i]);
-          vaultMembers_.push({
-            name: memberList[i],
-            generatedName: generatedVaultMember.generatedName,
-            cid: generatedVaultMember.cid,
-          });
+    // NFT info
+    if (allMoments.length > 0) {
+      for (let i = 0; i < allMoments.length; i++) {
+        // Get the total number of comments
+        const _commentCnt = await VaultAssistContract.getCommentCount(
+          allMoments[i].tokenId
+        );
+        const commentCnt = parseInt(_commentCnt.toString(), 10); // Convert BigNumber to number
+
+        // get the encryption key from encryptedEncryptionKey of Vault Contract
+        const combinedEncryptedData_ = await VaultContract.getEncryptedKey(
+          bytes32ToAddress(allMoments[i].tokenId)
+        );
+        const combinedEncryptedData = hexStringToUint8Array(
+          combinedEncryptedData_
+        );
+        const creator = await VaultContract.momentOwners(allMoments[i].tokenId);
+
+        const decryptedKey_ = await fetchDecryptedKey(combinedEncryptedData);
+        const decryptedKey = Buffer.from(decryptedKey_);
+
+        // if (hexToDecimal(balance._hex) == 0) continue;
+        const tokenIdMetadata = await VaultContract.getDataForTokenId(
+          allMoments[i].tokenId,
+          ERC725YDataKeys.LSP4["LSP4Metadata"]
+        );
+        const erc725js = new ERC725(lsp4Schema);
+        const decodedMetadata = erc725js.decodeData([
+          {
+            keyName: "LSP4Metadata",
+            value: tokenIdMetadata,
+          },
+        ]);
+        const metadataHash = decodedMetadata[0].value.url;
+
+        const metadataJsonLink =
+          process.env.NEXT_PUBLIC_IPFS_GATEWAY + "/" + metadataHash;
+
+        const resMetadata = await fetch(metadataJsonLink);
+        const jsonMetadata = await resMetadata.json();
+        const ipfsHash = jsonMetadata.LSP4Metadata.ipfsHash;
+        const metadata = jsonMetadata.LSP4Metadata;
+
+        if (ipfsHash == "") continue;
+        const fetchUrl = process.env.NEXT_PUBLIC_FETCH_URL + ipfsHash;
+        const response = await fetch(fetchUrl);
+        if (!response.ok) {
+          throw new Error("Failed to fetch image from IPFS");
         }
+        const encryptedData = await response.arrayBuffer();
+        const decryptedData = await decryptFile(
+          new Uint8Array(encryptedData),
+          decryptedKey
+        );
 
-      setVaultMembers(vaultMembers_);
-      let moments_: Moment[] = [];
-
-      // NFT info
-      if (allMoments.length > 0) {
-        for (let i = 0; i < allMoments.length; i++) {
-          // Get the total number of comments
-          const _commentCnt = await VaultAssistContract.getCommentCount(
-            allMoments[i].tokenId
-          );
-          const commentCnt = parseInt(_commentCnt.toString(), 10); // Convert BigNumber to number
-
-          // get the encryption key from encryptedEncryptionKey of Vault Contract
-          const combinedEncryptedData_ = await VaultContract.getEncryptedKey(
-            bytes32ToAddress(allMoments[i].tokenId)
-          );
-          const combinedEncryptedData = hexStringToUint8Array(
-            combinedEncryptedData_
-          );
-          console.log("combinedEncryptedData", combinedEncryptedData);
-          const creator = await VaultContract.momentOwners(
-            allMoments[i].tokenId
-          );
-
-          const decryptedKey_ = await fetchDecryptedKey(combinedEncryptedData);
-          const decryptedKey = Buffer.from(decryptedKey_);
-
-          // if (hexToDecimal(balance._hex) == 0) continue;
-          const tokenIdMetadata = await VaultContract.getDataForTokenId(
-            allMoments[i].tokenId,
-            ERC725YDataKeys.LSP4["LSP4Metadata"]
-          );
-          const erc725js = new ERC725(lsp4Schema);
-          const decodedMetadata = erc725js.decodeData([
-            {
-              keyName: "LSP4Metadata",
-              value: tokenIdMetadata,
-            },
-          ]);
-          const metadataHash = decodedMetadata[0].value.url;
-
-          const metadataJsonLink =
-            process.env.NEXT_PUBLIC_IPFS_GATEWAY + "/" + metadataHash;
-
-          const resMetadata = await fetch(metadataJsonLink);
-          const jsonMetadata = await resMetadata.json();
-          const ipfsHash = jsonMetadata.LSP4Metadata.ipfsHash;
-          const metadata = jsonMetadata.LSP4Metadata;
-
-          if (ipfsHash == "") continue;
-          const fetchUrl = process.env.NEXT_PUBLIC_FETCH_URL + ipfsHash;
-          const response = await fetch(fetchUrl);
-          if (!response.ok) {
-            throw new Error("Failed to fetch image from IPFS");
-          }
-          const encryptedData = await response.arrayBuffer();
-          const decryptedData = await decryptFile(
-            new Uint8Array(encryptedData),
-            decryptedKey
-          );
-
-          const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
-          const objectURL = URL.createObjectURL(blob);
-          const likes_ = await VaultAssistContract.getLikes(
-            allMoments[i].tokenId
-          );
-          const attributes = metadata.attributes;
-          let fileType: string = "image";
-          if (attributes.length > 0) {
-            fileType = getValueByKey(attributes, "FileType") as string;
-          }
-          moments_.push({
-            headline: metadata.headline, //tokenSymbol.value as string,
-            description: metadata.description,
-            fileType: fileType,
-            cid: objectURL,
-            likes: likes_.length,
-            comments: commentCnt,
-            owner: creator,
-            momentAddress: allMoments[i].tokenId,
-          });
+        const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
+        const objectURL = URL.createObjectURL(blob);
+        const likes_ = await VaultAssistContract.getLikes(
+          allMoments[i].tokenId
+        );
+        const attributes = metadata.attributes;
+        let fileType: string = "image";
+        if (attributes.length > 0) {
+          fileType = getValueByKey(attributes, "FileType") as string;
         }
+        moments_.push({
+          headline: metadata.headline, //tokenSymbol.value as string,
+          description: metadata.description,
+          fileType: fileType,
+          cid: objectURL,
+          likes: likes_.length,
+          comments: commentCnt,
+          owner: creator,
+          momentAddress: allMoments[i].tokenId,
+        });
       }
-      setMoments(moments_);
-      setIsDownloading(true);
     }
+    setMoments(moments_);
+    setIsDownloading(true);
   };
 
   const handleJoinVault = async () => {
     if (walletProvider) {
-      setIsDownloading(false);
-      const ethersProvider = new ethers.providers.Web3Provider(
-        walletProvider,
-        "any"
-      );
-      const signer = ethersProvider.getSigner(address);
+      if (isJoinedVault) {
+        toast.error("You have already joint.");
+      } else {
+        setIsDownloading(false);
+        const ethersProvider = new ethers.providers.Web3Provider(
+          walletProvider,
+          "any"
+        );
+        const signer = ethersProvider.getSigner(address);
 
-      const VaultFactoryContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-        VaultFactoryABI.abi,
-        signer
-      );
-      const tx = await VaultFactoryContract.joinVault(vaultAddress);
-      router.push("/myVaults/" + vaultAddress);
-      toast.success("Joint to vault successfully.");
+        const VaultFactoryContract = new ethers.Contract(
+          process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+          VaultFactoryABI.abi,
+          signer
+        );
+        const tx = await VaultFactoryContract.joinVault(vaultAddress);
+        router.push("/myVaults/vault/" + vaultAddress);
+        toast.success("Joint to vault successfully.");
+      }
     } else {
       toast.error("Please connect the wallet.");
     }
   };
 
   return !isDownloading ? (
-    <div className="flex flex-col justify-center items-center bg-black min-h-screen text-gray-200"> 
+    <div className="flex flex-col justify-center items-center bg-black min-h-screen text-gray-200">
       <div className="flex space-x-2 justify-center items-center">
         <div
           className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
           style={{
-            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            backgroundImage:
+              "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
           }}
         ></div>
         <div
           className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
           style={{
-            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            backgroundImage:
+              "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
           }}
         ></div>
         <div
           className="h-8 w-8 rounded-full animate-bounce"
           style={{
-            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            backgroundImage:
+              "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
           }}
         ></div>
       </div>
@@ -380,21 +390,29 @@ export default function Page({ params }: { params: { slug: string } }) {
         </div>
 
         {/* Vault Title & Description */}
-        <div className="font-bold text-3xl text-gray-200 pt-3 mb-3">{vaultTitle}</div>
+        <div className="font-bold text-3xl text-gray-200 pt-3 mb-3">
+          {vaultTitle}
+        </div>
         {/* Vault Description */}
         <div className="text-gray-200 mb-3">
           <div
-            className={`overflow-hidden whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-2'}`}
-            style={{ display: '-webkit-box', WebkitLineClamp: isExpanded ? 'unset' : '2', WebkitBoxOrient: 'vertical' }}
+            className={`overflow-hidden whitespace-pre-wrap ${
+              isExpanded ? "" : "line-clamp-2"
+            }`}
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: isExpanded ? "unset" : "2",
+              WebkitBoxOrient: "vertical",
+            }}
           >
-            {vaultDescription  || ''}
+            {vaultDescription || ""}
           </div>
           {(vaultDescription?.length || 0) > 100 && (
             <button
               onClick={toggleDescription}
               className="text-gray-600 hover:text-gray-500 text-sm"
             >
-              {isExpanded ? 'Hide full description' : 'Expand description'}
+              {isExpanded ? "Hide full description" : "Expand description"}
             </button>
           )}
         </div>
@@ -426,15 +444,19 @@ export default function Page({ params }: { params: { slug: string } }) {
           {!moments.length ? (
             <div className="text-center text-gray-200 mt-10 space-y-4 ">
               <div>
-                <img 
+                <img
                   // src="https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"
                   src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExazJkdG1uOHR0cTI5ZWltY3YzdTc0anVsMmluMGpybTJmajdtMzc1ciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ISOckXUybVfQ4/giphy.gif"
-                  alt="Oh no Spongbob gif" 
+                  alt="Oh no Spongbob gif"
                   className="mx-auto w-96 h-auto"
                 />
               </div>
-              <div className="text-xl font-medium">There are no moments in this collection yet!</div>
-              <div className="text-base">Add a moment to get the collection started</div>
+              <div className="text-xl font-medium">
+                There are no moments in this collection yet!
+              </div>
+              <div className="text-base">
+                Add a moment to get the collection started
+              </div>
               <div className="pt-6 flex justify-center items-center">
                 <Link href={"/addMoment"}>
                   <button className="px-6 py-3 bg-primary-600 text-white rounded-lg shadow-md hover:bg-primary-700">
@@ -445,12 +467,12 @@ export default function Page({ params }: { params: { slug: string } }) {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-8">
-            {moments &&
-              moments.map((moment, index) => (
-                <div key={index}>
-                  <MomentCard moment={moment} />
-                </div>
-              ))}
+              {moments &&
+                moments.map((moment, index) => (
+                  <div key={index}>
+                    <MomentCard moment={moment} />
+                  </div>
+                ))}
             </div>
           )}
         </div>
@@ -495,12 +517,12 @@ export default function Page({ params }: { params: { slug: string } }) {
             <div className="relative w-auto my-6 mx-auto max-w-4xl mt-32">
               {/*content*/}
               <div className="rounded-lg shadow-md relative flex flex-col w-full bg-gray-700 border-solid border-gray-600 border-2">
-                    {/*header*/}
-                    <div className="flex text-gray-100 items-start justify-between p-6 border-b border-solid border-gray-500 rounded-t-lg">
+                {/*header*/}
+                <div className="flex text-gray-100 items-start justify-between p-6 border-b border-solid border-gray-500 rounded-t-lg">
                   <h3 className="text-xl">
-                        {vaultMembers?.length} member
-                        {vaultMembers?.length !== 1 ? "s" : ""}
-                      </h3>
+                    {vaultMembers?.length} member
+                    {vaultMembers?.length !== 1 ? "s" : ""}
+                  </h3>
                   <button
                     className="ml-auto bg-transparent border-0 float-right leading-none outline-none focus:outline-none"
                     onClick={() => setOpenMembersModal(false)}

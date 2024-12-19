@@ -12,7 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import {
   bytes32ToAddress,
-  hexToDecimal,
+  isAddressInList,
   hexStringToUint8Array,
   getValueByKey,
   convertIpfsUriToUrl,
@@ -73,13 +73,39 @@ export default function Page({ params }: { params: { slug: string } }) {
   // const [openInvitationModal, setInvitationModal] = useState(false);
   const [vaultProfileName, setVaultProfileName] = useState<string>("");
   const [vaultProfileCid, setVaultProfileCid] = useState<string>("");
+  const [isInvitedMemberVault, setIsInvitedMemberVault] =
+    useState<boolean>(false);
 
   const [isExpanded, setIsExpanded] = useState(false);
   const toggleDescription = () => {
     setIsExpanded(!isExpanded);
   };
 
+  const isInvitedMemberCheckFunc = async () => {
+    if (isConnected) {
+      const ethersProvider = new ethers.providers.JsonRpcProvider(
+        process.env.NEXT_PUBLIC_MAINNET_URL
+      );
+      const VaultFactoryContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+        VaultFactoryABI.abi,
+        ethersProvider
+      );
+      const memberList = await VaultFactoryContract.getVaultMembers(
+        vaultAddress
+      );
+      if (isAddressInList(memberList, address as string)) {
+        console.log(true);
+        setIsInvitedMemberVault(true);
+      } else {
+        console.log(false);
+        setIsInvitedMemberVault(false);
+      }
+    }
+  };
+
   useEffect(() => {
+    isInvitedMemberCheckFunc();
     init();
   }, [isConnected, address, walletProvider]);
 
@@ -169,6 +195,8 @@ export default function Page({ params }: { params: { slug: string } }) {
           });
         }
 
+      console.log("vaultMembers_", vaultMembers_);
+
       setVaultMembers(vaultMembers_);
 
       let moments_: Moment[] = [];
@@ -257,63 +285,41 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   const handleInvitationMember = async () => {
-    try {
-      if (invitationAddress === address) {
-        toast.error("You cannot invite yourself!");
-        return;
-      }
-      if (vaultOwner !== address) {
-        toast.error("Only the collection owner can invite!");
-        return;
-      }
-      if (walletProvider) {
-        const ethersProvider = new ethers.providers.Web3Provider(
-          walletProvider,
-          "any"
-        );
-        const signer = ethersProvider.getSigner(address);
-  
-        const VaultFactoryContract = new ethers.Contract(
-          process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-          VaultFactoryABI.abi,
-          signer
-        );
-  
-        setIsDownloading(false);
-  
-        const tx = await VaultFactoryContract.inviteMember(
-          vaultAddress,
-          invitationAddress
-        );
-  
-        console.log("Transaction hash:", tx.hash);
-  
-        // Wait for the transaction to be mined
-        await tx.wait();
-  
-        // Call init() to refresh data
-        init();
-  
-        // Show success toast and extend visibility duration
-        toast.success("Added to collection successfully.", {
-          autoClose: 5000, // Stay visible for 5 seconds
-        });
-  
-        // Close the modal
-        setOpenInvitationModal(false);
-  
-        // Reload the page after a slight delay
-        setTimeout(() => {
-          window.location.reload();
-        }, 5200); // Allow toast to finish showing before reload
-      } else {
-        toast.error("Please connect your wallet.");
-      }
-    } catch (error) {
-      console.error("Error inviting member:", error);
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsDownloading(false); // Always stop the loading state
+    if (isInvitedMemberVault) {
+      toast.error("You have already invited selected user.");
+      return;
+    }
+    if (invitationAddress == address) {
+      toast.error("You cannot invite yourself!");
+      return;
+    }
+    if (vaultOwner !== address) {
+      toast.error("Only the collection owner can invite!");
+      return;
+    }
+    if (walletProvider) {
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
+      const VaultFactoryContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+        VaultFactoryABI.abi,
+        signer
+      );
+      setIsDownloading(false);
+      const tx = await VaultFactoryContract.inviteMember(
+        vaultAddress,
+        invitationAddress
+      );
+      console.log("tx", tx);
+      init();
+      toast.success("Added to collection successfully.");
+      setOpenInvitationModal(false);
+    } else {
+      toast.error("Please connect your wallet.");
+      setIsDownloading(false);
     }
   };
   
@@ -367,6 +373,10 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   const handleRemoveMember = async (memberAddress: string) => {
+    if ((vaultOwner as string) == memberAddress) {
+      toast.error("The collection owner cannot be removed");
+      return;
+    }
     if (walletProvider) {
       setIsDownloading(false);
       const ethersProvider = new ethers.providers.Web3Provider(
@@ -379,10 +389,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         VaultFactoryABI.abi,
         signer
       );
-      if (vaultOwner === memberAddress) {
-        toast.error("The collection owner cannot be removed");
-        return;
-      }
+
       const tx = await VaultFactoryContract.removeMember(
         vaultAddress,
         memberAddress
@@ -395,30 +402,35 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   return !isDownloading ? (
-    <div className="flex flex-col justify-center items-center bg-black min-h-screen text-gray-200"> 
+    <div className="flex flex-col justify-center items-center bg-black min-h-screen text-gray-200">
       <div className="flex space-x-2 justify-center items-center">
         <div
           className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
           style={{
-            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            backgroundImage:
+              "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
           }}
         ></div>
         <div
           className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
           style={{
-            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            backgroundImage:
+              "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
           }}
         ></div>
         <div
           className="h-8 w-8 rounded-full animate-bounce"
           style={{
-            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            backgroundImage:
+              "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
           }}
         ></div>
       </div>
       <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
         <p className="text-lg mt-8">Loading collection</p>
-        <p className="text-base mt-2 italic">&quot;Each moment tells a story; together, they create a legacy.&quot;</p>
+        <p className="text-base mt-2 italic">
+          &quot;Each moment tells a story; together, they create a legacy.&quot;
+        </p>
       </div>
     </div>
   ) : (
@@ -442,7 +454,7 @@ export default function Page({ params }: { params: { slug: string } }) {
             </div>
           </div>
           <div className="flex space-x-2 items-center">
-            {vaultMode === 1 ? (
+            {vaultMode === 1 && vaultOwner == address ? (
               <button
                 type="button"
                 onClick={() => setOpenInvitationModal(true)}
@@ -488,17 +500,23 @@ export default function Page({ params }: { params: { slug: string } }) {
           {/* Vault Description */}
           <div className="text-gray-200 mb-3">
             <div
-              className={`overflow-hidden whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-2'}`}
-              style={{ display: '-webkit-box', WebkitLineClamp: isExpanded ? 'unset' : '2', WebkitBoxOrient: 'vertical' }}
+              className={`overflow-hidden whitespace-pre-wrap ${
+                isExpanded ? "" : "line-clamp-2"
+              }`}
+              style={{
+                display: "-webkit-box",
+                WebkitLineClamp: isExpanded ? "unset" : "2",
+                WebkitBoxOrient: "vertical",
+              }}
             >
-              {vaultDescription  || ''}
+              {vaultDescription || ""}
             </div>
             {(vaultDescription.length || 0) > 100 && (
               <button
                 onClick={toggleDescription}
                 className="text-gray-600 hover:text-gray-500 text-sm"
               >
-                {isExpanded ? 'Hide full description' : 'Expand description'}
+                {isExpanded ? "Hide full description" : "Expand description"}
               </button>
             )}
           </div>
@@ -525,8 +543,6 @@ export default function Page({ params }: { params: { slug: string } }) {
               </div>
             </div>
           </div>
-
-          
 
           {/* Moments */}
 
@@ -603,28 +619,30 @@ export default function Page({ params }: { params: { slug: string } }) {
 
           {openInvitationModal && (
             <>
-            {/* <Modal.Header /> */}
-            <div className="justify-center items-start flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 shadow-md-light"> 
-              <div className="relative w-auto my-6 mx-auto max-w-4xl mt-32">
-                <div className="rounded-lg shadow-md relative flex flex-col w-full bg-gray-700 border-solid border-gray-600 border-2">
-                  {/* header */}
-                  <div className="flex text-gray-100 items-start justify-between p-6 border-b border-solid border-gray-500 rounded-t-lg">
-                    <h3 className="text-xl">Add Member</h3>
-                    <button
-                      className="ml-auto bg-transparent border-0 float-right leading-none outline-none focus:outline-none"
-                      onClick={() => setOpenInvitationModal(false)}
-                    >
-                      <span className="bg-transparent h-6 w-6 text-2xl outline-none focus:outline-none">
-                        ×
-                      </span>
-                    </button>
-                  </div>
+              {/* <Modal.Header /> */}
+              <div className="justify-center items-start flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 shadow-md-light">
+                <div className="relative w-auto my-6 mx-auto max-w-4xl mt-32">
+                  <div className="rounded-lg shadow-md relative flex flex-col w-full bg-gray-700 border-solid border-gray-600 border-2">
+                    {/* header */}
+                    <div className="flex text-gray-100 items-start justify-between p-6 border-b border-solid border-gray-500 rounded-t-lg">
+                      <h3 className="text-xl">Add Member</h3>
+                      <button
+                        className="ml-auto bg-transparent border-0 float-right leading-none outline-none focus:outline-none"
+                        onClick={() => setOpenInvitationModal(false)}
+                      >
+                        <span className="bg-transparent h-6 w-6 text-2xl outline-none focus:outline-none">
+                          ×
+                        </span>
+                      </button>
+                    </div>
 
-                  {/* body */}
-                  <div className="relative p-6 flex-auto max-h-[600px] sm:w-[600px] w-full">
-                    {/* <HiOutlineUserAdd className="mx-auto mb-4 h-10 w-10 text-gray-400 dark:text-gray-200" /> */}
-                  
-                    <label className="block mb-2 text-gray-200">Enter Universal Profile address</label>
+                    {/* body */}
+                    <div className="relative p-6 flex-auto max-h-[600px] sm:w-[600px] w-full">
+                      {/* <HiOutlineUserAdd className="mx-auto mb-4 h-10 w-10 text-gray-400 dark:text-gray-200" /> */}
+
+                      <label className="block mb-2 text-gray-200">
+                        Enter Universal Profile address
+                      </label>
                       <input
                         id="invitationAddress"
                         type="text"
@@ -632,35 +650,34 @@ export default function Page({ params }: { params: { slug: string } }) {
                         onChange={(e) => setInvitationAddress(e.target.value)}
                         placeholder="Input address"
                         className="w-full py-2 rounded-md bg-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        style={{ backgroundColor: '#4B5563' }}
+                        style={{ backgroundColor: "#4B5563" }}
                         required
                       />
-                    <div className="flex justify-end gap-4 mt-6">
-                      <button
-                        className="bg-gray-600 text-gray-200 hover:bg-gray-500 rounded-lg shadow-sm px-4 py-2"
-                        onClick={() => setOpenInvitationModal(false)}
-                      >
-                        Cancel
-                      </button>
-                    
+                      <div className="flex justify-end gap-4 mt-6">
+                        <button
+                          className="bg-gray-600 text-gray-200 hover:bg-gray-500 rounded-lg shadow-sm px-4 py-2"
+                          onClick={() => setOpenInvitationModal(false)}
+                        >
+                          Cancel
+                        </button>
 
-                      <button
-                        className={
-                          invitationAddress
-                            ? "bg-primary-600 text-gray-200 hover:bg-primary-500 rounded-lg shadow-sm px-4 py-2 text-base"
-                            : "bg-primary-600 text-gray-400 text-base rounded-lg px-4 py-2"
-                        }
-                        onClick={() => handleInvitationMember()}
-                      >
-                        Add member
-                      </button>
+                        <button
+                          className={
+                            invitationAddress
+                              ? "bg-primary-600 text-gray-200 hover:bg-primary-500 rounded-lg shadow-sm px-4 py-2 text-base"
+                              : "bg-primary-600 text-gray-400 text-base rounded-lg px-4 py-2"
+                          }
+                          onClick={() => handleInvitationMember()}
+                        >
+                          Add member
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="opacity-80 fixed inset-0 z-40 bg-black"></div>
-            </> 
+              <div className="opacity-80 fixed inset-0 z-40 bg-black"></div>
+            </>
           )}
 
           {openMembersModal ? (
@@ -687,7 +704,6 @@ export default function Page({ params }: { params: { slug: string } }) {
                     {/*body*/}
                     <div className="relative p-6 flex-auto max-h-[600px] sm:w-[600px] w-full overflow-y-auto ">
                       {vaultMembers &&
-                        vaultOwner == address &&
                         vaultMembers.map((member, index) => (
                           <div
                             className="p-1 flex items-center justify-between  space-x-3"

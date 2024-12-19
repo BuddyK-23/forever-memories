@@ -105,43 +105,43 @@ export default function Profile() {
       );
 
       // Fetch Vault Lists
-      const [
-        ownedPvVaultList,
-        nonOwnedPvVaultList,
-        ownedPuVaultList,
-        nonOwnedPuVaultList,
-      ] = await Promise.all([
-        VaultFactoryContract.getPrivateVaultsOwnedByUser(address),
-        VaultFactoryContract.getPrivateVaultsByUser(address),
-        VaultFactoryContract.getPublicVaultsOwnedByUser(address),
-        VaultFactoryContract.getPublicVaultsByUser(address),
-      ]);
+      // const [
+      //   ownedPvVaultList,
+      //   nonOwnedPvVaultList,
+      //   ownedPuVaultList,
+      //   nonOwnedPuVaultList,
+      // ] = await Promise.all([
+      //   VaultFactoryContract.getPrivateVaultsOwnedByUser(address),
+      //   VaultFactoryContract.getPrivateVaultsByUser(address),
+      //   VaultFactoryContract.getPublicVaultsOwnedByUser(address),
+      //   VaultFactoryContract.getPublicVaultsByUser(address),
+      // ]);
 
-      // Combine all vault lists
-      const vaultList = [
-        ...ownedPvVaultList,
-        ...nonOwnedPvVaultList,
-        ...ownedPuVaultList,
-        ...nonOwnedPuVaultList,
-      ];
+      // // Combine all vault lists
+      // const vaultList = [
+      //   ...ownedPvVaultList,
+      //   ...nonOwnedPvVaultList,
+      //   ...ownedPuVaultList,
+      //   ...nonOwnedPuVaultList,
+      // ];
 
       // Fetch moments for each vault in parallel
       const momentsList: string[] = [];
 
       // Using Promise.all to fetch moments concurrently
-      await Promise.all(
-        vaultList.map(async (list) => {
-          const tokenIds: string[] = await VaultContract.getAllMoments(list);
-          await Promise.all(
-            tokenIds.map(async (tokenId) => {
-              const owner: string = await VaultContract.momentOwners(tokenId);
-              if (owner === address) {
-                momentsList.push(tokenId);
-              }
-            })
-          );
-        })
-      );
+      // await Promise.all(
+      //   vaultList.map(async (list) => {
+      //     const tokenIds: string[] = await VaultContract.getAllMoments(list);
+      //     await Promise.all(
+      //       tokenIds.map(async (tokenId) => {
+      //         const owner: string = await VaultContract.momentOwners(tokenId);
+      //         if (owner === address) {
+      //           momentsList.push(tokenId);
+      //         }
+      //       })
+      //     );
+      //   })
+      // );
 
       return momentsList;
     } catch (error) {
@@ -154,7 +154,7 @@ export default function Profile() {
     if (address && walletProvider) {
       const erc725js = new ERC725(
         LSP5Schema,
-        address, //"0x2d6584E545B5c4A15FB3a825431b10A1452c3780",
+        "0x3c33871d7ff685433cdba55a85a5960fd9feb007", //"0x2d6584E545B5c4A15FB3a825431b10A1452c3780",
         RPC_MAINNET
       );
 
@@ -186,62 +186,140 @@ export default function Profile() {
       setTotalAssetsCount((prevCount) => prevCount + tokens.length);
       const tLength = tokens.length;
 
+      // if (tokens.length > 0) {
+      //   for (let i = 0; i < tLength; i++) {
+      //     const erc725 = new ERC725(LSP4Schema, tokens[i], RPC_MAINNET);
+
+      //     // Step 1: Fetch the LSP4Metadata key
+      //     // const metadataResult = await erc725.getData("LSP4Metadata");
+      //     // const tokenName = await erc725.getData("LSP4TokenName");
+      //     // const tokenSymbol = await erc725.getData("LSP4TokenName");
+
+      //     const [metadataResult, tokenName, tokenSymbol] = await Promise.all([
+      //       erc725.getData("LSP4Metadata"),
+      //       erc725.getData("LSP4TokenName"),
+      //       erc725.getData("LSP4TokenSymbol"), // Updated to fetch the correct symbol key
+      //     ]);
+
+      //     let ipfsHashUrl: string = "";
+      //     const defaultIpfsHashUrl: string =
+      //       "https://api.universalprofile.cloud/image/QmRnodxiibv3CnEa59eiYyNyjahCVAvLUi2JE9Zsp5bZn3";
+
+      //     if (metadataResult?.value) {
+      //       // Step 2: Get the metadata URI (e.g., ipfs://QmHash)
+      //       const metadataUri = (metadataResult.value as { url: string }).url;
+      //       const checkBuffer = "ipfs://";
+      //       if (metadataUri && metadataUri.startsWith(checkBuffer)) {
+      //         const metadataUrl = metadataUri.replace(
+      //           "ipfs://",
+      //           "https://ipfs.io/ipfs/"
+      //         );
+
+      //         const response = await fetch("/api/getAssetsByIpfsHash", {
+      //           method: "POST",
+      //           body: metadataUrl,
+      //         });
+      //         const metadataJson = await response.json();
+      //         const data = metadataJson.metadataJson;
+
+      //         let ipfsHashUri = "";
+      //         if (data.LSP4Metadata?.images.length > 0) {
+      //           ipfsHashUri = data.LSP4Metadata?.images[0][0].url;
+      //           ipfsHashUrl = ipfsHashUri.replace(
+      //             "ipfs://",
+      //             "https://api.universalprofile.cloud/image/"
+      //           );
+      //         }
+      //       }
+      //     }
+
+      //     tokenMetadata_.push({
+      //       name: tokenName.value as string,
+      //       symbol: tokenSymbol.value as string,
+      //       type: 2,
+      //       creator: address,
+      //       contractAddress: tokens[i],
+      //       ipfsHash: {
+      //         url: ipfsHashUrl ? ipfsHashUrl : defaultIpfsHashUrl,
+      //         width: 300,
+      //         height: 300,
+      //       },
+      //     });
+      //     setLoadedAssetsCount((prevCount) => prevCount + 1);
+      //   }
+      // }
+
       if (tokens.length > 0) {
-        for (let i = 0; i < tLength; i++) {
-          const erc725 = new ERC725(LSP4Schema, tokens[i], RPC_MAINNET);
+        const defaultIpfsHashUrl =
+          "https://api.universalprofile.cloud/image/QmRnodxiibv3CnEa59eiYyNyjahCVAvLUi2JE9Zsp5bZn3";
 
-          // Step 1: Fetch the LSP4Metadata key
-          const metadataResult = await erc725.getData("LSP4Metadata");
-          const tokenName = await erc725.getData("LSP4TokenName");
-          const tokenSymbol = await erc725.getData("LSP4TokenName");
+        const tokenMetadataPromises = tokens.map(async (token) => {
+          const erc725 = new ERC725(LSP4Schema, token, RPC_MAINNET);
 
-          let ipfsHashUrl: string = "";
-          const defaultIpfsHashUrl: string =
-            "https://api.universalprofile.cloud/image/QmRnodxiibv3CnEa59eiYyNyjahCVAvLUi2JE9Zsp5bZn3";
+          try {
+            // Fetch LSP4Metadata, TokenName, and TokenSymbol in parallel
+            const [metadataResult, tokenName, tokenSymbol] = await Promise.all([
+              erc725.getData("LSP4Metadata"),
+              erc725.getData("LSP4TokenName"),
+              erc725.getData("LSP4TokenSymbol"), // Updated to fetch the correct symbol key
+            ]);
 
-          if (metadataResult?.value) {
-            // Step 2: Get the metadata URI (e.g., ipfs://QmHash)
-            const metadataUri = (metadataResult.value as { url: string }).url;
-            const checkBuffer = "ipfs://";
-            if (metadataUri && metadataUri.startsWith(checkBuffer)) {
-              const metadataUrl = metadataUri.replace(
-                "ipfs://",
-                "https://ipfs.io/ipfs/"
-              );
+            let ipfsHashUrl = defaultIpfsHashUrl;
 
-              const response = await fetch("/api/getAssetsByIpfsHash", {
-                method: "POST",
-                body: metadataUrl,
-              });
-              const metadataJson = await response.json();
-              const data = metadataJson.metadataJson;
-
-              let ipfsHashUri = "";
-              if (data.LSP4Metadata?.images.length > 0) {
-                ipfsHashUri = data.LSP4Metadata?.images[0][0].url;
-                ipfsHashUrl = ipfsHashUri.replace(
+            if (metadataResult?.value) {
+              const metadataUri = (metadataResult.value as { url: string }).url;
+              if (metadataUri.startsWith("ipfs://")) {
+                const metadataUrl = metadataUri.replace(
                   "ipfs://",
-                  "https://api.universalprofile.cloud/image/"
+                  "https://ipfs.io/ipfs/"
                 );
+
+                const response = await fetch("/api/getAssetsByIpfsHash", {
+                  method: "POST",
+                  body: metadataUrl,
+                });
+
+                const metadataJson = await response.json();
+                const data = metadataJson.metadataJson;
+
+                if (data?.LSP4Metadata?.images?.length > 0) {
+                  const ipfsHashUri = data.LSP4Metadata.images[0][0].url;
+                  ipfsHashUrl = ipfsHashUri.replace(
+                    "ipfs://",
+                    "https://api.universalprofile.cloud/image/"
+                  );
+                }
               }
             }
-          }
 
-          tokenMetadata_.push({
-            name: tokenName.value as string,
-            symbol: tokenSymbol.value as string,
-            type: 2,
-            creator: address,
-            contractAddress: tokens[i],
-            ipfsHash: {
-              url: ipfsHashUrl ? ipfsHashUrl : defaultIpfsHashUrl,
-              width: 300,
-              height: 300,
-            },
-          });
-          setLoadedAssetsCount((prevCount) => prevCount + 1);
-        }
+            return {
+              name: tokenName.value as string,
+              symbol: tokenSymbol.value as string,
+              type: 2,
+              creator: address,
+              contractAddress: token,
+              ipfsHash: {
+                url: ipfsHashUrl,
+                width: 300,
+                height: 300,
+              },
+            };
+          } catch (error) {
+            console.error(`Error fetching metadata for token ${token}:`, error);
+            return null; // Skip tokens with errors
+          }
+        });
+
+        // Wait for all promises to resolve
+        const resolvedMetadata = await Promise.all(tokenMetadataPromises);
+
+        // Filter out any null values from failed fetches
+        tokenMetadata_ = resolvedMetadata.filter((item) => item !== null);
+
+        setLoadedAssetsCount(tokenMetadata_.length);
+        setTotalAssetsCount(tokenMetadata_.length);
       }
+
       console.log("tokenMetadata", tokenMetadata_);
       setTokens(tokenMetadata_);
     }

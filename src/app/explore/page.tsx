@@ -36,7 +36,12 @@ export default function Explore() {
   const [vaultData, setVaultData] = useState<Vault[]>([]);
   // const [categoryCounts, setCategoryCounts] = useState<number[]>([]); // To store counts of each category
   const { walletProvider } = useWeb3ModalProvider();
+  const upWalletAddress = address
+    ? address
+    : process.env.NEXT_PUBLIC_SUPER_ADMIN_ADDRESS;
+  console.log("upWalletAddress", upWalletAddress);
 
+  // const walletP =
   const categories = getCategoryOptions();
   const selectedCategoryButtonStyle =
     "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-gray-300 hover:bg-gray-200 text-gray-800 relative";
@@ -45,154 +50,165 @@ export default function Explore() {
 
   useEffect(() => {
     const fetchVault = async () => {
-      if (walletProvider && address) {
-        // Ensuring both are available
-        const ethersProvider = new ethers.providers.Web3Provider(
-          walletProvider,
-          "any"
-        );
-        const signer = ethersProvider.getSigner(address);
-
-        const VaultContract = new ethers.Contract(
-          process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
-          VaultABI.abi,
-          signer
-        );
-
-        const VaultFactoryContract = new ethers.Contract(
-          process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-          VaultFactoryABI.abi,
-          signer
-        );
-
-        const joinedPublicVaults =
-          await VaultFactoryContract.getVaultsByCategory(0, address, 0, true);
-        const unJoinedPublicVaults =
-          await VaultFactoryContract.getVaultsByCategory(0, address, 0, false);
-
-        const vaultList = [...joinedPublicVaults, ...unJoinedPublicVaults];
-
-        const vaults: Vault[] = [];
-        if (vaultList)
-          for (let i = 0; i < vaultList.length; i++) {
-            const data = await VaultFactoryContract.getVaultMetadata(
-              vaultList[i]
-            );
-
-            const momentCount = await VaultContract.getNFTcounts(vaultList[i]);
-
-            vaults.push({
-              name: data.title,
-              description: data.description,
-              cid: data.imageURI,
-              moments: hexToDecimal(momentCount._hex),
-              members: hexToDecimal(data.memberCount._hex),
-              owner: data.vaultOwner,
-              vaultAddress: vaultList[i],
-              vaultMode: data.vaultMode,
-            });
-          }
-
-        setVaultData(vaults);
-        setIsDownloading(true);
-      }
-    };
-
-    fetchVault();
-  }, [isConnected, address, walletProvider]); // Added address and walletProvider to dependencies
-
-  const handleCategory = async (index: number) => {
-    setCategoryIndex(index);
-
-    if (walletProvider) {
-      const ethersProvider = new ethers.providers.Web3Provider(
-        walletProvider,
-        "any"
-      );
-      const signer = ethersProvider.getSigner(address);
-
-      const VaultFactoryContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-        VaultFactoryABI.abi,
-        signer
+      const ethersProvider = new ethers.providers.JsonRpcProvider(
+        process.env.NEXT_PUBLIC_MAINNET_URL
       );
 
       const VaultContract = new ethers.Contract(
         process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
         VaultABI.abi,
-        signer
+        ethersProvider
       );
 
-      let categoryVaults;
-      if (index === 0) {
-        const joinedPublicVaults =
-          await VaultFactoryContract.getVaultsByCategory(0, address, 0, true);
-        const unJoinedPublicVaults =
-          await VaultFactoryContract.getVaultsByCategory(0, address, 0, false);
+      const VaultFactoryContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+        VaultFactoryABI.abi,
+        ethersProvider
+      );
 
-        categoryVaults = [...joinedPublicVaults, ...unJoinedPublicVaults];
-      } else {
-        const joinedPublicVaults =
-          await VaultFactoryContract.getVaultsByCategory(
-            index,
-            address,
-            0,
-            true
-          );
-        const unJoinedPublicVaults =
-          await VaultFactoryContract.getVaultsByCategory(
-            index,
-            address,
-            0,
-            false
-          );
-
-        categoryVaults = [...joinedPublicVaults, ...unJoinedPublicVaults];
-      }
-
-      const vaults: Vault[] = [];
-      for (let i = 0; i < categoryVaults.length; i++) {
-        const data = await VaultFactoryContract.getVaultMetadata(
-          categoryVaults[i]
+      const joinedPublicVaults = await VaultFactoryContract.getVaultsByCategory(
+        0,
+        upWalletAddress,
+        0,
+        true
+      );
+      const unJoinedPublicVaults =
+        await VaultFactoryContract.getVaultsByCategory(
+          0,
+          upWalletAddress,
+          0,
+          false
         );
 
-        const momentCount = await VaultContract.getNFTcounts(categoryVaults[i]);
+      const vaultList = [...joinedPublicVaults, ...unJoinedPublicVaults];
 
-        vaults.push({
-          name: data.title,
-          description: data.description,
-          cid: data.imageURI,
-          moments: hexToDecimal(momentCount._hex),
-          members: hexToDecimal(data.memberCount._hex),
-          owner: data.vaultOwner,
-          vaultAddress: categoryVaults[i],
-          vaultMode: data.vaultMode,
-        });
-      }
+      const vaults: Vault[] = [];
+      if (vaultList)
+        for (let i = 0; i < vaultList.length; i++) {
+          const data = await VaultFactoryContract.getVaultMetadata(
+            vaultList[i]
+          );
+
+          const momentCount = await VaultContract.getNFTcounts(vaultList[i]);
+
+          vaults.push({
+            name: data.title,
+            description: data.description,
+            cid: data.imageURI,
+            moments: hexToDecimal(momentCount._hex),
+            members: hexToDecimal(data.memberCount._hex),
+            owner: data.vaultOwner,
+            vaultAddress: vaultList[i],
+            vaultMode: data.vaultMode,
+          });
+        }
 
       setVaultData(vaults);
+      setIsDownloading(true);
+    };
+
+    fetchVault();
+  }, []); // Added address and walletProvider to dependencies
+
+  const handleCategory = async (index: number) => {
+    setCategoryIndex(index);
+
+    const ethersProvider = new ethers.providers.JsonRpcProvider(
+      process.env.NEXT_PUBLIC_MAINNET_URL
+    );
+
+    const VaultFactoryContract = new ethers.Contract(
+      process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+      VaultFactoryABI.abi,
+      ethersProvider
+    );
+
+    const VaultContract = new ethers.Contract(
+      process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+      VaultABI.abi,
+      ethersProvider
+    );
+
+    let categoryVaults;
+    if (index === 0) {
+      const joinedPublicVaults = await VaultFactoryContract.getVaultsByCategory(
+        0,
+        upWalletAddress,
+        0,
+        true
+      );
+      const unJoinedPublicVaults =
+        await VaultFactoryContract.getVaultsByCategory(
+          0,
+          upWalletAddress,
+          0,
+          false
+        );
+
+      categoryVaults = [...joinedPublicVaults, ...unJoinedPublicVaults];
+    } else {
+      const joinedPublicVaults = await VaultFactoryContract.getVaultsByCategory(
+        index,
+        upWalletAddress,
+        0,
+        true
+      );
+      const unJoinedPublicVaults =
+        await VaultFactoryContract.getVaultsByCategory(
+          index,
+          upWalletAddress,
+          0,
+          false
+        );
+
+      categoryVaults = [...joinedPublicVaults, ...unJoinedPublicVaults];
     }
+
+    const vaults: Vault[] = [];
+    for (let i = 0; i < categoryVaults.length; i++) {
+      const data = await VaultFactoryContract.getVaultMetadata(
+        categoryVaults[i]
+      );
+
+      const momentCount = await VaultContract.getNFTcounts(categoryVaults[i]);
+
+      vaults.push({
+        name: data.title,
+        description: data.description,
+        cid: data.imageURI,
+        moments: hexToDecimal(momentCount._hex),
+        members: hexToDecimal(data.memberCount._hex),
+        owner: data.vaultOwner,
+        vaultAddress: categoryVaults[i],
+        vaultMode: data.vaultMode,
+      });
+    }
+
+    setVaultData(vaults);
   };
 
   return !isDownloading ? (
-    <div className="flex flex-col justify-center items-center bg-black min-h-screen text-gray-200"> 
+    <div className="flex flex-col justify-center items-center bg-black min-h-screen text-gray-200">
       <div className="flex space-x-2 justify-center items-center">
         <div
           className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
           style={{
-            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            backgroundImage:
+              "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
           }}
         ></div>
         <div
           className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
           style={{
-            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            backgroundImage:
+              "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
           }}
         ></div>
         <div
           className="h-8 w-8 rounded-full animate-bounce"
           style={{
-            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            backgroundImage:
+              "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
           }}
         ></div>
       </div>
@@ -217,7 +233,7 @@ export default function Explore() {
             modules={[Navigation]}
             className="mySwiper"
           >
-            {categories.map((category, index) => (  
+            {categories.map((category, index) => (
               <SwiperSlide
                 key={index}
                 onClick={() => handleCategory(index)}
@@ -251,12 +267,16 @@ export default function Explore() {
             <div>
               <img 
                 src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExc2hzb2RqdmV3MnNkNzdkdmx1ZGFxZ2c2cnJuZ2ZlMTZwNnN3NnV1YyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xUPJPzcdlbvaFUrF7y/giphy.gif"
-                alt="Oh no Spongbob gif" 
+                alt="Oh no Spongbob gif"
                 className="mx-auto w-96 h-auto"
               />
             </div>
-            <div className="text-xl font-medium">There are no collections here yet!</div>
-            <div className="text-base">Create a new one to get the party started 🎉</div>
+            <div className="text-xl font-medium">
+              There are no collections here yet!
+            </div>
+            <div className="text-base">
+              Create a new one to get the party started 🎉
+            </div>
             <div className="pt-3 flex justify-center items-center">
               <Link href={"/createVault"}>
                 <button className="px-6 py-3 bg-primary-600 text-white rounded-lg shadow-md hover:bg-primary-500">
@@ -266,7 +286,6 @@ export default function Explore() {
             </div>
           </div>
         )}
-
       </div>
     </main>
   );

@@ -115,7 +115,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
-  const [loadingStage, setLoadingStage] = useState(''); // Tracks which stage is currently active
+  const [loadingStage, setLoadingStage] = useState(""); // Tracks which stage is currently active
   const [isDownloading, setIsDownloading] = useState<boolean>(true);
   const [vaultData, setVaultData] = useState<Vault[]>([]);
   const [fileType, setFileType] = useState<number>(1); // 1 for image, 2 for video
@@ -151,15 +151,6 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
             await VaultFactoryContract.getVaultsOwnedByUser(address, true);
           const ownedPrivateVaultList =
             await VaultFactoryContract.getVaultsOwnedByUser(address, false);
-          // // get all vault list
-          // const ownedPrivateVaultList =
-          //   await VaultFactoryContract.getPrivateVaultsOwnedByUser(address);
-          // const nonOwnedPrivateVaultList =
-          //   await VaultFactoryContract.getPrivateVaultsByUser(address);
-          // const ownedPublicVaultList =
-          //   await VaultFactoryContract.getPublicVaultsOwnedByUser(address);
-          // const nonOwnedPublicVaultList =
-          //   await VaultFactoryContract.getPublicVaultsByUser(address);
           const vaultList = [
             ...ownedPrivateVaultList,
             ...nonOwnedPrivateVaultList,
@@ -253,12 +244,12 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
 
   const handleMintMoment = async (e: FormEvent) => {
     e.preventDefault();
-    
+
     if (!address || !walletProvider || !vaultData.length) {
       toast.error("Connect your wallet");
       return;
     }
-    
+
     try {
       // Ensure vaultAddress is correctly set
       let vaultAddress: string = "";
@@ -272,28 +263,31 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
       setUploading(true);
 
       // Stage 1: Connecting to the UP browser extension
-      setLoadingStage('connecting');
-      const ethersProvider = new ethers.providers.Web3Provider(walletProvider, 'any');
+      setLoadingStage("connecting");
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
       const signer = await ethersProvider.getSigner(address);
 
       // Simulate connecting to the UP browser extension
-      await new Promise(resolve => setTimeout(resolve, 8000));
-      setLoadingStage('connected'); // User confirmed connection
+      await new Promise((resolve) => setTimeout(resolve, 8000));
+      setLoadingStage("connected"); // User confirmed connection
 
       // Stage 2: Preparing data
       const formData = new FormData();
       !file ? "" : formData.append("file", file); // FormData keys are called fields
       const { type, error } = detectFileType(file as File);
-      
+
       const currentTimestamp = Date.now();
       formData.append(
-        'momentMetadata',
+        "momentMetadata",
         vault?.vaultAddress + headline + address + currentTimestamp
       );
 
       // Upload assets to IPFS
-      const resAssetData_ = await fetch('/api/uploadAssetsToIPFS', {
-        method: 'POST',
+      const resAssetData_ = await fetch("/api/uploadAssetsToIPFS", {
+        method: "POST",
         body: formData,
       });
       const resAssetData = await resAssetData_.json();
@@ -301,7 +295,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
       const combinedEncryptedData = resAssetData.combinedEncryptedData;
       setCid(ipfsHash);
 
-      setLoadingStage('confirmingTransaction'); // Awaiting transaction confirmation
+      setLoadingStage("confirmingTransaction"); // Awaiting transaction confirmation
 
       // Stage 3: Minting moment on chain
       const VaultContract = new ethers.Contract(
@@ -381,7 +375,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
 
       //console.log("vaultTx", vaultTx);
       console.log("Transaction sent! Waiting for confirmation...");
-      setLoadingStage('storingOnBlockchain'); // Inform user the data is being stored on the blockchain
+      setLoadingStage("storingOnBlockchain"); // Inform user the data is being stored on the blockchain
       const receipt = await vaultTx.wait(); // Wait for the transaction to be mined
       const tokenId = receipt.events[2].args[0];
 
@@ -410,7 +404,7 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
     } catch (e) {
       console.log("Error", e);
       setUploading(false);
-      setLoadingStage('');
+      setLoadingStage("");
       toast.error("Trouble uploading file");
     }
   };
@@ -418,53 +412,61 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
   return uploading ? (
     // Loading screens during the minting process
     <div className="flex flex-col justify-center items-center bg-black min-h-screen text-white">
-      {loadingStage === 'connecting' && (
+      {loadingStage === "connecting" && (
         <div>
           <div className="flex space-x-2 justify-center items-center">
             <div
               className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
               style={{
-                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+                backgroundImage:
+                  "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
               }}
             ></div>
             <div
               className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
               style={{
-                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+                backgroundImage:
+                  "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
               }}
             ></div>
             <div
               className="h-8 w-8 rounded-full animate-bounce"
               style={{
-                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+                backgroundImage:
+                  "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
               }}
             ></div>
           </div>
           <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
             <p className="text-lg mt-8">We&apos;re encrypting your Moment</p>
-            <p className="text-base text-gray-400 mt-2">This can take a few seconds</p>
+            <p className="text-base text-gray-400 mt-2">
+              This can take a few seconds
+            </p>
           </div>
         </div>
       )}
-      {loadingStage === 'connected' && (
+      {loadingStage === "connected" && (
         <div>
           <div className="flex space-x-2 justify-center items-center">
             <div
               className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
               style={{
-                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+                backgroundImage:
+                  "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
               }}
             ></div>
             <div
               className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
               style={{
-                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+                backgroundImage:
+                  "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
               }}
             ></div>
             <div
               className="h-8 w-8 rounded-full animate-bounce"
               style={{
-                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+                backgroundImage:
+                  "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
               }}
             ></div>
           </div>
@@ -474,60 +476,74 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
           </div>
         </div>
       )}
-      {loadingStage === 'confirmingTransaction' && (
+      {loadingStage === "confirmingTransaction" && (
         <div>
           <div className="flex space-x-2 justify-center items-center">
             <div
               className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
               style={{
-                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+                backgroundImage:
+                  "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
               }}
             ></div>
             <div
               className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
               style={{
-                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+                backgroundImage:
+                  "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
               }}
             ></div>
             <div
               className="h-8 w-8 rounded-full animate-bounce"
               style={{
-                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+                backgroundImage:
+                  "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
               }}
             ></div>
           </div>
           <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
             <p className="text-lg mt-8">Done. Let&apos;s store your Moment!</p>
-            <p className="text-base text-gray-400 mt-2">Confirm the transaction in your Universal Profile to proceed. It should pop up automatically.</p>
+            <p className="text-base text-gray-400 mt-2">
+              Confirm the transaction in your Universal Profile to proceed. It
+              should pop up automatically.
+            </p>
             <p className="text-base text-gray-400 mt-2"></p>
           </div>
         </div>
       )}
-      {loadingStage === 'storingOnBlockchain' && (
+      {loadingStage === "storingOnBlockchain" && (
         <div>
           <div className="flex space-x-2 justify-center items-center">
             <div
               className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
               style={{
-                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+                backgroundImage:
+                  "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
               }}
             ></div>
             <div
               className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
               style={{
-                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+                backgroundImage:
+                  "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
               }}
             ></div>
             <div
               className="h-8 w-8 rounded-full animate-bounce"
               style={{
-                backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+                backgroundImage:
+                  "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
               }}
             ></div>
           </div>
           <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
-            <p className="text-lg font-semibold mt-8">Storing your Moment to last forever</p>
-            <p className="text-base mt-2">Great things take time. Your Forever Moment token will be ready soon.</p>
+            <p className="text-lg font-semibold mt-8">
+              Storing your Moment to last forever
+            </p>
+            <p className="text-base mt-2">
+              Great things take time. Your Forever Moment token will be ready
+              soon.
+            </p>
           </div>
         </div>
       )}
@@ -539,25 +555,27 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         <div
           className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
           style={{
-            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            backgroundImage:
+              "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
           }}
         ></div>
         <div
           className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
           style={{
-            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            backgroundImage:
+              "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
           }}
         ></div>
         <div
           className="h-8 w-8 rounded-full animate-bounce"
           style={{
-            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            backgroundImage:
+              "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
           }}
         ></div>
       </div>
       <p className="text-lg mt-8">Loading</p>
     </div>
-
   ) : (
     // Main content (moment creation form)
     <main
@@ -585,131 +603,127 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
                     />
                   )}
 
-                  {videoPreview && (
-                    <video
-                      src={videoPreview}
-                      controls
-                      className="w-full h-full object-contain rounded-xl"
+                    {videoPreview && (
+                      <video
+                        src={videoPreview}
+                        controls
+                        className="w-full h-full object-contain rounded-xl"
+                      />
+                    )}
+
+                    {!videoPreview && !imagePreview && (
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg
+                          className="w-8 h-8 mb-4 text-gray-200"
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 20 16"
+                        >
+                          <path
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                          />
+                        </svg>
+                        <p className="mb-2 text-base text-gray-200">
+                          <span className="font-medium">Click to upload</span>{" "}
+                          or drag and drop
+                        </p>
+                        <p className="text-sm text-gray-400 ">
+                          JPG, PNG or GIF up to 8MB
+                        </p>
+                        <p className="text-sm text-gray-400 ">MP4 up to 50MB</p>
+                      </div>
+                    )}
+
+                    <input
+                      id="dropzone-file"
+                      type="file"
+                      className="hidden"
+                      onChange={handleFileChange}
                     />
-                  )}
-
-                  {!videoPreview && !imagePreview && (
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <svg
-                        className="w-8 h-8 mb-4 text-gray-200"
-                        aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 20 16"
-                      >
-                        <path
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
-                        />
-                      </svg>
-                      <p className="mb-2 text-base text-gray-200">
-                        <span className="font-medium">Click to upload</span>{" "}
-                        or drag and drop
-                      </p>
-                      <p className="text-sm text-gray-400 ">
-                        JPG, PNG or GIF up to 8MB
-                      </p>
-                      <p className="text-sm text-gray-400 ">
-                        MP4 up to 50MB
-                      </p>
-                    </div>
-                  )}
-
-                  <input
-                    id="dropzone-file"
-                    type="file"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-                </label>
+                  </label>
+                </div>
               </div>
-            </div>
 
-            <div className="mb-4">
-              <label
-                htmlFor="vault"
-                className="block mb-2 text-gray-200 flex justify-between"
-              >
-                <div>Select a collection</div>
-              </label>
-              <div className="relative">
-                <select
-                  id="vault"
-                  className="w-full px-3 py-2 rounded-md bg-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none"
-                  value={vault?.name || ''} // show placeholder if vault is undefined
-                  onChange={(e) => {
-                    const selectedOption = vaultData.find(
-                      (option) => option.name === e.target.value
-                    );
-                    setVault(selectedOption || undefined); // Update vault state
-                  }}
+              <div className="mb-4">
+                <label
+                  htmlFor="vault"
+                  className="block mb-2 text-gray-200 flex justify-between"
                 >
-                  <option value="" disabled>
-                    Select a collection
-                  </option>
-                  {vaultData.map((option, index) => (
-                    <option key={index} value={option.name}>
-                      {option.name}
-                    </option>
-                  ))}
-                </select>
-                {vault?.vaultMode !== undefined && (
-                  <span
-                    className={`absolute top-1/2 right-9 transform -translate-y-1/2 px-2 py-1 text-sm rounded-md ${
-                      vault.vaultMode === 0
-                        ? 'bg-gray-600 text-gray-200'
-                        : 'bg-gray-800 text-gray-200'
-                    }`}
+                  <div>Select a collection</div>
+                </label>
+                <div className="relative">
+                  <select
+                    id="vault"
+                    className="w-full px-3 py-2 rounded-md bg-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none"
+                    value={vault?.name || ""} // show placeholder if vault is undefined
+                    onChange={(e) => {
+                      const selectedOption = vaultData.find(
+                        (option) => option.name === e.target.value
+                      );
+                      setVault(selectedOption || undefined); // Update vault state
+                    }}
                   >
-                    {vault.vaultMode === 0 ? 'Public collection' : 'Private collection'}
-                  </span>
-                )}
+                    <option value="" disabled>
+                      Select a collection
+                    </option>
+                    {vaultData.map((option, index) => (
+                      <option key={index} value={option.name}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </select>
+                  {vault?.vaultMode !== undefined && (
+                    <span
+                      className={`absolute top-1/2 right-9 transform -translate-y-1/2 px-2 py-1 text-sm rounded-md ${
+                        vault.vaultMode === 0
+                          ? "bg-gray-600 text-gray-200"
+                          : "bg-gray-800 text-gray-200"
+                      }`}
+                    >
+                      {vault.vaultMode === 0
+                        ? "Public collection"
+                        : "Private collection"}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
 
+              <div className="mb-4">
+                <label htmlFor="headline" className="block mb-2 text-gray-200">
+                  Moment title
+                </label>
+                <input
+                  id="headline"
+                  type="text"
+                  className="w-full px-3 py-2 rounded-md bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-200"
+                  placeholder="Enter moment title"
+                  value={headline}
+                  onChange={(e) => setHeadline(e.target.value)}
+                />
+              </div>
 
-            <div className="mb-4">
-              <label
-                htmlFor="headline"
-                className="block mb-2 text-gray-200"
-              >
-                Moment title
-              </label>
-              <input
-                id="headline"
-                type="text"
-                className="w-full px-3 py-2 rounded-md bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-200"
-                placeholder="Enter moment title"
-                value={headline}
-                onChange={(e) => setHeadline(e.target.value)}
-              />
-            </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="description"
+                  className="block mb-2 text-gray-200"
+                >
+                  Moment description
+                </label>
+                <textarea
+                  id="description"
+                  className="w-full px-3 py-2 min-h-[160px] rounded-md bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-200"
+                  placeholder="Enter description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
 
-            <div className="mb-4">
-              <label
-                htmlFor="description"
-                className="block mb-2 text-gray-200"
-              >
-                Moment description
-              </label>
-              <textarea
-                id="description"
-                className="w-full px-3 py-2 min-h-[160px] rounded-md bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-200"
-                placeholder="Enter description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-
-            {/* <div className="mb-4">
+              {/* <div className="mb-4">
               <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                 Select Tags
               </label>
@@ -737,31 +751,36 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
               />
             </div> */}
 
-            <div className="w-full flex justify-center">
-              <button
-                type="submit"
-                disabled={uploading} // Disable button during submission
-                onClick={handleMintMoment}
-                className={`w-full py-3 rounded-lg px-6 shadow-md ${
-                  uploading ? "bg-gray-600" : "bg-primary-600 hover:bg-primary-500"
-                } text-gray-200 text-lg font-medium flex justify-center items-center`}
-              >
-                {uploading ? (
-                  <span className="animate-spin h-5 w-5 border-4 border-t-transparent border-gray-200 rounded-full"></span>
-                ) : (
-                  "Create Moment"
-                )}
-              </button>
-            </div>
-            <div className="flex flex-col mx-auto max-w-[480px] text-center">
-              <p className="text-sm text-gray-500 mt-8">Check all details, this is irreversible. Legal text here, Link to privacy policy. This app is in beta.</p>
-              {/* <p className="text-sm text-gray-500 mt-2">Legal text here, Link to privacy policy. This app is in beta.</p> */}
+              <div className="w-full flex justify-center">
+                <button
+                  type="submit"
+                  disabled={uploading} // Disable button during submission
+                  onClick={handleMintMoment}
+                  className={`w-full py-3 rounded-lg px-6 shadow-md ${
+                    uploading
+                      ? "bg-gray-600"
+                      : "bg-primary-600 hover:bg-primary-500"
+                  } text-gray-200 text-lg font-medium flex justify-center items-center`}
+                >
+                  {uploading ? (
+                    <span className="animate-spin h-5 w-5 border-4 border-t-transparent border-gray-200 rounded-full"></span>
+                  ) : (
+                    "Create Moment"
+                  )}
+                </button>
+              </div>
+              <div className="flex flex-col mx-auto max-w-[480px] text-center">
+                <p className="text-sm text-gray-500 mt-8">
+                  Check all details, this is irreversible. Legal text here, Link
+                  to privacy policy. This app is in beta.
+                </p>
+                {/* <p className="text-sm text-gray-500 mt-2">Legal text here, Link to privacy policy. This app is in beta.</p> */}
+              </div>
             </div>
           </div>
         </div>
+        <Toaster />
       </div>
-      <Toaster />
-    </div>
     </main>
   );
 }
