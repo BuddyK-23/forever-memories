@@ -3,6 +3,7 @@
 import { Button, Modal, TextInput } from "flowbite-react";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
+import { AiOutlinePlusCircle } from "react-icons/ai";
 import { ethers } from "ethers";
 import {
   useWeb3ModalAccount,
@@ -56,7 +57,7 @@ export default function Page({ params }: { params: { slug: string } }) {
   const router = useRouter();
 
   const [vaultTitle, setVaultTitle] = useState<string>();
-  const [vaultDescription, setVaultDescription] = useState<string>();
+  const [vaultDescription, setVaultDescription] = useState<string>("");
   const [vaultMembers, setVaultMembers] = useState<VaultMember[]>();
   const [vaultMoments, setVaultMoments] = useState<VaultMoment[]>([]);
   const [vaultMode, setVaultMode] = useState<number>(0);
@@ -66,13 +67,17 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [moments, setMoments] = useState<Moment[]>([]);
   const [invitationAddress, setInvitationAddress] = useState<string>("");
-
   const [openModal, setOpenModal] = useState(false);
   const [openInvitationModal, setOpenInvitationModal] = useState(false);
   const [openMembersModal, setOpenMembersModal] = useState(false);
   // const [openInvitationModal, setInvitationModal] = useState(false);
   const [vaultProfileName, setVaultProfileName] = useState<string>("");
   const [vaultProfileCid, setVaultProfileCid] = useState<string>("");
+
+  const [isExpanded, setIsExpanded] = useState(false);
+  const toggleDescription = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   useEffect(() => {
     init();
@@ -253,11 +258,11 @@ export default function Page({ params }: { params: { slug: string } }) {
 
   const handleInvitationMember = async () => {
     if (invitationAddress == address) {
-      toast.error("Cannot invite yourself!");
+      toast.error("You cannot invite yourself!");
       return;
     }
     if (vaultOwner !== address) {
-      toast.error("Only Vault Owner can invite!");
+      toast.error("Only the collection owner can invite!");
       return;
     }
     if (walletProvider) {
@@ -279,10 +284,10 @@ export default function Page({ params }: { params: { slug: string } }) {
       console.log("tx", tx);
       setIsDownloading(true);
       init();
-      toast.success("Invited to vault successfully.");
+      toast.success("Added to collection successfully.");
       setOpenInvitationModal(false);
     } else {
-      toast.error("Please connect the wallet.");
+      toast.error("Please connect your wallet.");
       setIsDownloading(false);
     }
   };
@@ -303,10 +308,10 @@ export default function Page({ params }: { params: { slug: string } }) {
 
       const tx = await VaultFactoryContract.leaveVault(vaultAddress);
       console.log("tx", tx);
-      toast.success("Left to vault successfully!");
+      toast.success("You have now left this collection!");
       setOpenModal(false);
     } else {
-      toast.error("Please connect the wallet.");
+      toast.error("Please connect your wallet.");
     }
   };
 
@@ -327,11 +332,11 @@ export default function Page({ params }: { params: { slug: string } }) {
 
       const tx = await VaultFactoryContract.burnVault(vaultAddress);
       console.log("tx", tx);
-      toast.success("Removed the vault successfully!");
+      toast.success("Collection removed successfully!");
       setIsDownloading(true);
       router.push("/myVaults");
     } else {
-      toast.error("Please connect the wallet.");
+      toast.error("Please connect your wallet.");
     }
   };
 
@@ -349,66 +354,135 @@ export default function Page({ params }: { params: { slug: string } }) {
         signer
       );
       if (vaultOwner === memberAddress) {
-        toast.error("The vault owner cannot be removed");
+        toast.error("The collection owner cannot be removed");
         return;
       }
       const tx = await VaultFactoryContract.removeMember(
         vaultAddress,
         memberAddress
       );
-      toast.success("Member is removed successfully!");
+      toast.success("Member has been removed successfully!");
       init();
     } else {
-      toast.error("Connect the wallet");
+      toast.error("Connect your wallet");
     }
   };
 
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center bg-black h-screen dark:invert">
-      <span className="sr-only">Loading...</span>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce"></div>
+    <div className="flex flex-col justify-center items-center bg-black min-h-screen text-gray-200"> 
+      <div className="flex space-x-2 justify-center items-center">
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+      </div>
+      <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
+        <p className="text-lg mt-8">Loading collection</p>
+        <p className="text-base mt-2 italic">&quot;Each moment tells a story; together, they create a legacy.&quot;</p>
+      </div>
     </div>
   ) : (
     <main
       className="relative min-h-screen overflow-hidden bg-black"
       style={{
-        background: "radial-gradient(circle at top left, #121212, #000000)",
+        background: "radial-gradient(circle at top left, #041420, #000000)",
       }}
     >
-      <div className="container mx-auto max-w-6xl pt-32">
-        <div className="font-medium text-gray-200 text-3xl">{vaultTitle}</div>
-        <div className="pt-1">
-          <div className="flex gap-2 pt-1 items-center">
+      <div className="container mx-auto max-w-6xl pt-32 pb-32">
+        {/* Vault Name and Join Button */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2 pl-2 pr-3 border border-gray-900/80 py-1 bg-gray-900/80 rounded-full shadow-sm">
             <img
-              className="rounded-lg h-[25px] w-[25px]"
+              className="rounded-full object-cover w-8 h-8"
               src={vaultProfileCid}
               alt="Profile"
             />
-            <div className="text-sm justify-center item-center">
+            <div className="text-base text-gray-200">
               {vaultProfileName || "Loading..."}
             </div>
           </div>
+          <div className="flex space-x-2 items-center">
+            {vaultMode === 1 ? (
+              <button
+                type="button"
+                onClick={() => setOpenInvitationModal(true)}
+                className="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg shadow-md hover:bg-gray-600"
+              >
+                Invite member
+              </button>
+            ) : (
+              ""
+            )}
+            <Link href={"/addMoment"}>
+              <button className="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg shadow-md hover:bg-gray-600">
+                Add moment
+              </button>
+            </Link>
+            {process.env.NEXT_PUBLIC_SUPER_ADMIN_ADDRESS == address ? (
+              <button
+                onClick={() => handleRemoveVault()}
+                className="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg shadow-md hover:bg-gray-600"
+              >
+                Remove collection
+              </button>
+            ) : (
+              ""
+            )}
+            {vaultOwner !== address ? (
+              <button
+                onClick={() => handleLeaveVault()}
+                className="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg shadow-md hover:bg-gray-600"
+              >
+                Leave collection
+              </button>
+            ) : (
+              ""
+            )}
+          </div>
+        </div>
 
+        <div className="pt-3">
+          <div className="font-bold text-3xl mb-3 text-gray-200">
+            {vaultTitle}
+          </div>
           {/* Vault Description */}
-          <div className="pt-2 text-gray-200">{vaultDescription}</div>
+          <div className="text-gray-200 mb-3">
+            <div
+              className={`overflow-hidden whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-2'}`}
+              style={{ display: '-webkit-box', WebkitLineClamp: isExpanded ? 'unset' : '2', WebkitBoxOrient: 'vertical' }}
+            >
+              {vaultDescription  || ''}
+            </div>
+            {(vaultDescription.length || 0) > 100 && (
+              <button
+                onClick={toggleDescription}
+                className="text-gray-600 hover:text-gray-500 text-sm"
+              >
+                {isExpanded ? 'Hide full description' : 'Expand description'}
+              </button>
+            )}
+          </div>
+          {/* <div className="w-full text-gray-400 mb-3">{vaultDescription}</div> */}
 
           {/* Vault Owner, Members, and Moments */}
-          <div className="flex items-center gap-4 pt-4">
-            <div className="flex items-center gap-2">
-              <img
-                className="rounded-full object-cover w-8 h-8"
-                src={vaultProfileCid}
-                alt="Profile"
-              />
-              <div className="text-sm text-gray-200">
-                {vaultProfileName || "Loading..."}
-              </div>
-            </div>
-            <div className="flex gap-2 text-gray-400 hover:text-gray-300">
+          <div className="flex items-center gap-4">
+            <div className="flex gap-2 text-gray-200">
               <div
-                className="hover:cursor-pointer"
+                className="hover:cursor-pointer hover:text-primary-300"
                 onClick={() => setOpenMembersModal(true)}
               >
                 {vaultMembers?.length} member
@@ -421,11 +495,13 @@ export default function Page({ params }: { params: { slug: string } }) {
             </div>
           </div>
 
+          
+
           {/* Moments */}
 
           <div className="div">
             {!moments.length ? (
-              <div className="text-center text-gray-200 mt-2 space-y-6">
+              <div className="text-center text-gray-200 mt-10 space-y-4">
                 <div>
                   <img
                     // src="https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"
@@ -434,13 +510,13 @@ export default function Page({ params }: { params: { slug: string } }) {
                     className="mx-auto w-96 h-auto"
                   />
                 </div>
-                <div className="text-xl font-bold">
+                <div className="text-xl font-medium">
                   There are no moments in this collection yet!
                 </div>
                 <div className="text-base">
                   Add a moment to get the collection started
                 </div>
-                <div className="pt-6 flex justify-center items-center">
+                <div className="pt-3 flex justify-center items-center">
                   <Link href={"/addMoment"}>
                     <button className="px-6 py-3 bg-primary-600 text-white rounded-lg shadow-md hover:bg-primary-700">
                       Add moment
@@ -493,86 +569,115 @@ export default function Page({ params }: { params: { slug: string } }) {
               </div>
             </Modal.Body>
           </Modal>
-          <Modal
-            show={openInvitationModal}
-            size="md"
-            onClose={() => setOpenInvitationModal(false)}
-            popup
-          >
+
+          {openInvitationModal && (
+            <>
             {/* <Modal.Header /> */}
-            <Modal.Body>
-              <div className="text-center">
-                <HiOutlineUserAdd className="mx-auto mt-8 mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
-                <TextInput
-                  id="invitationAddress"
-                  type="text"
-                  value={invitationAddress}
-                  onChange={(e) => setInvitationAddress(e.target.value)}
-                  placeholder="Input the address"
-                  className="pt-2 pb-8"
-                  required
-                />
-                <div className="flex justify-center gap-4">
-                  <Button
-                    className={
-                      invitationAddress ? "bg-blue-600" : "bg-blue-400"
-                    }
-                    onClick={() => handleInvitationMember()}
-                  >
-                    Invite
-                  </Button>
-                  <Button
-                    className="bg-red-400 text-white"
-                    onClick={() => setOpenInvitationModal(false)}
-                  >
-                    Cancel
-                  </Button>
+            <div className="justify-center items-start flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 shadow-md-light"> 
+              <div className="relative w-auto my-6 mx-auto max-w-4xl mt-32">
+                <div className="rounded-lg shadow-md relative flex flex-col w-full bg-gray-700 border-solid border-gray-600 border-2">
+                  {/* header */}
+                  <div className="flex text-gray-100 items-start justify-between p-6 border-b border-solid border-gray-500 rounded-t-lg">
+                    <h3 className="text-xl">Add Member</h3>
+                    <button
+                      className="ml-auto bg-transparent border-0 float-right leading-none outline-none focus:outline-none"
+                      onClick={() => setOpenInvitationModal(false)}
+                    >
+                      <span className="bg-transparent h-6 w-6 text-2xl outline-none focus:outline-none">
+                        ×
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* body */}
+                  <div className="relative p-6 flex-auto max-h-[600px] sm:w-[600px] w-full">
+                    {/* <HiOutlineUserAdd className="mx-auto mb-4 h-10 w-10 text-gray-400 dark:text-gray-200" /> */}
+                  
+                    <label className="block mb-2 text-gray-200">Enter Universal Profile address</label>
+                      <input
+                        id="invitationAddress"
+                        type="text"
+                        value={invitationAddress}
+                        onChange={(e) => setInvitationAddress(e.target.value)}
+                        placeholder="Input address"
+                        className="w-full py-2 rounded-md bg-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        style={{ backgroundColor: '#4B5563' }}
+                        required
+                      />
+                    <div className="flex justify-end gap-4 mt-6">
+                      <button
+                        className="bg-gray-600 text-gray-200 hover:bg-gray-500 rounded-lg shadow-sm px-4 py-2"
+                        onClick={() => setOpenInvitationModal(false)}
+                      >
+                        Cancel
+                      </button>
+                    
+
+                      <button
+                        className={
+                          invitationAddress
+                            ? "bg-primary-600 text-gray-200 hover:bg-primary-500 rounded-lg shadow-sm px-4 py-2 text-base"
+                            : "bg-primary-600 text-gray-400 text-base rounded-lg px-4 py-2"
+                        }
+                        onClick={() => handleInvitationMember()}
+                      >
+                        Add member
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </Modal.Body>
-          </Modal>
+            </div>
+            <div className="opacity-80 fixed inset-0 z-40 bg-black"></div>
+            </> 
+          )}
 
           {openMembersModal ? (
             <>
-              <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-                <div className="relative w-auto my-6 mx-auto max-w-3xl">
+              <div className="justify-center items-start flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 shadow-md-light">
+                <div className="relative w-auto my-6 mx-auto max-w-4xl mt-32">
                   {/*content*/}
-                  <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+                  <div className="rounded-lg shadow-md relative flex flex-col w-full bg-gray-700 border-solid border-gray-600 border-2">
                     {/*header*/}
-                    <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
-                      <h3 className="text-3xl font-semibold">Members</h3>
+                    <div className="flex text-gray-100 items-start justify-between p-6 border-b border-solid border-gray-500 rounded-t-lg">
+                      <h3 className="text-xl">
+                        {vaultMembers?.length} member
+                        {vaultMembers?.length !== 1 ? "s" : ""}
+                      </h3>
                       <button
-                        className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
+                        className="ml-auto bg-transparent border-0 float-right leading-none outline-none focus:outline-none"
                         onClick={() => setOpenMembersModal(false)}
                       >
-                        <span className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
+                        <span className="bg-transparent h-6 w-6 text-2xl outline-none focus:outline-none">
                           ×
                         </span>
                       </button>
                     </div>
                     {/*body*/}
-                    <div className="relative p-6 flex-auto max-h-[400px] w-[400px] overflow-y-auto ">
+                    <div className="relative p-6 flex-auto max-h-[600px] sm:w-[600px] w-full overflow-y-auto ">
                       {vaultMembers &&
                         vaultOwner == address &&
                         vaultMembers.map((member, index) => (
                           <div
-                            className="p-1 flex items-center space-x-3"
+                            className="p-1 flex items-center justify-between  space-x-3"
                             key={index}
                           >
-                            <img
-                              src={member.cid}
-                              alt={member.name}
-                              className="w-10 h-10 rounded-full"
-                            />
-                            <div>
-                              <h3 className="text-sm font-medium">
-                                {member.generatedName}
-                              </h3>
+                            <div className="flex items-center gap-2">
+                              <img
+                                src={member.cid}
+                                alt={member.name}
+                                className="rounded-full h-8 w-8 object-cover"
+                              />
+                              <div>
+                                <h3 className="text-base text-gray-200">
+                                  {member.generatedName}
+                                </h3>
+                              </div>
                             </div>
                             {vaultOwner == address ? (
                               <div className="flex justify-center gap-4">
                                 <Button
-                                  className="bg-red-400 text-white"
+                                  className="bg-gray-800/50 hover:bg-gray-700/80 rounded-lg shadow-sm py-1"
                                   onClick={() =>
                                     handleRemoveMember(member.name)
                                   }
@@ -586,20 +691,10 @@ export default function Page({ params }: { params: { slug: string } }) {
                           </div>
                         ))}
                     </div>
-                    {/*footer*/}
-                    <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
-                      <button
-                        className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                        type="button"
-                        onClick={() => setOpenMembersModal(false)}
-                      >
-                        Close
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>
-              <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
+              <div className="opacity-80 fixed inset-0 z-40 bg-black"></div>
             </>
           ) : null}
         </div>

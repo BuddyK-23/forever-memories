@@ -79,7 +79,31 @@ export default function Page({ params }: { params: { slug: string } }) {
 
   useEffect(() => {
     init();
-  }, [walletProvider]);
+  }, []);
+
+  useEffect(() => {
+    const isMemberCheckFunc = async () => {
+      const ethersProvider = new ethers.providers.JsonRpcProvider(
+        process.env.NEXT_PUBLIC_MAINNET_URL
+      );
+      const VaultFactoryContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+        VaultFactoryABI.abi,
+        ethersProvider
+      );
+      const memberList = await VaultFactoryContract.getVaultMembers(
+        vaultAddress
+      );
+      if (isAddressInList(memberList, address as string)) {
+        console.log(true);
+        setIsJoinedVault(true);
+      } else {
+        console.log(false);
+        setIsJoinedVault(false);
+      }
+    };
+    isMemberCheckFunc();
+  }, [walletProvider && address]);
 
   const fetchProfileName = async (owner: string) => {
     const profile = await getUniversalProfileCustomName(owner);
@@ -141,153 +165,139 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   const init = async () => {
-    if (walletProvider) {
-      setIsDownloading(false);
-      const ethersProvider = new ethers.providers.Web3Provider(
-        walletProvider,
-        "any"
-      );
-      const signer = ethersProvider.getSigner(address);
+    setIsDownloading(false);
+    const ethersProvider = new ethers.providers.JsonRpcProvider(
+      process.env.NEXT_PUBLIC_MAINNET_URL
+    );
 
-      const VaultFactoryContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-        VaultFactoryABI.abi,
-        signer
-      );
+    const VaultFactoryContract = new ethers.Contract(
+      process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+      VaultFactoryABI.abi,
+      ethersProvider
+    );
 
-      const VaultContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
-        VaultABI.abi,
-        signer
-      );
+    const VaultContract = new ethers.Contract(
+      process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+      VaultABI.abi,
+      ethersProvider
+    );
 
-      const VaultAssistContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_ASSIST_CONTRACT_ADDRESS as string,
-        VaultAssistABI.abi,
-        signer
-      );
+    const VaultAssistContract = new ethers.Contract(
+      process.env.NEXT_PUBLIC_VAULT_ASSIST_CONTRACT_ADDRESS as string,
+      VaultAssistABI.abi,
+      ethersProvider
+    );
 
-      const data = await VaultFactoryContract.getVaultMetadata(vaultAddress);
-      setVaultMode(data.vaultMode);
+    const data = await VaultFactoryContract.getVaultMetadata(vaultAddress);
+    setVaultMode(data.vaultMode);
 
-      const allMoments = await VaultContract.getAllMoments(vaultAddress);
-      setVaultTitle(data.title as string);
-      setVaultDescription(data.description as string);
-      setVaultOwner(data.vaultOwner as string);
-      setVaultMoments(allMoments.length);
+    const allMoments = await VaultContract.getAllMoments(vaultAddress);
+    setVaultTitle(data.title as string);
+    setVaultDescription(data.description as string);
+    setVaultOwner(data.vaultOwner as string);
+    setVaultMoments(allMoments.length);
 
-      const ownerData = await fetchProfileName(data.vaultOwner);
-      setVaultProfileName(ownerData.generatedName);
-      setVaultProfileCid(ownerData.cid);
+    const ownerData = await fetchProfileName(data.vaultOwner);
+    setVaultProfileName(ownerData.generatedName);
+    setVaultProfileCid(ownerData.cid);
 
-      const memberList = await VaultFactoryContract.getVaultMembers(
-        vaultAddress
-      );
-      if (isAddressInList(memberList, address as string)) {
-        console.log(true);
-        setIsJoinedVault(true);
-      } else {
-        console.log(false);
-        setIsJoinedVault(false);
+    const memberList = await VaultFactoryContract.getVaultMembers(vaultAddress);
+
+    console.log("memberList", memberList);
+    let vaultMembers_: VaultMember[] = [];
+    if (memberList.length > 0)
+      for (let i = 0; i < memberList.length; i++) {
+        const generatedVaultMember = await fetchProfileName(memberList[i]);
+        vaultMembers_.push({
+          name: memberList[i],
+          generatedName: generatedVaultMember.generatedName,
+          cid: generatedVaultMember.cid,
+        });
       }
 
-      let vaultMembers_: VaultMember[] = [];
-      if (memberList.length > 0)
-        for (let i = 0; i < memberList.length; i++) {
-          const generatedVaultMember = await fetchProfileName(memberList[i]);
-          vaultMembers_.push({
-            name: memberList[i],
-            generatedName: generatedVaultMember.generatedName,
-            cid: generatedVaultMember.cid,
-          });
+    setVaultMembers(vaultMembers_);
+    let moments_: Moment[] = [];
+
+    // NFT info
+    if (allMoments.length > 0) {
+      for (let i = 0; i < allMoments.length; i++) {
+        // Get the total number of comments
+        const _commentCnt = await VaultAssistContract.getCommentCount(
+          allMoments[i].tokenId
+        );
+        const commentCnt = parseInt(_commentCnt.toString(), 10); // Convert BigNumber to number
+
+        // get the encryption key from encryptedEncryptionKey of Vault Contract
+        const combinedEncryptedData_ = await VaultContract.getEncryptedKey(
+          bytes32ToAddress(allMoments[i].tokenId)
+        );
+        const combinedEncryptedData = hexStringToUint8Array(
+          combinedEncryptedData_
+        );
+        console.log("combinedEncryptedData", combinedEncryptedData);
+        const creator = await VaultContract.momentOwners(allMoments[i].tokenId);
+
+        const decryptedKey_ = await fetchDecryptedKey(combinedEncryptedData);
+        const decryptedKey = Buffer.from(decryptedKey_);
+
+        // if (hexToDecimal(balance._hex) == 0) continue;
+        const tokenIdMetadata = await VaultContract.getDataForTokenId(
+          allMoments[i].tokenId,
+          ERC725YDataKeys.LSP4["LSP4Metadata"]
+        );
+        const erc725js = new ERC725(lsp4Schema);
+        const decodedMetadata = erc725js.decodeData([
+          {
+            keyName: "LSP4Metadata",
+            value: tokenIdMetadata,
+          },
+        ]);
+        const metadataHash = decodedMetadata[0].value.url;
+
+        const metadataJsonLink =
+          process.env.NEXT_PUBLIC_IPFS_GATEWAY + "/" + metadataHash;
+
+        const resMetadata = await fetch(metadataJsonLink);
+        const jsonMetadata = await resMetadata.json();
+        const ipfsHash = jsonMetadata.LSP4Metadata.ipfsHash;
+        const metadata = jsonMetadata.LSP4Metadata;
+
+        if (ipfsHash == "") continue;
+        const fetchUrl = process.env.NEXT_PUBLIC_FETCH_URL + ipfsHash;
+        const response = await fetch(fetchUrl);
+        if (!response.ok) {
+          throw new Error("Failed to fetch image from IPFS");
         }
+        const encryptedData = await response.arrayBuffer();
+        const decryptedData = await decryptFile(
+          new Uint8Array(encryptedData),
+          decryptedKey
+        );
 
-      setVaultMembers(vaultMembers_);
-      let moments_: Moment[] = [];
-
-      // NFT info
-      if (allMoments.length > 0) {
-        for (let i = 0; i < allMoments.length; i++) {
-          // Get the total number of comments
-          const _commentCnt = await VaultAssistContract.getCommentCount(
-            allMoments[i].tokenId
-          );
-          const commentCnt = parseInt(_commentCnt.toString(), 10); // Convert BigNumber to number
-
-          // get the encryption key from encryptedEncryptionKey of Vault Contract
-          const combinedEncryptedData_ = await VaultContract.getEncryptedKey(
-            bytes32ToAddress(allMoments[i].tokenId)
-          );
-          const combinedEncryptedData = hexStringToUint8Array(
-            combinedEncryptedData_
-          );
-          console.log("combinedEncryptedData", combinedEncryptedData);
-          const creator = await VaultContract.momentOwners(
-            allMoments[i].tokenId
-          );
-
-          const decryptedKey_ = await fetchDecryptedKey(combinedEncryptedData);
-          const decryptedKey = Buffer.from(decryptedKey_);
-
-          // if (hexToDecimal(balance._hex) == 0) continue;
-          const tokenIdMetadata = await VaultContract.getDataForTokenId(
-            allMoments[i].tokenId,
-            ERC725YDataKeys.LSP4["LSP4Metadata"]
-          );
-          const erc725js = new ERC725(lsp4Schema);
-          const decodedMetadata = erc725js.decodeData([
-            {
-              keyName: "LSP4Metadata",
-              value: tokenIdMetadata,
-            },
-          ]);
-          const metadataHash = decodedMetadata[0].value.url;
-
-          const metadataJsonLink =
-            process.env.NEXT_PUBLIC_IPFS_GATEWAY + "/" + metadataHash;
-
-          const resMetadata = await fetch(metadataJsonLink);
-          const jsonMetadata = await resMetadata.json();
-          const ipfsHash = jsonMetadata.LSP4Metadata.ipfsHash;
-          const metadata = jsonMetadata.LSP4Metadata;
-
-          if (ipfsHash == "") continue;
-          const fetchUrl = process.env.NEXT_PUBLIC_FETCH_URL + ipfsHash;
-          const response = await fetch(fetchUrl);
-          if (!response.ok) {
-            throw new Error("Failed to fetch image from IPFS");
-          }
-          const encryptedData = await response.arrayBuffer();
-          const decryptedData = await decryptFile(
-            new Uint8Array(encryptedData),
-            decryptedKey
-          );
-
-          const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
-          const objectURL = URL.createObjectURL(blob);
-          const likes_ = await VaultAssistContract.getLikes(
-            allMoments[i].tokenId
-          );
-          const attributes = metadata.attributes;
-          let fileType: string = "image";
-          if (attributes.length > 0) {
-            fileType = getValueByKey(attributes, "FileType") as string;
-          }
-          moments_.push({
-            headline: metadata.headline, //tokenSymbol.value as string,
-            description: metadata.description,
-            fileType: fileType,
-            cid: objectURL,
-            likes: likes_.length,
-            comments: commentCnt,
-            owner: creator,
-            momentAddress: allMoments[i].tokenId,
-          });
+        const blob = new Blob([decryptedData]); // Creating a blob from decrypted data
+        const objectURL = URL.createObjectURL(blob);
+        const likes_ = await VaultAssistContract.getLikes(
+          allMoments[i].tokenId
+        );
+        const attributes = metadata.attributes;
+        let fileType: string = "image";
+        if (attributes.length > 0) {
+          fileType = getValueByKey(attributes, "FileType") as string;
         }
+        moments_.push({
+          headline: metadata.headline, //tokenSymbol.value as string,
+          description: metadata.description,
+          fileType: fileType,
+          cid: objectURL,
+          likes: likes_.length,
+          comments: commentCnt,
+          owner: creator,
+          momentAddress: allMoments[i].tokenId,
+        });
       }
-      setMoments(moments_);
-      setIsDownloading(true);
     }
+    setMoments(moments_);
+    setIsDownloading(true);
   };
 
   const handleJoinVault = async () => {
@@ -376,15 +386,19 @@ export default function Page({ params }: { params: { slug: string } }) {
           {!moments.length ? (
             <div className="text-center text-gray-200 mt-2 space-y-6 ">
               <div>
-                <img 
+                <img
                   // src="https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"
                   src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExazJkdG1uOHR0cTI5ZWltY3YzdTc0anVsMmluMGpybTJmajdtMzc1ciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ISOckXUybVfQ4/giphy.gif"
-                  alt="Oh no Spongbob gif" 
+                  alt="Oh no Spongbob gif"
                   className="mx-auto w-96 h-auto"
                 />
               </div>
-              <div className="text-xl font-bold">There are no moments in this collection yet!</div>
-              <div className="text-base">Add a moment to get the collection started</div>
+              <div className="text-xl font-bold">
+                There are no moments in this collection yet!
+              </div>
+              <div className="text-base">
+                Add a moment to get the collection started
+              </div>
               <div className="pt-6 flex justify-center items-center">
                 <Link href={"/addMoment"}>
                   <button className="px-6 py-3 bg-primary-600 text-white rounded-lg shadow-md hover:bg-primary-700">
@@ -395,12 +409,12 @@ export default function Page({ params }: { params: { slug: string } }) {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-8">
-            {moments &&
-              moments.map((moment, index) => (
-                <div key={index}>
-                  <MomentCard moment={moment} />
-                </div>
-              ))}
+              {moments &&
+                moments.map((moment, index) => (
+                  <div key={index}>
+                    <MomentCard moment={moment} />
+                  </div>
+                ))}
             </div>
           )}
         </div>

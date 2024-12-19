@@ -24,7 +24,7 @@ async function uploadToPinata(data: ArrayBuffer): Promise<string> {
   );
 
   if (!response.ok) {
-    throw new Error("Failed to upload to Pinata");
+    throw new Error("Failed to upload to IPFS");
   }
 
   const responseData = await response.json();
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     
     const arrayBuffer = await file.arrayBuffer();
     const ipfsHash = await uploadToPinata(arrayBuffer);
-    console.log("Uploaded encrypted data to Pinata. IPFS Hash:", ipfsHash);
+    console.log("Uploaded encrypted data to IPFS. IPFS Hash:", ipfsHash);
     return new NextResponse(JSON.stringify({ ipfsHash }), {
       status: 200,
       headers: { "Content-Type": "application/json" },

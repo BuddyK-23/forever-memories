@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { AiOutlineUser, AiOutlinePicture } from "react-icons/ai";
 import {
   getUniversalProfileCustomName,
   convertIpfsUriToUrl,
@@ -48,76 +49,63 @@ const VaultCard: React.FC<VaultCardProps> = ({ vault, href }) => {
   }, []);
 
   return (
-    <Link
-      className="block relative group rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-gray-900"
-      href={`/` + href + `/vault/` + vault.vaultAddress}
-    >
-      {/* Vault Image */}
-      <div className="relative w-full h-[300px]">
-        <img
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          src={"https://ipfs.io/ipfs/" + vault.cid}
-          onError={(e) => (e.currentTarget.src = "/fallback-image.jpg")}
-          alt={vault.name}
-        />
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0.9 group-hover:opacity-100 transition-opacity duration-300"></div>
-      </div>
+    <>
+      <Link
+        className="block relative group rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-gray-900"
+        href={`/` + href + `/vault/` + vault.vaultAddress}
+      >
+        {/* Vault Image */}
+        <div className="relative w-full h-[300px]">
+          <img
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            src={"https://ipfs.io/ipfs/" + vault.cid}
+            onError={(e) => (e.currentTarget.src = "/fallback-image.jpg")}
+            alt={vault.name}
+          />
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0.9 group-hover:opacity-100 transition-opacity duration-300"></div>
+        </div>
 
-      {/* Details */}
-      <div className="absolute bottom-0 p-4 w-full text-white group-hover:bg-black/70 transition-all duration-300">
-        <h3 className="font-bold text-lg truncate">{vault.name}</h3>
-        <div className="flex justify-between items-center mt-2 text-sm">
+        {/* Details */}
+        <div className="absolute bottom-0 p-4 w-full text-white group-hover:bg-black/70 transition-all duration-300">
+          <h3 className="font-bold text-lg truncate">{vault.name}</h3>
           
-          <div
-            className="relative"
-            onMouseEnter={() => setShowName(true)}
-            onMouseLeave={() => setShowName(false)}
-            onClick={() => setShowName((prev) => !prev)} // For mobile
-          >
-            <img
-              className="rounded-full h-8 w-8 object-cover"
-              src={profileCid}
-              alt="Profile"
-            />
-            {showName && (
-              <div className="absolute top-1/2 left-[120%] transform -translate-y-1/2 bg-gray-800 text-white text-xs px-3 py-1 rounded-lg shadow-md">
-                {profileName || "Loading..."}
+          <div className="flex justify-start items-center mt-2 text-sm">
+            {/* Likes, Dislikes, and Comments */}
+            <div className="flex space-x-4">
+              <div className="flex items-center space-x-1">
+                <AiOutlineUser />
+                <span>{vault.members}</span>
               </div>
-            )}
-          </div>
-
-          <div className="flex space-x-4">
-            <div className="flex items-center space-x-1">
-            <span className="text-sm">👥</span> 
-              <span>{vault.members}</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <span className="text-sm">🖼️</span> 
-              <span>{vault.moments.toString()}</span>
+              <div className="flex items-center space-x-1" >
+                <AiOutlinePicture />
+                <span>{vault.moments.toString()}</span>
+              </div>
             </div>
           </div>
+        </div>
 
-          
-          {/* <div className="flex items-center space-x-2">
-            <img
-              className="rounded-full h-6 w-6 object-cover"
-              src={profileCid || "/default-avatar.png"}
-              alt="Profile"
-            />
-            <span>{profileName || "Loading..."}</span>
-          </div> */}
-          
+        {/* Ribbon for Owned Vaults */}
+        {/* {vault.owner === address && (
+          <div className="absolute top-3 left-3 bg-pink-400 text-white text-xs font-semibold px-2 py-1 rounded-full shadow">
+            Owner
+          </div>
+        )} */}
+      </Link>
+      {/* Owner Section */}
+      <div className="pt-2">
+        <div className="inline-flex items-center gap-1 pl-1 pr-2 border border-gray-900/80 py-1 bg-gray-900/40 rounded-full ">
+          <img
+            className="rounded-full object-cover w-6 h-6"
+            src={profileCid}
+            alt="Owner profile"
+          />
+          <div className="text-sm text-gray-200">
+            {profileName || "Loading..."}
+          </div>
         </div>
       </div>
-
-      {/* Ribbon for Owned Vaults */}
-      {/* {vault.owner === address && (
-        <div className="absolute top-3 left-3 bg-pink-400 text-white text-xs font-semibold px-2 py-1 rounded-full shadow">
-          Owner
-        </div>
-      )} */}
-    </Link>
+    </>
   );
 };
 

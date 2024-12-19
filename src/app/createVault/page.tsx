@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, FormEvent } from "react";
+import { AiOutlinePlusCircle } from "react-icons/ai";
 import Select, { MultiValue } from "react-select";
 import { ethers } from "ethers";
 import {
@@ -37,6 +38,8 @@ export default function CreateVault() {
   const { walletProvider } = useWeb3ModalProvider();
   const [isDownloading, setIsDownloading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [loadingStage, setLoadingStage] = useState(''); // Tracks which stage is currently active
   const [formValues, setFormValues] = useState<FormValues>({
     vaultName: "",
     metadataUriImage: null,
@@ -44,6 +47,7 @@ export default function CreateVault() {
     rewardAmount: 0,
     vaultMode: 1, // Default to Private
   });
+  
 
   const categories = getCategoryOptions();
   const handleCategoryChange = (
@@ -116,7 +120,7 @@ export default function CreateVault() {
           "any"
         );
         const signer = ethersProvider.getSigner(address);
-        setIsDownloading(false);
+        setUploading(true);
         const VaultFactoryContract = new ethers.Contract(
           process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
           VaultFactoryABI.abi,
@@ -134,6 +138,7 @@ export default function CreateVault() {
         console.log("tx", tx);
         console.log("Transaction sent:", tx.hash);
 
+        setLoadingStage('Creating collection');
         // Wait for the transaction to be mined
         const receipt = await tx.wait();
         const vaultAddress = receipt.events[2].args[0];
@@ -151,25 +156,79 @@ export default function CreateVault() {
   };
 
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center h-[600px] dark:invert">
-      <span className="sr-only">Loading...</span>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-      <div className="h-8 w-8 bg-black rounded-full animate-bounce"></div>
+    <div className="flex flex-col space-x-2 justify-center items-center bg-black h-screen dark:invert text-gray-200">
+      <div className="flex space-x-2 justify-center items-center">
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce"
+          style={{
+            backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+      </div>
+      <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
+        <p className="text-lg mt-8">Let&apos;s create your collection!</p>
+        <p className="text-base mt-2">Confirm the transaction in your Universal Profile to proceed. It should pop up automatically.</p>
+      </div>
+    </div>
+
+    ) : uploading ? (
+    
+    <div className="flex flex-col justify-center items-center bg-black h-screen text-gray-200">
+      {loadingStage === 'Creating collection' && (
+      <div>
+        <div className="flex space-x-2 justify-center items-center">
+          <div
+            className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
+            style={{
+              backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+           }}
+          ></div>
+          <div
+            className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
+            style={{
+              backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            }}
+          ></div>
+          <div
+            className="h-8 w-8 rounded-full animate-bounce"
+            style={{
+              backgroundImage: "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+            }}
+          ></div>
+        </div>
+        <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
+          <p className="text-lg mt-8">Creating your collection!</p>
+          <p className="text-base mt-2">This can take several seconds</p>
+        </div>
+      </div>
+      )}
     </div>
     ) : (
       <main
         className="relative min-h-screen overflow-hidden bg-black text-gray-200"
         style={{
-          background: "radial-gradient(circle at top left, #121212, #000000)",
+          background: "radial-gradient(circle at top left, #041420, #000000)",
         }}
       >
-      <div className="container mx-auto max-w-2xl pt-32 pb-32">
+      <div className="container mx-auto max-w-2xl pt-32 pb-[500px]">
         <div className="flex justify-center items-center">
           <div className="w-full">
             <h2 className="text-3xl font-medium mb-6">
-              Select collection type
+              Create a new collection
             </h2>
+            <label className="block mb-2">Choose type:</label>
             <div className="grid grid-cols-2 gap-4 w-full mb-4">
               <button
                 onClick={() => handleVaultModeChange(1)}
@@ -179,15 +238,16 @@ export default function CreateVault() {
                     : "border-4 border-transparent hover:border-primary-400"
                 }`}
                 style={{
-                  height: "240px",
-                  backgroundImage: "url('/private_collection_header.jpg')",
+                  height: "160px",
+                  // backgroundImage: "url('/private_collection_header.jpg')",
                   opacity: 1.0,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
+                  backgroundColor: "#111827",
                 }}
               >
               <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-              <span className="absolute text-gray-200 font-bold text-lg text-left bottom-3">
+              <span className="absolute text-gray-200 font-bold text-xl text-left bottom-3">
                 Private Collection
               </span>
             </button>
@@ -195,15 +255,16 @@ export default function CreateVault() {
               onClick={() => handleVaultModeChange(0)}
               className={`relative flex flex-col items-start p-4 rounded-lg shadow-md overflow-hidden ${
                 formValues.vaultMode === 0
-                  ? "border-2 border-primary-500"
-                  : "border-2 border-transparent hover:border-primary-400"
+                  ? "border-4 border-primary-500"
+                  : "border-4 border-transparent hover:border-primary-400"
               }`}
               style={{
-                height: "240px",
-                backgroundImage: "url('/public_collection_header.jpg')",
+                height: "160px",
+                // backgroundImage: "url('/public_collection_header.jpg')",
                 opacity: 1.0,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
+                backgroundColor: "#111827",
               }}
             >
               <div className="absolute inset-0 bg-black bg-opacity-30"></div>
@@ -215,27 +276,52 @@ export default function CreateVault() {
 
             <button
               onClick={toggleAccordion}
-              className="text-primary-500 underline hover:text-primary-400 text-base mb-4"
+              className="text-primary-600 underline hover:text-primary-500 text-base mb-4"
             >
               How do collections work?
             </button>
+
             {isAccordionOpen && (
-              <div className="w-full text-gray-400 mb-4">
-                <p className="mb-4 text-base">
-                  <strong>Private Collections:</strong> Only you or authorized members
-                  can view and contribute. Ideal for personal memories or close groups.
-                  <br />
-                  <strong>Public Collections:</strong> Open to the community for viewing
-                  and contributions, great for sharing moments with a wider audience.
-                </p>
-                {/* <button
-                  onClick={toggleAccordion}
-                  className="mt-2 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-400"
-                >
-                  Got it
-                </button> */}
-              </div>
+              <div className="container flex flex-col pb-10 text-gray-200">
+                {/* Main Title */}
+                <div className="flex text-base mb-4 text-left max-w-[800px] mx-auto">Collections are at the heart of the Forever Moments ecosystem. Simply put, they group Moments together. Collections can be private, for you or a group; or public, where anyone can join and contribute.</div>
+                    
+                {/* Two Columns for Private and Public Collections */}
+                <div className="flex flex-col gap-4">
+                  {/* Private Collections */}
+                  <div className="p-6 bg-gray-900/80 rounded-lg shadow-sm-light border border-gray-800/70">
+                    <h2 className="text-xl font-medium mb-2">Private Collections</h2>
+                    <p className="text-base mb-4">Totally private, just for you or invite a select group of members.</p>
+                    <div className="mb-4">
+                      <h3 className="text-base pb-2 font-medium">Best for:</h3>
+                      <ul className="list-disc pl-4 space-y-2 text-base">
+                        <li>Family photo albums shared securely among loved ones</li>
+                        <li>Collaborative workspaces for community or team projects and milestones</li>
+                        <li>Personal journals or time capsules to pass down legacies</li>
+                      </ul>
+                    </div>
+                  </div>
+              
+                  {/* Public Collections */}
+                  <div className="p-6 bg-gray-900/80 rounded-lg shadow-sm-light border border-gray-800/70">
+                    <h2 className="text-xl font-medium mb-2">Public Collections</h2>
+                    <p className="text-base mb-4">Open to everyone, anyone can join and contribute.</p>
+                    <div className="mb-4">
+                      <h3 className="text-base pb-2 font-medium">Some ideas:</h3>
+                      <ul className="list-disc pl-4 space-y-2 text-base">
+                        <li>Digital time capsules that anyone can view and contribute to</li>
+                        <li>Community collaboration hubs</li>
+                        <li>Crowdsourced legacy projects for public causes or shared history logging</li>
+                      </ul>
+                    </div>
+                    
+                  </div>
+                </div>
+              </div> 
+
             )}
+
+            
             
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
@@ -337,6 +423,10 @@ export default function CreateVault() {
                   "Create Collection"
                 )}
               </button>
+              <div className="flex flex-col mx-auto max-w-[500px] text-center">
+                <p className="text-sm text-gray-500 mt-8">Please check all details carefully before proceeding. By creating this collection, you agree to our terms and conditions.</p>
+                {/* <p className="text-sm text-gray-500 mt-2">Legal text here, Link to privacy policy. This app is in beta.</p> */}
+              </div>
             </form>
           </div>
         </div>

@@ -3,8 +3,6 @@
 import React from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { ApolloProvider } from "@apollo/client";
-import client from "../utils/apolloClient";
 import { config } from "@/app/config";
 import "./globals.css";
 
@@ -22,19 +20,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ApolloProvider client={client}>
-      <html lang="en-US">
-        <head>
-          <title>{config.metadata.title}</title>
-          <meta name="description" content={config.metadata.description} />
-          <link rel="icon" href={config.metadata.icon} sizes="any" />
-        </head>
-        <body>
-          <Header />
-          <main>{children}</main>
-          <Footer />
-        </body>
-      </html>
-    </ApolloProvider>
+    <html lang="en-US">
+      <head>
+        <title>{config.metadata.title}</title>
+        <meta name="description" content={config.metadata.description} />
+        <link rel="icon" href={config.metadata.icon} sizes="any" />
+      </head>
+      <body>
+        <Header />
+        <main>{children}</main>
+        <Footer />
+      </body>
+    </html>
   );
 }

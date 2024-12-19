@@ -30,7 +30,7 @@ export default function Home() {
         <div className="text-white">
           <h2 className="text-5xl text-gray-200 font-bold mb-6">Capture today, inspire tomorrow</h2>
           <p className="text-xl text-gray-300 mb-10">
-            A social platform to save, share, and shape our collective history.
+            A social platform to save, share, and shape our collective history
           </p>
           <div className="space-x-4">
             <a
