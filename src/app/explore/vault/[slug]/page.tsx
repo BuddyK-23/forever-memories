@@ -29,10 +29,6 @@ import VaultAssistABI from "@/artifacts/VaultAssist.json";
 import MomentCard from "@/components/MomentCard";
 import toast, { Toaster } from "react-hot-toast";
 import { HiOutlineExclamationCircle, HiOutlineUserAdd } from "react-icons/hi";
-import {
-  generateAESKey,
-  decryptEncryptedEncryptionKey,
-} from "@/utils/encryptKey";
 
 interface Moment {
   headline: string;
@@ -76,6 +72,10 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [vaultProfileName, setVaultProfileName] = useState<string>("");
   const [vaultProfileCid, setVaultProfileCid] = useState<string>("");
   const [isJoinedVault, setIsJoinedVault] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const toggleDescription = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   useEffect(() => {
     init();
@@ -83,27 +83,29 @@ export default function Page({ params }: { params: { slug: string } }) {
 
   useEffect(() => {
     const isMemberCheckFunc = async () => {
-      const ethersProvider = new ethers.providers.JsonRpcProvider(
-        process.env.NEXT_PUBLIC_MAINNET_URL
-      );
-      const VaultFactoryContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-        VaultFactoryABI.abi,
-        ethersProvider
-      );
-      const memberList = await VaultFactoryContract.getVaultMembers(
-        vaultAddress
-      );
-      if (isAddressInList(memberList, address as string)) {
-        console.log(true);
-        setIsJoinedVault(true);
-      } else {
-        console.log(false);
-        setIsJoinedVault(false);
+      if (isConnected) {
+        const ethersProvider = new ethers.providers.JsonRpcProvider(
+          process.env.NEXT_PUBLIC_MAINNET_URL
+        );
+        const VaultFactoryContract = new ethers.Contract(
+          process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+          VaultFactoryABI.abi,
+          ethersProvider
+        );
+        const memberList = await VaultFactoryContract.getVaultMembers(
+          vaultAddress
+        );
+        if (isAddressInList(memberList, address as string)) {
+          console.log(true);
+          setIsJoinedVault(true);
+        } else {
+          console.log(false);
+          setIsJoinedVault(false);
+        }
       }
     };
     isMemberCheckFunc();
-  }, [walletProvider && address]);
+  }, [isConnected]);
 
   const fetchProfileName = async (owner: string) => {
     const profile = await getUniversalProfileCustomName(owner);
@@ -114,6 +116,10 @@ export default function Page({ params }: { params: { slug: string } }) {
   };
 
   const handleRemoveMember = async (memberAddress: string) => {
+    if ((vaultOwner as string) == memberAddress) {
+      toast.error("The vault owner cannot be removed");
+      return;
+    }
     if (walletProvider) {
       setIsDownloading(false);
       const ethersProvider = new ethers.providers.Web3Provider(
@@ -126,10 +132,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         VaultFactoryABI.abi,
         signer
       );
-      if (vaultOwner === memberAddress) {
-        toast.error("The vault owner cannot be removed");
-        return;
-      }
+
       const tx = await VaultFactoryContract.removeMember(
         vaultAddress,
         memberAddress
@@ -203,7 +206,6 @@ export default function Page({ params }: { params: { slug: string } }) {
 
     const memberList = await VaultFactoryContract.getVaultMembers(vaultAddress);
 
-    console.log("memberList", memberList);
     let vaultMembers_: VaultMember[] = [];
     if (memberList.length > 0)
       for (let i = 0; i < memberList.length; i++) {
@@ -214,7 +216,6 @@ export default function Page({ params }: { params: { slug: string } }) {
           cid: generatedVaultMember.cid,
         });
       }
-
     setVaultMembers(vaultMembers_);
     let moments_: Moment[] = [];
 
@@ -234,7 +235,6 @@ export default function Page({ params }: { params: { slug: string } }) {
         const combinedEncryptedData = hexStringToUint8Array(
           combinedEncryptedData_
         );
-        console.log("combinedEncryptedData", combinedEncryptedData);
         const creator = await VaultContract.momentOwners(allMoments[i].tokenId);
 
         const decryptedKey_ = await fetchDecryptedKey(combinedEncryptedData);
@@ -302,44 +302,82 @@ export default function Page({ params }: { params: { slug: string } }) {
 
   const handleJoinVault = async () => {
     if (walletProvider) {
-      setIsDownloading(false);
-      const ethersProvider = new ethers.providers.Web3Provider(
-        walletProvider,
-        "any"
-      );
-      const signer = ethersProvider.getSigner(address);
+      if (isJoinedVault) {
+        toast.error("You have already joint.");
+      } else {
+        setIsDownloading(false);
+        const ethersProvider = new ethers.providers.Web3Provider(
+          walletProvider,
+          "any"
+        );
+        const signer = ethersProvider.getSigner(address);
 
-      const VaultFactoryContract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
-        VaultFactoryABI.abi,
-        signer
-      );
-      const tx = await VaultFactoryContract.joinVault(vaultAddress);
-      router.push("/myVaults/" + vaultAddress);
-      toast.success("Joint to vault successfully.");
+        const VaultFactoryContract = new ethers.Contract(
+          process.env.NEXT_PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS as string,
+          VaultFactoryABI.abi,
+          signer
+        );
+        const tx = await VaultFactoryContract.joinVault(vaultAddress);
+        router.push("/myVaults/vault/" + vaultAddress);
+        toast.success("Joint to vault successfully.");
+      }
     } else {
       toast.error("Please connect the wallet.");
     }
   };
 
   return !isDownloading ? (
-    <div className="flex space-x-2 justify-center items-center bg-black h-screen dark:invert">
-      <span className="sr-only">Loading...</span>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-      <div className="h-8 w-8 bg-white rounded-full animate-bounce"></div>
+    <div className="flex flex-col justify-center items-center bg-black min-h-screen text-gray-200">
+      <div className="flex space-x-2 justify-center items-center">
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.3s]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce [animation-delay:-0.15s]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+        <div
+          className="h-8 w-8 rounded-full animate-bounce"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at top left, #1E3A8A, #60A5FA)",
+          }}
+        ></div>
+      </div>
+      <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
+        <p className="text-lg mt-8">Loading collection</p>
+        <p className="text-base mt-2 italic">
+          &quot;Each moment tells a story; together, they create a legacy.&quot;
+        </p>
+      </div>
     </div>
   ) : (
     <main
       className="relative min-h-screen overflow-hidden bg-black"
       style={{
-        background: "radial-gradient(circle at top left, #121212, #000000)",
+        background: "radial-gradient(circle at top left, #041420, #000000)",
       }}
     >
       <div className="container mx-auto max-w-6xl pt-32 pb-32">
         {/* Vault Name and Join Button */}
         <div className="flex justify-between items-center">
-          <div className="font-bold text-3xl text-gray-200">{vaultTitle}</div>
+          <div className="flex items-center gap-2 pl-2 pr-3 border border-gray-900/80 py-1 bg-gray-900/80 rounded-full shadow-sm">
+            <img
+              className="rounded-full object-cover w-8 h-8"
+              src={vaultProfileCid}
+              alt="Profile"
+            />
+            <div className="text-base text-gray-200">
+              {vaultProfileName || "Loading..."}
+            </div>
+          </div>
           {!isJoinedVault ? (
             <button
               onClick={() => handleJoinVault()}
@@ -352,24 +390,40 @@ export default function Page({ params }: { params: { slug: string } }) {
           )}
         </div>
 
+        {/* Vault Title & Description */}
+        <div className="font-bold text-3xl text-gray-200 pt-3 mb-3">
+          {vaultTitle}
+        </div>
         {/* Vault Description */}
-        <div className="pt-2 text-gray-200">{vaultDescription}</div>
+        <div className="text-gray-200 mb-3">
+          <div
+            className={`overflow-hidden whitespace-pre-wrap ${
+              isExpanded ? "" : "line-clamp-2"
+            }`}
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: isExpanded ? "unset" : "2",
+              WebkitBoxOrient: "vertical",
+            }}
+          >
+            {vaultDescription || ""}
+          </div>
+          {(vaultDescription?.length || 0) > 100 && (
+            <button
+              onClick={toggleDescription}
+              className="text-gray-600 hover:text-gray-500 text-sm"
+            >
+              {isExpanded ? "Hide full description" : "Expand description"}
+            </button>
+          )}
+        </div>
+        {/* <div className="pt-2 pb-2 text-gray-200">{vaultDescription}</div> */}
 
         {/* Vault Owner, Members, and Moments */}
-        <div className="flex items-center gap-4 pt-4">
-          <div className="flex items-center gap-2">
-            <img
-              className="rounded-full object-cover w-8 h-8"
-              src={vaultProfileCid}
-              alt="Profile"
-            />
-            <div className="text-sm text-gray-200">
-              {vaultProfileName || "Loading..."}
-            </div>
-          </div>
-          <div className="flex gap-2 text-gray-400 hover:text-gray-300">
+        <div className="flex items-center gap-4">
+          <div className="flex gap-2 text-gray-200">
             <div
-              className="hover:cursor-pointer"
+              className="hover:cursor-pointer hover:text-primary-300"
               onClick={() => setOpenMembersModal(true)}
             >
               {vaultMembers?.length} member
@@ -384,7 +438,7 @@ export default function Page({ params }: { params: { slug: string } }) {
 
         <div className="div">
           {!moments.length ? (
-            <div className="text-center text-gray-200 mt-2 space-y-6 ">
+            <div className="text-center text-gray-200 mt-10 space-y-4 ">
               <div>
                 <img
                   // src="https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"
@@ -393,7 +447,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                   className="mx-auto w-96 h-auto"
                 />
               </div>
-              <div className="text-xl font-bold">
+              <div className="text-xl font-medium">
                 There are no moments in this collection yet!
               </div>
               <div className="text-base">
@@ -455,44 +509,49 @@ export default function Page({ params }: { params: { slug: string } }) {
 
       {openMembersModal ? (
         <>
-          <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-            <div className="relative w-auto my-6 mx-auto max-w-3xl">
+          <div className="justify-center items-start flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 shadow-md-light">
+            <div className="relative w-auto my-6 mx-auto max-w-4xl mt-32">
               {/*content*/}
-              <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+              <div className="rounded-lg shadow-md relative flex flex-col w-full bg-gray-700 border-solid border-gray-600 border-2">
                 {/*header*/}
-                <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
-                  <h3 className="text-3xl font-semibold">Members</h3>
+                <div className="flex text-gray-100 items-start justify-between p-6 border-b border-solid border-gray-500 rounded-t-lg">
+                  <h3 className="text-xl">
+                    {vaultMembers?.length} member
+                    {vaultMembers?.length !== 1 ? "s" : ""}
+                  </h3>
                   <button
-                    className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
+                    className="ml-auto bg-transparent border-0 float-right leading-none outline-none focus:outline-none"
                     onClick={() => setOpenMembersModal(false)}
                   >
-                    <span className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
+                    <span className="bg-transparent h-6 w-6 text-2xl outline-none focus:outline-none">
                       ×
                     </span>
                   </button>
                 </div>
                 {/*body*/}
-                <div className="relative p-6 flex-auto max-h-[400px] w-[400px] overflow-y-auto ">
+                <div className="relative p-6 flex-auto max-h-[600px] sm:w-[600px] w-full overflow-y-auto ">
                   {vaultMembers &&
                     vaultMembers.map((member, index) => (
                       <div
-                        className="p-1 flex items-center space-x-3"
+                        className="p-1 flex items-center justify-between  space-x-3"
                         key={index}
                       >
-                        <img
-                          src={member.cid}
-                          alt={member.name}
-                          className="w-10 h-10 rounded-full"
-                        />
-                        <div>
-                          <h3 className="text-sm font-medium">
-                            {member.generatedName}
-                          </h3>
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={member.cid}
+                            alt={member.name}
+                            className="rounded-full h-8 w-8 object-cover"
+                          />
+                          <div>
+                            <h3 className="text-base text-gray-200">
+                              {member.generatedName}
+                            </h3>
+                          </div>
                         </div>
                         {vaultOwner == address ? (
                           <div className="flex justify-center gap-4">
                             <Button
-                              className="bg-red-400 text-white"
+                              className="bg-gray-800/50 hover:bg-gray-700/80 rounded-lg shadow-sm py-1"
                               onClick={() => handleRemoveMember(member.name)}
                             >
                               Remove
@@ -503,16 +562,6 @@ export default function Page({ params }: { params: { slug: string } }) {
                         )}
                       </div>
                     ))}
-                </div>
-                {/*footer*/}
-                <div className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
-                  <button
-                    className="text-red-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                    type="button"
-                    onClick={() => setOpenMembersModal(false)}
-                  >
-                    Close
-                  </button>
                 </div>
               </div>
             </div>
