@@ -21,7 +21,6 @@ import VaultFactoryABI from "@/artifacts/VaultFactory.json";
 import VaultABI from "@/artifacts/Vault.json";
 import toast, { Toaster } from "react-hot-toast";
 import FMT from "@/artifacts/FMT.json";
-const RPC_MAINNET = "https://42.rpc.thirdweb.com";
 const FMTContractAddress = "0x186f3468Ff169AEe9c7E72ABEF83c2c6aDB5D5cc";
 const tokenAddress = "0x01e4386127a976bf65961a6a117c1a5b12703fd3";
 
@@ -154,8 +153,8 @@ export default function Profile() {
     if (address && walletProvider) {
       const erc725js = new ERC725(
         LSP5Schema,
-        "0x3c33871d7ff685433cdba55a85a5960fd9feb007", //"0x2d6584E545B5c4A15FB3a825431b10A1452c3780",
-        RPC_MAINNET
+        address,
+        process.env.NEXT_PUBLIC_MAINNET_URL
       );
 
       let tokenMetadata_: TokenMetadata[] = [];
@@ -254,7 +253,7 @@ export default function Profile() {
           "https://api.universalprofile.cloud/image/QmRnodxiibv3CnEa59eiYyNyjahCVAvLUi2JE9Zsp5bZn3";
 
         const tokenMetadataPromises = tokens.map(async (token) => {
-          const erc725 = new ERC725(LSP4Schema, token, RPC_MAINNET);
+          const erc725 = new ERC725(LSP4Schema, token, process.env.NEXT_PUBLIC_MAINNET_URL);
 
           try {
             // Fetch LSP4Metadata, TokenName, and TokenSymbol in parallel
@@ -320,7 +319,6 @@ export default function Profile() {
         setTotalAssetsCount(tokenMetadata_.length);
       }
 
-      console.log("tokenMetadata", tokenMetadata_);
       setTokens(tokenMetadata_);
     }
   };
