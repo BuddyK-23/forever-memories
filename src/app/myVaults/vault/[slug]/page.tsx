@@ -3,7 +3,11 @@
 import { Button, Modal, TextInput } from "flowbite-react";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
-import { AiOutlinePlusCircle, AiOutlineUser, AiOutlinePicture } from "react-icons/ai";
+import {
+  AiOutlinePlusCircle,
+  AiOutlineUser,
+  AiOutlinePicture,
+} from "react-icons/ai";
 import { ethers } from "ethers";
 import {
   useWeb3ModalAccount,
@@ -95,10 +99,8 @@ export default function Page({ params }: { params: { slug: string } }) {
         vaultAddress
       );
       if (isAddressInList(memberList, address as string)) {
-        console.log(true);
         setIsInvitedMemberVault(true);
       } else {
-        console.log(false);
         setIsInvitedMemberVault(false);
       }
     }
@@ -322,7 +324,6 @@ export default function Page({ params }: { params: { slug: string } }) {
       setIsDownloading(false);
     }
   };
-  
 
   const handleLeaveVault = async () => {
     if (walletProvider) {
@@ -525,7 +526,7 @@ export default function Page({ params }: { params: { slug: string } }) {
           {/* Vault Owner, Members, and Moments */}
           <div className="flex items-center gap-4">
             <div className="flex gap-3 items-center text-gray-200">
-              <div className="flex gap-1 items-center">  
+              <div className="flex gap-1 items-center">
                 <AiOutlineUser />
                 <div
                   className="hover:cursor-pointer hover:text-primary-300"
@@ -538,7 +539,8 @@ export default function Page({ params }: { params: { slug: string } }) {
               <div className="flex gap-1 items-center">
                 <AiOutlinePicture />
                 <div>
-                  {moments?.length || 0} moment{moments?.length !== 1 ? "s" : ""}
+                  {moments?.length || 0} moment
+                  {moments?.length !== 1 ? "s" : ""}
                 </div>
               </div>
             </div>

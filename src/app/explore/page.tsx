@@ -39,9 +39,7 @@ export default function Explore() {
   const upWalletAddress = address
     ? address
     : process.env.NEXT_PUBLIC_SUPER_ADMIN_ADDRESS;
-  console.log("upWalletAddress", upWalletAddress);
 
-  // const walletP =
   const categories = getCategoryOptions();
   const selectedCategoryButtonStyle =
     "px-4 py-2 rounded-md cursor-pointer flex items-center justify-center bg-gray-300 hover:bg-gray-200 text-gray-800 relative";

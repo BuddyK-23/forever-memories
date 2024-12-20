@@ -9,11 +9,9 @@ import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
 } from "@web3modal/ethers5/react";
-const RCP_MAINNET = "https://42.rpc.thirdweb.com";
 const RPC_ENDPOINT = "https://rpc.l16.lukso.network";
 import lsp8Artifact from "@lukso/lsp-smart-contracts/artifacts/LSP8IdentifiableDigitalAsset.json";
 import { INTERFACE_IDS } from "@lukso/lsp-smart-contracts";
-const RPC_MAINNET = "https://42.rpc.thirdweb.com";
 
 interface IpfsHash {
   url: string;
@@ -40,7 +38,7 @@ const Feed: React.FC = () => {
       const erc725js = new ERC725(
         LSP5Schema,
         "0x3c33871d7ff685433cdba55a85a5960fd9feb007",
-        RPC_MAINNET
+        process.env.NEXT_PUBLIC_MAINNET_URL
       );
 
       let tokenMetadata_: TokenMetadata[] = [];
@@ -54,7 +52,7 @@ const Feed: React.FC = () => {
 
       if (tokens.length > 0) {
         for (let i = 0; i < tLength; i++) {
-          const erc725 = new ERC725(LSP4Schema, tokens[i], RPC_MAINNET);
+          const erc725 = new ERC725(LSP4Schema, tokens[i], process.env.NEXT_PUBLIC_MAINNET_URL);
 
           // Step 1: Fetch the LSP4Metadata key
           const metadataResult = await erc725.getData("LSP4Metadata");
