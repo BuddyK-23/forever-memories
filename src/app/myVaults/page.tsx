@@ -559,7 +559,7 @@ export default function Profile() {
             )}
           </>      
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6">
             {vaultData.map((vault, index) => (
               <div key={index}>
                 <VaultCard vault={vault} href="myVaults" />

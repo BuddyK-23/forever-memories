@@ -97,10 +97,8 @@ export default function Page({ params }: { params: { slug: string } }) {
           vaultAddress
         );
         if (isAddressInList(memberList, address as string)) {
-          console.log(true);
           setIsJoinedVault(true);
         } else {
-          console.log(false);
           setIsJoinedVault(false);
         }
       }
@@ -420,17 +418,22 @@ export default function Page({ params }: { params: { slug: string } }) {
 
         {/* Vault Owner, Members, and Moments */}
         <div className="flex items-center gap-4">
-          <div className="flex gap-2 text-gray-200">
-            <div
-              className="hover:cursor-pointer hover:text-primary-300"
-              onClick={() => setOpenMembersModal(true)}
-            >
-              {vaultMembers?.length} member
-              {vaultMembers?.length !== 1 ? "s" : ""}
+          <div className="flex gap-3 items-center text-gray-200">
+            <div className="flex gap-1 items-center">
+              <AiOutlineUser />
+              <div
+                className="hover:cursor-pointer hover:text-primary-300"
+                onClick={() => setOpenMembersModal(true)}
+              >
+                {vaultMembers?.length} member
+                {vaultMembers?.length !== 1 ? "s" : ""}
+              </div>
             </div>
-            <div>|</div>
-            <div>
-              {moments?.length || 0} moment{moments?.length !== 1 ? "s" : ""}
+            <div className="flex gap-1 items-center">
+              <AiOutlinePicture />
+              <div>
+                {moments?.length || 0} moment{moments?.length !== 1 ? "s" : ""}
+              </div>
             </div>
           </div>
         </div>
