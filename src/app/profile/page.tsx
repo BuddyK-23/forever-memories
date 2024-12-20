@@ -153,7 +153,7 @@ export default function Profile() {
     if (address && walletProvider) {
       const erc725js = new ERC725(
         LSP5Schema,
-        "0x3c33871d7ff685433cdba55a85a5960fd9feb007", //"0x2d6584E545B5c4A15FB3a825431b10A1452c3780",
+        address,
         process.env.NEXT_PUBLIC_MAINNET_URL
       );
 
@@ -319,7 +319,6 @@ export default function Profile() {
         setTotalAssetsCount(tokenMetadata_.length);
       }
 
-      console.log("tokenMetadata", tokenMetadata_);
       setTokens(tokenMetadata_);
     }
   };
