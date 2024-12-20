@@ -323,7 +323,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         toast.success("Joint to vault successfully.");
       }
     } else {
-      toast.error("Please connect the wallet.");
+      toast.error("Please connect your Universal Profile.");
     }
   };
 
@@ -353,8 +353,8 @@ export default function Page({ params }: { params: { slug: string } }) {
         ></div>
       </div>
       <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
-        <p className="text-lg mt-8">Take a moment</p>
-        <p className="text-base mt-2">Getting collection data from the blockchain can take a few seconds, please be patient</p>
+        <p className="text-lg mt-8">Loading collection</p>
+        <p className="text-base mt-2">This can take a few seconds</p>
       </div>
     </div>
   ) : (
@@ -537,7 +537,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                   {vaultMembers &&
                     vaultMembers.map((member, index) => (
                       <div
-                        className="p-1 flex items-center justify-between  space-x-3"
+                        className="p-1 flex items-center justify-between space-x-3 pb-3"
                         key={index}
                       >
                         <div className="flex items-center gap-2">

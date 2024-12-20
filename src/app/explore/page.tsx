@@ -213,8 +213,8 @@ export default function Explore() {
         ></div>
       </div>
       <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
-        <p className="text-lg mt-8">Loading collections</p>
-        <p className="text-base mt-2">Make sure to connect your Universal Profile</p>
+        <p className="text-lg mt-8">Loading public collections</p>
+        <p className="text-base mt-2">This can take a few moments</p>
       </div>
     </div>
   ) : (
