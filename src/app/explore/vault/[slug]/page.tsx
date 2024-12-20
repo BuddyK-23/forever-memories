@@ -3,6 +3,7 @@
 import { Button, Modal, TextInput } from "flowbite-react";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
+import { AiOutlinePlusCircle, AiOutlineUser, AiOutlinePicture } from "react-icons/ai";
 import { ethers } from "ethers";
 import {
   useWeb3ModalAccount,
@@ -352,10 +353,8 @@ export default function Page({ params }: { params: { slug: string } }) {
         ></div>
       </div>
       <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
-        <p className="text-lg mt-8">Loading collection</p>
-        <p className="text-base mt-2 italic">
-          &quot;Each moment tells a story; together, they create a legacy.&quot;
-        </p>
+        <p className="text-lg mt-8">Take a moment</p>
+        <p className="text-base mt-2">Getting collection data from the blockchain can take a few seconds, please be patient</p>
       </div>
     </div>
   ) : (
@@ -365,7 +364,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         background: "radial-gradient(circle at top left, #041420, #000000)",
       }}
     >
-      <div className="container mx-auto max-w-6xl pt-32 pb-32">
+      <div className="container mx-auto max-w-6xl py-24 lg:py-32 px-4 lg:px-0">
         {/* Vault Name and Join Button */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2 pl-2 pr-3 border border-gray-900/80 py-1 bg-gray-900/80 rounded-full shadow-sm">

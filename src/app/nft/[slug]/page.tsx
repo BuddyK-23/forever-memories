@@ -20,6 +20,7 @@ import { ethers } from "ethers";
 import { ERC725 } from "@erc725/erc725.js";
 import lsp4Schema from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
 import { generateEncryptionKey, decryptFile } from "@/utils/upload";
+import { useRouter } from "next/navigation";
 import {
   convertUnixTimestampToCustomDate,
   hexToDecimal,
@@ -32,12 +33,17 @@ import {
 import CommentComponent from "@/components/CommentComponent";
 import toast, { Toaster } from "react-hot-toast";
 import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
-import "./index.css"; 
+import "./index.css";
 
 // Define the types you expect
 type URLDataWithHash = {
   url: string;
   hash: string;
+};
+
+type Positions = {
+  current: number;
+  last: number;
 };
 
 type LikeMemberType = {
@@ -53,6 +59,7 @@ function hasUrlProperty(value: any): value is URLDataWithHash {
 
 export default function Page({ params }: { params: { slug: string } }) {
   const tokenId = params.slug;
+  const router = useRouter();
   const { address, isConnected } = useWeb3ModalAccount();
   const { walletProvider } = useWeb3ModalProvider();
   const [showLikeModal, setShowLikeModal] = useState(false);
@@ -78,6 +85,7 @@ export default function Page({ params }: { params: { slug: string } }) {
   const [profileCid, setProfileCid] = useState<string>("");
   const [fileType, setFileType] = useState<string>("");
   const [isMember, setIsMember] = useState<boolean>(false);
+  const [positions, setPositions] = useState<Positions>();
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
 
 
@@ -299,6 +307,16 @@ export default function Page({ params }: { params: { slug: string } }) {
         dislikesTemp.push(disikes_);
       }
       setMomentDislikes(dislikesTemp);
+
+      // showing positions
+      const allMoments = await VaultContract.getAllMoments(_vaultAddress);
+      const currentIndex = allMoments.findIndex(
+        (moment: { tokenId: string }) => moment.tokenId === tokenId
+      );
+      const lastPosition = allMoments.length;
+      const currentPosition = currentIndex as number;
+      setPositions({ current: currentPosition + 1, last: lastPosition });
+
       setIsDownloading(true);
     }
   };
@@ -377,7 +395,7 @@ export default function Page({ params }: { params: { slug: string } }) {
       console.error("CID is undefined, cannot download.");
       return;
     }
-    
+
     const link = document.createElement("a");
     link.href = cid;
     link.download = "moment.jpg";
@@ -389,7 +407,6 @@ export default function Page({ params }: { params: { slug: string } }) {
   const toggleFullScreen = () => {
     setIsFullScreen(!isFullScreen);
   };
-
 
   const handleSend = async () => {
     if (walletProvider) {
@@ -453,6 +470,74 @@ export default function Page({ params }: { params: { slug: string } }) {
     setCommentCnt((prevCommentCnt) => prevCommentCnt + 1);
   };
 
+  const handlePrevNFT = async () => {
+    if (positions?.current == 1 && positions?.current == positions?.last) {
+      toast.error("Currently only one node does exist");
+      return;
+    }
+    if (positions?.current == 1) {
+      toast.error("This node is the first node");
+      return;
+    }
+    if (walletProvider) {
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
+      const VaultContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+        VaultABI.abi,
+        signer
+      );
+
+      const allMoments = await VaultContract.getAllMoments(vaultAddress);
+      const currentIndex = allMoments.findIndex(
+        (moment: { tokenId: string }) => moment.tokenId === tokenId
+      );
+
+      const prevMomentTokenID =
+        currentIndex > 0 ? allMoments[currentIndex - 1]?.tokenId : null;
+      router.push("/nft/" + prevMomentTokenID);
+    }
+  };
+
+  const handleNextNFT = async () => {
+    if (positions?.current == 1 && positions?.current == positions?.last) {
+      toast.error("Currently only one node does exist");
+      return;
+    }
+    if (positions?.current == positions?.last) {
+      toast.error("This node is the last node");
+      return;
+    }
+    if (walletProvider) {
+      const ethersProvider = new ethers.providers.Web3Provider(
+        walletProvider,
+        "any"
+      );
+      const signer = ethersProvider.getSigner(address);
+      const VaultContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_VAULT_CONTRACT_ADDRESS as string,
+        VaultABI.abi,
+        signer
+      );
+
+      const allMoments = await VaultContract.getAllMoments(vaultAddress);
+      const currentIndex = allMoments.findIndex(
+        (moment: { tokenId: string }) => moment.tokenId === tokenId
+      );
+
+      const lastPosition_ = allMoments.length - 1;
+
+      const nextMomentTokenID =
+        currentIndex < lastPosition_
+          ? allMoments[currentIndex + 1]?.tokenId
+          : null;
+      router.push("/nft/" + nextMomentTokenID);
+    }
+  };
+
   return !isDownloading ? (
      <div className="flex flex-col justify-center items-center bg-black min-h-screen text-gray-200"> 
       <div className="flex space-x-2 justify-center items-center">
@@ -494,7 +579,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         <div className="ball ball3"></div>
       </div>
 
-      <div className="container mx-auto max-w-6xl pt-32 pb-32 flex flex-col lg:flex-row lg:gap-6">
+      <div className="container mx-auto max-w-6xl py-24 lg:py-32 px-4 lg:px-0 flex flex-col lg:flex-row lg:gap-6">
       
       
         
@@ -537,13 +622,23 @@ export default function Page({ params }: { params: { slug: string } }) {
                 <MdClose size={20} />
               </Button>
             </Link>
-            {/* <Button className="bg-gray-800/50 hover:bg-gray-700/50 rounded-full py-2">
+            <Button
+              onClick={() => handlePrevNFT()}
+              className="bg-gray-800/50 hover:bg-gray-700/50 rounded-full py-2"
+            >
               <FaChevronLeft size={20} />
             </Button>
-            <Button className="bg-gray-800/50 hover:bg-gray-700/50 rounded-full py-2">
+            <Button
+              onClick={() => handleNextNFT()}
+              className="bg-gray-800/50 hover:bg-gray-700/50 rounded-full py-2"
+            >
               <FaChevronRight size={20} />
-            </Button> */}
+            </Button>
+            <p className="text-white">
+              {positions?.current + "/" + positions?.last}
+            </p>
           </div>
+
           <div className="absolute top-4 right-4 flex items-center space-x-2">
             {/* <Button onClick={toggleFullScreen} className="bg-gray-800/50 hover:bg-gray-700/80 rounded-full py-2">
               <MdFullscreen size={20} />

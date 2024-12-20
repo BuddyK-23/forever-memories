@@ -584,26 +584,24 @@ export default function AddMoment({ params }: { params: { slug: string } }) {
         background: "radial-gradient(circle at top left, #041420, #000000)",
       }}
     >
-      <div className="container mx-auto max-w-2xl pt-32 pb-32">
-        <div className="flex justify-center main-content gap-x-1 mb-20 w-full">
-          <div className="w-full">
-            <h4 className="text-3xl text-gray-200 font-medium mb-6">
-              Create a Moment
-            </h4>
-            <div>
-              <div className="mb-4">
-                <div className="flex items-center justify-center w-full">
-                  <label
-                    htmlFor="dropzone-file"
-                    className="flex flex-col items-center justify-center w-full h-[300px] md:h-[500px] border-2 border-gray-600 border-dashed rounded-xl cursor-pointer bg-gray-700  hover:bg-gray-700/90"
-                  >
-                    {imagePreview && (
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-full object-contain rounded-xl"
-                      />
-                    )}
+    <div className="container mx-auto max-w-2xl py-24 lg:py-32 px-4 lg:px-0">
+      <div className="flex justify-center main-content gap-x-1 w-full">
+        <div className="w-full">
+          <h4 className="text-3xl text-gray-200 font-medium mb-6">Create a Moment</h4>
+          <div>
+            <div className="mb-4">
+              <div className="flex items-center justify-center w-full">
+                <label
+                  htmlFor="dropzone-file"
+                  className="flex flex-col items-center justify-center w-full h-[300px] md:h-[500px] border-2 border-gray-600 border-dashed rounded-xl cursor-pointer bg-gray-700  hover:bg-gray-700/90"
+                >
+                  {imagePreview && (
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full h-full object-contain rounded-xl"
+                    />
+                  )}
 
                     {videoPreview && (
                       <video

@@ -336,7 +336,7 @@ export default function Profile() {
         background: "radial-gradient(circle at top left, #041420, #000000)",
       }}
     >
-      <div className="container mx-auto max-w-6xl pt-32">
+      <div className="container mx-auto max-w-6xl pt-32 pb-16 px-4 lg:px-0">
         <div className="font-medium text-gray-200 text-3xl">Collections</div>
         
         <div className="flex items-center justify-between pt-4">

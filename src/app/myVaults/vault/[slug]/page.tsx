@@ -3,7 +3,7 @@
 import { Button, Modal, TextInput } from "flowbite-react";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
-import { AiOutlinePlusCircle } from "react-icons/ai";
+import { AiOutlinePlusCircle, AiOutlineUser, AiOutlinePicture } from "react-icons/ai";
 import { ethers } from "ethers";
 import {
   useWeb3ModalAccount,
@@ -322,6 +322,7 @@ export default function Page({ params }: { params: { slug: string } }) {
       setIsDownloading(false);
     }
   };
+  
 
   const handleLeaveVault = async () => {
     if (walletProvider) {
@@ -439,7 +440,7 @@ export default function Page({ params }: { params: { slug: string } }) {
         background: "radial-gradient(circle at top left, #041420, #000000)",
       }}
     >
-      <div className="container mx-auto max-w-6xl pt-32 pb-32">
+      <div className="container mx-auto max-w-6xl py-24 lg:py-32 px-4 lg:px-0">
         {/* Vault Name and Join Button */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2 pl-2 pr-3 border border-gray-900/80 py-1 bg-gray-900/80 rounded-full shadow-sm">
@@ -523,17 +524,22 @@ export default function Page({ params }: { params: { slug: string } }) {
 
           {/* Vault Owner, Members, and Moments */}
           <div className="flex items-center gap-4">
-            <div className="flex gap-2 text-gray-200">
-              <div
-                className="hover:cursor-pointer hover:text-primary-300"
-                onClick={() => setOpenMembersModal(true)}
-              >
-                {vaultMembers?.length} member
-                {vaultMembers?.length !== 1 ? "s" : ""}
+            <div className="flex gap-3 items-center text-gray-200">
+              <div className="flex gap-1 items-center">  
+                <AiOutlineUser />
+                <div
+                  className="hover:cursor-pointer hover:text-primary-300"
+                  onClick={() => setOpenMembersModal(true)}
+                >
+                  {vaultMembers?.length} member
+                  {vaultMembers?.length !== 1 ? "s" : ""}
+                </div>
               </div>
-              <div>|</div>
-              <div>
-                {moments?.length || 0} moment{moments?.length !== 1 ? "s" : ""}
+              <div className="flex gap-1 items-center">
+                <AiOutlinePicture />
+                <div>
+                  {moments?.length || 0} moment{moments?.length !== 1 ? "s" : ""}
+                </div>
               </div>
             </div>
           </div>

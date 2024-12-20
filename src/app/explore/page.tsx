@@ -213,8 +213,8 @@ export default function Explore() {
         ></div>
       </div>
       <div className="flex flex-col items-center text-center max-w-[360px] mx-auto">
-        <p className="text-lg mt-8">Loading</p>
-        {/* <p className="text-base mt-2 italic">"Every moment is a memory in the making"</p> */}
+        <p className="text-lg mt-8">Loading collections</p>
+        <p className="text-base mt-2">Make sure to connect your Universal Profile</p>
       </div>
     </div>
   ) : (
@@ -224,7 +224,7 @@ export default function Explore() {
         background: "radial-gradient(circle at top left, #041420, #000000)",
       }}
     >
-      <div className="container mx-auto max-w-6xl pt-32">
+      <div className="container mx-auto max-w-6xl py-24 lg:py-32 px-4 lg:px-0">
         <div className="flex gap-2">
           <Swiper
             slidesPerView={"auto"}
