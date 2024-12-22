@@ -108,9 +108,9 @@ const Navbar = () => {
         {/* Logo */}
         <Link href="/" className="flex items-center pl-0 z-50">
           <img
-            src="/fm-logo-main.svg"
+            src="/logo-fm-small.svg"
             alt="Forever Moments"
-            className="object-cover w-[164px] h-[30px] sm:w-[164px] sm:h-[30px] w-[110px] h-[20px]"
+            className="object-contain w-[164px] h-[48px] sm:w-[164px] sm:h-[48px] w-[110px] h-[20px]"
           />
         </Link>
 

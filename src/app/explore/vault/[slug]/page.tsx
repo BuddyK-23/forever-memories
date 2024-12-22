@@ -97,8 +97,10 @@ export default function Page({ params }: { params: { slug: string } }) {
           vaultAddress
         );
         if (isAddressInList(memberList, address as string)) {
+          console.log(true);
           setIsJoinedVault(true);
         } else {
+          console.log(false);
           setIsJoinedVault(false);
         }
       }
