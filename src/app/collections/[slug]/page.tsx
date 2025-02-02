@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import { ethers } from "ethers";
@@ -49,13 +49,14 @@ export default function CollectionPage({ params }: { params: { slug: string } })
     return ipfsUrl.replace("ipfs://", "https://api.universalprofile.cloud/ipfs/");
   };
 
-  useEffect(() => {
-    if (provider) {
-      fetchCollectionData();
-    }
-  }, [provider]);
+  // useEffect(() => {
+  //   if (provider) {
+  //     fetchCollectionData();
+  //   }
+  // }, [provider, fetchCollectionData]);
 
-  const fetchCollectionData = async () => {
+  //const fetchCollectionData = async () => {
+  const fetchCollectionData = useCallback(async () => {
     try {
       if (!provider) {
         console.error("No provider available");
@@ -83,11 +84,6 @@ export default function CollectionPage({ params }: { params: { slug: string } })
         { ipfsGateway: "https://api.universalprofile.cloud/ipfs" }
       );
 
-      // // Fetch Collection Metadata from Universal Profile
-      // const erc725 = new ERC725(LSP3ProfileMetadataSchemas, collectionUP, provider);
-      // const metadata = await erc725js.fetchData("LSP3Profile");
-      // console.log(`Metadata for collection ${collectionUP}:`, metadata);
-
       // Fetch data for 'CollectionMetadata' key
       const collectionMetadata = await erc725js.fetchData("CollectionMetadata");
       console.log(`Collection Metadata for ${collectionUP}:`, collectionMetadata);
@@ -104,17 +100,13 @@ export default function CollectionPage({ params }: { params: { slug: string } })
       const image = collectionData?.CollectionMetadata?.images ? collectionData.CollectionMetadata?.images[0]?.url : null; 
 
       // Convert the image IPFS URI
-      const imageUrl = image ? convertIpfsToGatewayUrl(image) : "/fallback-image.jpg";
+      const imageUrl = image ? convertIpfsToGatewayUrl(image) : "/logo-icon-400.svg";
 
       setCollection({ title, description, tags, imageUrl, owner });
 
-      // Fetch Moments in Collection
-      // const momentAddresses = await momentFactory.getMomentsInCollection(collectionUP);
-      // console.log("Moment Addresses:", momentAddresses);
-
       const momentAddressesRaw = await momentFactory.getMomentsInCollection(collectionUP);
       const momentAddresses = Array.isArray(momentAddressesRaw) ? [...momentAddressesRaw] : [];
-      console.log("Moment Addresses (Processed):", momentAddresses);
+      console.log("Moment Addresses:", momentAddresses);
 
       const fetchedMoments: Moment[] = [];
 
@@ -148,7 +140,7 @@ export default function CollectionPage({ params }: { params: { slug: string } })
             continue; // Skip this collection if no valid data is found
           }
 
-          // Build the collection card data
+          // Build the Moment card data
           fetchedMoments.push({
             title: momentData?.MomentMetadata?.title || "Untitled Collection",
             description: momentData?.MomentMetadata?.description || "No description available.",
@@ -165,7 +157,15 @@ export default function CollectionPage({ params }: { params: { slug: string } })
     } catch (error) {
       console.error("Error loading collection:", error);
     }
-  };
+  }, [provider, collectionUP, account]); // ✅ Dependencies added
+
+  const fetchUserCollections = useCallback(() => {
+    fetchCollectionData();
+  }, [fetchCollectionData]);
+
+  useEffect(() => {
+    fetchUserCollections();
+  }, [fetchUserCollections]);
 
   return (
     <main 

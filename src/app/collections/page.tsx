@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useCallback } from "react";
 import { ethers } from "ethers";
 import { ERC725 } from "@erc725/erc725.js";
 import LSP4DigitalAssetSchema from "@erc725/erc725.js/schemas/LSP4DigitalAsset.json";
@@ -25,23 +25,8 @@ export default function Collections() {
 
   const momentFactoryAddress = "0x5B1c49c322B45637765D2389D6704B5cDfc92345";
 
-  // // Fetch JSON from IPFS
-  // const fetchIPFSJson = async (ipfsUrl: string) => {
-  //   try {
-  //     const ipfsGatewayUrl = ipfsUrl.replace(
-  //       "ipfs://",
-  //       "https://api.universalprofile.cloud/ipfs/"
-  //     );
-  //     const response = await axios.get(ipfsGatewayUrl);
-  //     return response.data;
-  //   } catch (error) {
-  //     console.error(`Error fetching IPFS data from ${ipfsUrl}:`, error);
-  //     return null;
-  //   }
-  // };
-
   // Fetch collections metadata
-  const fetchCollections = async () => {
+  const fetchCollections = useCallback(async () => {
     if (!provider || !momentFactoryAddress) {
       console.error("Provider or contract address is not available.");
       setIsLoading(false);
@@ -51,15 +36,15 @@ export default function Collections() {
     try {
       // Connect to the MomentFactory contract
       const momentFactory = MomentFactory__factory.connect(momentFactoryAddress, provider);
-  
-      // Fetch total number of collections
-      const totalCollections = await momentFactory.getTotalCollections();
-      console.log(`Total collections: ${totalCollections}`);
-  
+
       // Get all collection addresses
       const collectionAddresses = await momentFactory.getAllCollections();
       console.log("All collections:", collectionAddresses);
   
+      //Fetch total number of collections
+      const totalCollections = await momentFactory.getTotalCollections();
+      console.log(`Total collections: ${totalCollections}`);
+
       const fetchedCollections: Collection[] = [];
   
       for (const collectionAddress of collectionAddresses) {
@@ -75,8 +60,8 @@ export default function Collections() {
   
         try {
           // Fetch metadata for the collection
-          const metadata = await erc725js.fetchData();
-          console.log(`Metadata for collection ${collectionAddress}:`, metadata);
+          // const metadata = await erc725js.fetchData();
+          // console.log(`Metadata for collection ${collectionAddress}:`, metadata);
   
           const collectionMetadata = await erc725js.fetchData('CollectionMetadata');
           console.log(`Collection Metadata for ${collectionAddress}:`, collectionMetadata);
@@ -84,7 +69,7 @@ export default function Collections() {
           const collectionData = collectionMetadata?.value;
 
           if (!collectionData) {
-            console.warn(`No valid LSP3Profile data for collection ${collectionAddress}`);
+            console.warn(`No valid Collection Metadata for collection ${collectionAddress}`);
             continue; // Skip this collection if no valid data is found
           }
 
@@ -97,48 +82,21 @@ export default function Collections() {
             collectionUP: collectionAddress,
           });
 
-          // // Extract the IPFS URL
-          // const ipfsUrl = lsp3ProfileData?.value?.url;
-
-          // if (!ipfsUrl || !ipfsUrl.startsWith("ipfs://")) {
-          //   console.warn(`Invalid or missing IPFS URL for collection ${collectionAddress}`);
-          //   continue; // Skip to the next collection if no valid URL is found
-          // }
-
-          // console.log(`Found valid IPFS URL: ${ipfsUrl}`);
-
-          // // Fetch JSON from IPFS
-          // const ipfsJson = await fetchIPFSJson(ipfsUrl);
-
-          // // Add collection data to the list
-          // if (ipfsJson) {
-          //   fetchedCollections.push({
-          //     title: ipfsJson.title || "Untitled Collection",
-          //     description: ipfsJson.description || "No description available.",
-          //     image: ipfsJson.profileImage ? ipfsJson.profileImage[0]?.url : "",
-          //     owner: ipfsJson.owner || "Unknown Owner",
-          //     collectionUP: collectionAddress,
-          //   });
-          // } else {
-          //   console.warn(`No data found for collection at IPFS URL: ${ipfsUrl}`);
-          // }
         } catch (error) {
           console.error(`Error fetching metadata for collection ${collectionAddress}:`, error);
         }
       }
-  
-      // Update state with the fetched collections
       setCollections(fetchedCollections);
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching collections:", error);
       setIsLoading(false);
     }
-  };  
+  }, [provider, momentFactoryAddress, account]);
 
   useEffect(() => {
     fetchCollections();
-  }, [provider]);
+  }, [fetchCollections]);
 
   if (isLoading) {
     return <div>Loading collections...</div>;

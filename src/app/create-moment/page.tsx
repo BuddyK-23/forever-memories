@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, FormEvent, useContext } from "react";
+import { useState, useEffect, FormEvent, useContext, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { UPConnectionContext } from "@/contexts/UPConnectionContext";
@@ -31,14 +31,14 @@ export default function CreateMoment() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [collections, setCollections] = useState<{ address: string; name: string }[]>([]);
 
-  useEffect(() => {
-    if (provider && account) {
-      fetchUserCollections();
-    }
-  }, [provider, account]);
+  // useEffect(() => {
+  //   if (provider && account) {
+  //     fetchUserCollections();
+  //   }
+  // }, [provider, account]);
 
   // 🔹 Fetch Collections the User Owns
-  const fetchUserCollections = async () => {
+  const fetchUserCollections = useCallback(async () => {
     try {
       if (!provider || !account) return;
 
@@ -76,7 +76,11 @@ export default function CreateMoment() {
     } catch (error) {
       console.error("Error fetching collections:", error);
     }
-  };
+  }, [provider, account]);
+
+  useEffect(() => {
+    fetchUserCollections();
+  }, [fetchUserCollections]);
 
   // 🔹 Handle File Upload
   const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
