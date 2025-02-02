@@ -1,120 +1,75 @@
 "use client";
 
-import Image from "next/image";
+import React from "react";
 import Link from "next/link";
-import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { AiOutlineLike, AiOutlineDislike, AiOutlineComment } from "react-icons/ai";
-import {
-  getUniversalProfileCustomName,
-  convertIpfsUriToUrl,
-} from "@/utils/format";
-
-interface Moment {
-  headline: string;
-  description: string;
-  fileType: string;
-  cid: string;
-  likes: number;
-  // dislikes: number;
-  comments: number;
-  owner: string;
-  momentAddress: string;
-}
 
 interface MomentCardProps {
-  moment: Moment;
+  title: string; // Moment name (e.g., "Holiday in Paris")
+  description: string; // Moment description
+  image: string; // IPFS URL of image
+  owner: string; // Owner's address
+  address: string;
+  link: string; // Link to the moment page
 }
 
-const MomentCard: React.FC<MomentCardProps> = ({ moment }) => {
-  const [profileName, setProfileName] = useState<string>("");
-  const [profileCid, setProfileCid] = useState<string>("");
-  const [showName, setShowName] = useState(false); // For hover or click behavior
+const MomentCard: React.FC<MomentCardProps> = ({
+  title,
+  description,
+  image,
+  owner,
+  address,
+  link,
+}) => {
+  // Convert the IPFS URL to an HTTP-accessible URL
+  const convertIpfsToGatewayUrl = (ipfsUrl: string): string => {
+    return ipfsUrl.replace("ipfs://", "https://api.universalprofile.cloud/ipfs/");
+  };
 
-
-  useEffect(() => {
-    const fetchProfileName = async () => {
-      try {
-        const profile = await getUniversalProfileCustomName(moment.owner);
-        setProfileName(profile.profileName || "Unknown");
-        setProfileCid(convertIpfsUriToUrl(profile.cid));
-      } catch (error) {
-        console.error("Error fetching owner profile:", error);
-        setProfileName("Unknown");
-      }
-    };
-
-    fetchProfileName();
-  }, []);
+  // Convert the image IPFS URI
+  const imageUrl = image ? convertIpfsToGatewayUrl(image) : "/fallback-image.jpg"; // Fallback image
+  console.log("imageUrl", imageUrl);
 
   return (
-    <>
-    <Link 
-      className="block relative group rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-gray-900 border border-transparent" 
-      href={`/nft/${moment.momentAddress}`}
-    >
-      {/* Moment Image */}
-
-      <div className="relative w-full h-[300px]">
-        {moment.fileType == "image" && (
-          <img
-            src={moment.cid}
-            alt={moment.headline}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => (e.currentTarget.src = "/fallback-image.jpg")}
+    <div className="flex flex-col bg-gray-900/50 rounded-lg shadow-lg hover:shadow-2xl transition-all overflow-hidden">
+      {/* Image Section */}
+      <Link href={link} className="w-full">
+          <Image
+            src={imageUrl}
+            alt={title || "Untitled Moment"} // Provide a fallback title
+            width={300}
+            height={200}
+            className="w-full h-48 object-cover cursor-pointer hover:opacity-90 transition-opacity duration-300"
           />
-        )}
+      </Link>
 
-        {moment.fileType == "video" && (
-          <video
-            src={moment.cid}
-            controls
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => (e.currentTarget.src = "/fallback-image.jpg")}
-          />
-        )}
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-300"></div>
-      </div>
+      {/* Details Section */}
+      <div className="p-4 flex flex-col justify-between h-full">
+        {/* Moment Title and Description */}
+        <div>
+          <Link href={link}>
+            <h3 className="text-2xl font-bold text-gray-200 hover:text-primary-500 transition-colors line-clamp-2">
+              {title || "Untitled Collection"}
+            </h3>
+          </Link>
+          <p className="text-gray-400 text-sm mt-2 line-clamp-3">
+            {description || "No description available."}
+          </p>
+        </div>
 
-      {/* Moment Details */}
-      <div className="absolute bottom-0 p-4 w-full text-white group-hover:bg-black/70 transition-all duration-300 ">
-        <h3 className="font-bold text-lg truncate">{moment.headline}</h3>
-        <div className="flex justify-start items-center mt-2 text-sm">
-          {/* Likes, Dislikes, and Comments */}
-          <div className="flex space-x-4">
-            <div className="flex items-center space-x-1">
-              <AiOutlineLike />
-              <span>{moment.likes}</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <AiOutlineDislike />
-              {/* <span>{moment.dislikes}</span> */}
-              <span>0</span>
-            </div>
-            <div className="flex items-center space-x-1" >
-              <AiOutlineComment />
-              <span>{moment.comments}</span>
-            </div>
+        {/* Bottom Section: Owner */}
+        <div className="flex justify-between items-center mt-4">
+          <Link href={link} className="text-sm text-primary-600 hover:text-primary-500">
+            View Moment
+          </Link>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-200">{owner || "Unknown Owner"}</span>
           </div>
         </div>
       </div>
-      
-    </Link>
-
-    {/* Owner Section */}
-    <div className="pt-2">
-      <div className="inline-flex items-center gap-1 pl-1 pr-2 border border-gray-900/80 py-1 bg-gray-900/40 rounded-full">
-        <img
-          className="rounded-full object-cover w-6 h-6"
-          src={profileCid}
-          alt="Owner profile"
-        />
-        <div className="text-sm text-gray-200">
-          {profileName || "Loading..."}
-        </div>
-      </div>
     </div>
-  </>
   );
 };
 

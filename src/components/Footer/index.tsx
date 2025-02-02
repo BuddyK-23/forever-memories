@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
-import { FaTwitter, FaDiscord, FaMedium, FaYoutube } from 'react-icons/fa';
+import { 
+  FaTwitter, 
+  FaDiscord, 
+  FaMedium, 
+  FaYoutube 
+} from 'react-icons/fa';
 import { MdAccountCircle } from 'react-icons/md'; // For Universal Profile Icon
 import "./index.css";
 

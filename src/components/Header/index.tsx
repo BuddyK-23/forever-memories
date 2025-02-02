@@ -1,17 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
-import { useWeb3ModalAccount } from "@web3modal/ethers5/react";
-import { walletConnectInstance } from "@/components/WalletContext";
+import { UPConnectionContext } from "@/contexts/UPConnectionContext";
 import { getUniversalProfileCustomName } from "@/utils/format";
 import { convertIpfsUriToUrl } from "@/utils/format";
 import { useRouter } from "next/router";
 import "./index.css";
 
 const Navbar = () => {
-  const { address, isConnected } = useWeb3ModalAccount();
+  const { provider, account, connectUP, disconnectUP } = useContext(UPConnectionContext);
   const [nav, setNav] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("/default-avatar.png");
@@ -21,7 +20,6 @@ const Navbar = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
-
   useEffect(() => {
     const handleScroll = () => {
       // Set state based on scroll position
@@ -29,39 +27,19 @@ const Navbar = () => {
     };
 
     window.addEventListener("scroll", handleScroll);
-
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
-  const handleConnect = async () => {
-    await walletConnectInstance.open();
-  };
-
-  const handleDisconnect = async () => {
-    await walletConnectInstance.disconnect();
-    localStorage.removeItem("connectedAddress");
-    setDropdownOpen(false);
-  };
-
-  const toggleDropdown = () => {
-    setDropdownOpen((prev) => !prev);
-  };
-
   useEffect(() => {
     const fetchProfileDetails = async () => {
       try {
-        if (isConnected && address) {
-          const profile = await getUniversalProfileCustomName(address);
+        if (account && provider) {
+          const profile = await getUniversalProfileCustomName(account, provider);
           setProfileName(profile.profileName || "Unknown");
-          // setBannerUrl(
-          //   profile.backgroundImage ? convertIpfsUriToUrl(profile.backgroundImage) : "/default-banner.png"
-          // );
+          setAvatarUrl(profile.cid ? convertIpfsUriToUrl(profile.cid) : "/default-avatar.png");
           setBannerUrl("/default-banner.png");
-          setAvatarUrl(
-            profile.cid ? convertIpfsUriToUrl(profile.cid) : "/default-avatar.png"
-          );
           setLyxBalance("122.42"); // Replace with actual balance logic
         } else {
           setAvatarUrl("/default-avatar.png");
@@ -79,7 +57,11 @@ const Navbar = () => {
     };
 
     fetchProfileDetails();
-  }, [address, isConnected]);
+  }, [account, provider]);
+
+  const toggleDropdown = () => {
+    setDropdownOpen((prev) => !prev);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -95,9 +77,9 @@ const Navbar = () => {
   }, []);
 
   const links = [
-    { id: 1, title: "Explore", link: "/explore" },
-    { id: 2, title: "Collections", link: "/myVaults" },
-    { id: 3, title: "New Moment", link: "/addMoment" },
+    { id: 1, title: "Collections", link: "/collections" },
+    { id: 2, title: "Create Collection", link: "/create-collection" },
+    { id: 3, title: "Create Moment", link: "/create-moment" },
   ];
 
   return (
@@ -108,9 +90,9 @@ const Navbar = () => {
         {/* Logo */}
         <Link href="/" className="flex items-center pl-0 z-50">
           <img
-            src="/logo-fm-small.svg"
+            src="/logo-forevermoments.svg"
             alt="Forever Moments"
-            className="object-contain w-[164px] h-[48px] sm:w-[164px] sm:h-[48px] w-[110px] h-[20px]"
+            className="object-contain sm:w-[160px] sm:h-[26px] w-[120px] h-[20px]"
           />
         </Link>
 
@@ -120,7 +102,7 @@ const Navbar = () => {
             <Link
               key={id}
               href={link}
-              className="hover:text-primary-300 text-gray-200 transition-colors duration-200"
+              className="hover:text-pink-200 text-gray-200 transition-colors duration-200"
               // className={`transition-colors duration-200 ${
               //   currentPath === link
               //     ? "text-primary-700"
@@ -130,14 +112,15 @@ const Navbar = () => {
               {title}
             </Link>
           ))}
-          {!isConnected ? (
+
+          {!account ? (
             <button
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg shadow-md"
-              onClick={handleConnect}
+              onClick={connectUP}
+              className="bg-pink-100 hover:bg-pink-200 text-gray-800 px-4 py-2 rounded-xl"
             >
               Connect
             </button>
-          ) : (
+          ) : ( 
             <div className="relative" ref={dropdownRef}>
               {/* Avatar */}
               <img
@@ -166,9 +149,9 @@ const Navbar = () => {
                       />
                       <div>
                         <div className="text-base font-medium">{profileName}</div>
-                        <div className="text-sm text-gray-400">
+                        {/* <div className="text-sm text-gray-400">
                           {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ""}
-                        </div>
+                        </div> */}
                       </div>
                     </div>
 
@@ -183,13 +166,13 @@ const Navbar = () => {
                   <div className="flex flex-col space-y-2 pl-4 pr-4 pb-4">
                     <Link
                       href="/profile"
-                      className="w-full bg-primary-600 text-gray-200 hover:bg-primary-500 rounded-lg shadow-sm px-4 py-2 text-base text-center"
+                      className="w-full bg-pink-100 text-gray-800 hover:bg-pink-200 rounded-xl shadow-sm px-4 py-2 text-base text-center"
                     >
                       View Profile
                     </Link>
                     <button
-                      onClick={handleDisconnect}
-                      className="w-full bg-gray-600 text-gray-200 hover:bg-gray-500 rounded-lg shadow-sm px-4 py-2 text-center"
+                      onClick={disconnectUP}
+                      className="w-full bg-gray-600 text-gray-200 hover:bg-gray-500 rounded-xl shadow-sm px-4 py-2 text-center"
                     >
                       Disconnect
                     </button>
@@ -226,14 +209,12 @@ const Navbar = () => {
                 </Link>
               </li>
             ))}
-            {!isConnected ? (
+
+            {!account ? (
               <li>
                 <button
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded"
-                  onClick={() => {
-                    setNav(false);
-                    handleConnect();
-                  }}
+                  className="bg-pink-100 hover:bg-pink-200 text-gray-800 px-4 py-2 rounded-xl"
+                  onClick={connectUP}
                 >
                   Connect
                 </button>
@@ -241,8 +222,8 @@ const Navbar = () => {
             ) : (
               <li>
                 <button
-                  onClick={handleDisconnect}
-                  className="text-left px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded"
+                  onClick={disconnectUP}
+                  className="text-left px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-xl"
                 >
                   Disconnect
                 </button>

@@ -19,31 +19,31 @@ export default function Home() {
       ></div>
 
       {/* Animated Balls */}
-      <div className="animated-balls">
+      {/* <div className="animated-balls">
         <div className="ball ball1"></div>
         <div className="ball ball2"></div>
         <div className="ball ball3"></div>
-      </div>
+      </div> */}
 
       {/* Content */}
-      <div className="container mx-auto max-w-6xl h-screen px-4 lg:px-0 flex flex-col justify-center relative z-10">
+      <div className="container mx-auto max-w-6xl h-screen px-4 lg:px-0 flex flex-col items-center text-center justify-center relative z-10">
         <div className="text-white">
-          <h2 className="text-5xl text-gray-200 font-bold mb-3">Own and control your digital legacy</h2>
-          <p className="text-xl text-gray-300 mb-10 max-w-[740px]">
-            Decentralised storage ensures your photos and videos are safe, resilient, and fully under your control — forever.
+          <h2 className="text-6xl text-gray-200 font-bold mb-3">Capture the <span className="text-pink-400 italic">moment</span></h2>
+          <p className="text-xl text-gray-200 mb-10 max-w-[740px]">
+          Own your moments, preserve your truth. A decentralized archive of life’s most authentic stories, forever secured for generations to come.
           </p>
-          <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 mt-6">
-            <a
-              href="/createVault"
-              className="px-6 py-3 bg-primary-600 text-gray-200 rounded-lg shadow-md hover:bg-primary-500"
+          <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 mt-6 justify-center items-center">
+            {/* <a
+              href="/create-collection"
+              className="px-6 py-3 bg-gray-300 text-gray-800 rounded-xl shadow-md hover:bg-gray-400"
             >
-              Create a private collection →
-            </a>
+              Create a collection
+            </a> */}
             <a
-              href="/explore"
-              className="px-6 py-3 bg-gray-700 text-gray-200 rounded-lg shadow-md hover:bg-gray-600"
+              href="/collections"
+              className="px-6 py-3 bg-pink-100 text-gray-800 rounded-xl shadow-md hover:bg-pink-200"
             >
-              Explore public collections
+              Explore collections
             </a>
           </div>
         </div>

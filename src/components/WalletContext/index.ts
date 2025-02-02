@@ -1,11 +1,11 @@
 // Import the necessary components
-import { createWeb3Modal, defaultConfig } from "@web3modal/ethers5/react";
+import { createWeb3Modal, defaultConfig } from "@web3modal/ethers/react";
 
-const projectId = "a1bda241f0519c5d662bd07e0705acaf";
+const projectId = "a1bda241f0519c5d662bd07e0705acaf"; 
 
 // Setup the Metadata
 const walletConnectMetadata = {
-  name: "Ferever Memory",
+  name: "Forever Moments",
   description: "dApp using Wallet Connect",
   url: "https://forever-memory.vercel.app/",
   icons: ["https://my.dapp.domain/icon.svg"],

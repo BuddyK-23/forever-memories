@@ -1,10 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
-import { generateEncryptionKey, encryptFile, decryptFile } from "@/utils/upload";
-import {
-  generateEncryptedEncryptionKey,
-  generateAESKey,
-  decryptEncryptedEncryptionKey,
-} from "@/utils/encryptKey";
+import { encryptWithPublicKey } from "@/utils/encryption";
 import { hexToDecimal, uint8ArrayToHexString } from "@/utils/format";
 
 export const dynamic = "auto";
@@ -41,28 +36,28 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const data = await request.formData();
     const file: File | null = data.get("file") as File | null;
+    const collectionPublicKey = data.get("collectionPublicKey") as string;
 
     if (!file) {
       throw new Error("No file found in request");
     }
 
-    const encryptionKey = await generateEncryptionKey(
-      data.get("momentMetadata") as string
-    ); // Ensure 256-bit key
-    console.log("encryptionKey", encryptionKey);
-    const encryptedData = await encryptFile(file, encryptionKey);
-    console.log("Image encrypted successfully.");
-    const ipfsHash = await uploadToPinata(encryptedData);
-    console.log("Uploaded encrypted data to Pinata. IPFS Hash:", ipfsHash);
+    if (!collectionPublicKey) {
+      throw new Error("Collection public key is required");
+    }
 
-    //////////////
-    const combinedEncryptedData_ = await generateEncryptedEncryptionKey(
-      encryptionKey
+    // Encrypt the file with the collection's public key
+    const fileArrayBuffer = await file.arrayBuffer();
+    const encryptedData = encryptWithPublicKey(
+      collectionPublicKey,
+      new Uint8Array(fileArrayBuffer)
     );
-    const combinedEncryptedData = uint8ArrayToHexString(combinedEncryptedData_);
+
+    // Upload the encrypted file to Pinata
+    const ipfsHash = await uploadToPinata(encryptedData);
 
     return new NextResponse(
-      JSON.stringify({ ipfsHash, combinedEncryptedData }),
+      JSON.stringify({ ipfsHash }),
       {
         status: 200,
         headers: { "Content-Type": "application/json" },

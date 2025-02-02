@@ -1,0 +1,23 @@
+[
+  {
+    "name": "MomentMetadata",
+    "key": "0x3569795c73940696ea152d91d7bf7a2a1543fcf430ff086ba45e1de82f924e81",
+    "keyType": "Singleton",
+    "valueType": "bytes",
+    "valueContent": "VerifiableURI"
+  },
+  {
+    "name": "InteractionMetadata",
+    "key": "0x82c068611e124df023957417a7889b39db6b5973d2574457ec97b0310cc48bbf",
+    "keyType": "Singleton",
+    "valueType": "bytes",
+    "valueContent": "VerifiableURI"
+  },
+  {
+    "name": "FinancialMetadata",
+    "key": "0x5f9a2a3c336f207e56d80cc08d56e295a5d43b1b819463bcdfc7b9c0a403676b",
+    "keyType": "Singleton",
+    "valueType": "bytes",
+    "valueContent": "VerifiableURI"
+  }
+]

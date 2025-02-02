@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { config } from "@/app/config";
 import "./globals.css";
+import { UPConnectionProvider } from '@/contexts/UPConnectionContext';
 
 /**
  * Defines the basic layout for the application. It includes the
@@ -27,9 +28,11 @@ export default function RootLayout({
         <link rel="icon" href={config.metadata.icon} sizes="any" />
       </head>
       <body>
-        <Header />
-        <main>{children}</main>
-        <Footer />
+        <UPConnectionProvider>
+          <Header />
+          <main>{children}</main>
+          <Footer />
+        </UPConnectionProvider>
       </body>
     </html>
   );

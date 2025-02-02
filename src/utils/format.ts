@@ -1,4 +1,6 @@
-import { ethers } from "ethers";
+// import { ethers } from "ethers";
+// import { BigNumber, hexZeroPad, isHexString } from "ethers";
+import { hexlify, zeroPadBytes, isHexString, hashMessage, BrowserProvider } from "ethers";
 import { ERC725 } from "@erc725/erc725.js";
 import LSP3Schema from "@erc725/erc725.js/schemas/LSP3ProfileMetadata.json";
 import { format } from "date-fns";
@@ -81,38 +83,61 @@ export function anonymousAddress(address: string): string {
   return `${address.slice(0, 10)}...${address.slice(-8)}`;
 }
 
+// export function checkCID(ipfsString: string): boolean {
+//   const ipfsPrefix = "ipfs://";
+//   // Check if the string starts with the IPFS prefix
+//   if (!ipfsString.startsWith(ipfsPrefix)) return false;
+//   else return true;
+// }
+
 export function checkCID(ipfsString: string): boolean {
-  const ipfsPrefix = "ipfs://";
-  // Check if the string starts with the IPFS prefix
-  if (!ipfsString.startsWith(ipfsPrefix)) return false;
-  else return true;
+  return ipfsString.startsWith("ipfs://");
 }
 
 export async function getUniversalProfileCustomName(
-  address: string
+  address: string,
+  provider: BrowserProvider
 ): Promise<{ profileName: string; cid: string; description: string }> {
+  // Fetch the network from the provider
+  const network = await provider.getNetwork();
+  const rpcUrl =
+    network.chainId === BigInt(4201)
+      ? process.env.NEXT_PUBLIC_TESTNET_URL
+      : process.env.NEXT_PUBLIC_MAINNET_URL;
+  
   const erc725js = new ERC725(
     LSP3Schema,
     address,
-    process.env.NEXT_PUBLIC_MAINNET_URL,
+    rpcUrl,
+    // process.env.NEXT_PUBLIC_MAINNET_URL,
     {
       ipfsGateway: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
     }
   );
-  // Fetch the LSP3 profile metadata
-  const profileData = await erc725js.fetchData("LSP3Profile");
-  const decodedProfileMetadata =
-    profileData as unknown as DecodedProfileMetadata;
-  const profile: LSP3Profile = decodedProfileMetadata.value.LSP3Profile;
-  const addressPrefix = address.slice(2, 6);
-  const description = profile.description;
-  let profileName;
-  if (!profile.name) profileName = anonymousAddress(address);
-  else profileName = `@${profile.name}#${addressPrefix}`;
-  const cid = profile?.profileImage ? profile.profileImage[0]?.url : "";
 
-  // Return the Universal Profile name
-  return { profileName, cid, description };
+  try {
+    // Fetch the LSP3 profile metadata
+    const profileData = await erc725js.fetchData("LSP3Profile");
+    const decodedProfileMetadata =
+      profileData as unknown as DecodedProfileMetadata;
+    const profile: LSP3Profile = decodedProfileMetadata.value.LSP3Profile;
+    const addressPrefix = address.slice(2, 6);
+    const description = profile.description;
+    // let profileName;
+    // if (!profile.name) profileName = anonymousAddress(address);
+    // else profileName = `@${profile.name}#${addressPrefix}`;
+    const profileName = profile.name
+      ? `@${profile.name}#${addressPrefix}`
+      : anonymousAddress(address);
+
+    const cid = profile?.profileImage ? profile.profileImage[0]?.url : "";
+
+    // Return the Universal Profile name
+    return { profileName, cid, description };
+  } catch (error) {
+    console.error("Failed to fetch Universal Profile data:", error);
+    throw error;
+  }
 }
 
 export function generateProfileName(name: string, address: string): string {
@@ -125,7 +150,7 @@ export function generateProfileName(name: string, address: string): string {
 
 export function bytes32ToAddress(bytes32: string): string {
   // Ensure the input is a valid bytes32 string
-  if (!ethers.utils.isHexString(bytes32) || bytes32.length !== 66) {
+  if (!isHexString(bytes32) || bytes32.length !== 66) {
     throw new Error("Invalid bytes32 string");
   }
 
@@ -135,22 +160,15 @@ export function bytes32ToAddress(bytes32: string): string {
 }
 
 export function decimalToBytes32(decimal: number | string): string {
-  // Convert the decimal to a BigNumber
-  const bigNumber = ethers.BigNumber.from(decimal);
+  const bigIntValue = BigInt(decimal); // Convert to BigInt
 
-  // Ensure the BigNumber fits within 32 bytes
-  if (
-    bigNumber.gt(
-      ethers.BigNumber.from(
-        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-      )
-    )
-  ) {
+  // Ensure the BigInt fits within 32 bytes
+  if (bigIntValue > BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")) {
     throw new Error("Decimal value is too large to fit in 32 bytes");
   }
 
   // Convert to 32-byte hex string
-  return ethers.utils.hexZeroPad(bigNumber.toHexString(), 32);
+  return zeroPadBytes(bigIntValue.toString(16), 32); // Use hex string and pad
 }
 
 /**
