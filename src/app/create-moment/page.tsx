@@ -64,7 +64,31 @@ export default function CreateMoment() {
             );
 
             const metadata = await erc725.fetchData("CollectionMetadata");
-            const title = metadata?.value?.CollectionMetadata?.title || "Untitled Collection";
+            console.log(`Collection Metadata for ${address}:`, metadata);
+
+            const metadataValue = metadata?.value;
+
+            // Ensure it's an object and not an array or string
+            if (
+              typeof metadataValue !== "object" ||
+              metadataValue === null ||
+              Array.isArray(metadataValue)
+            ) {
+              console.warn("Unexpected metadata format:", metadataValue);
+            }
+
+            // If CollectionMetadata exists and is an object, use it
+            const collectionData =
+              metadataValue &&
+              typeof metadataValue === "object" &&
+              "CollectionMetadata" in metadataValue &&
+              typeof metadataValue.CollectionMetadata === "object"
+                ? metadataValue.CollectionMetadata
+                : {}; // Fallback to an empty object
+
+            console.log("Extracted CollectionMetadata:", collectionData);
+
+            const title = collectionData.title || "Untitled Collection";
             return { address, name: title };
           } catch (error) {
             console.error(`Error fetching metadata for ${address}:`, error);

@@ -18,14 +18,16 @@ interface Moment {
   title: string;
   description: string;
   image: string;
+  tags: string[];
   owner: string;
   address: string;
+  link: string;
 }
 
 const MOMENT_FACTORY_ADDRESS = process.env.NEXT_PUBLIC_MOMENT_FACTORY_ADDRESS_TESTNET!;
 
-export default function CollectionPage({ params }: { params: { slug: string } }) {
-  const { slug } = useParams();
+export default function CollectionPage() {
+  const { slug } = useParams() as { slug: string };
   const { provider, account } = useContext(UPConnectionContext);
   const collectionUP = slug as string;
   const router = useRouter();
@@ -73,7 +75,7 @@ export default function CollectionPage({ params }: { params: { slug: string } })
       );
 
       // Fetch Collection Owner
-      const owner = account;
+      const owner: string = account || "Unknown Owner";
       console.log("Collection Owner:", owner);
 
       // Initialize ERC725.js for the current collection
@@ -88,16 +90,43 @@ export default function CollectionPage({ params }: { params: { slug: string } })
       const collectionMetadata = await erc725js.fetchData("CollectionMetadata");
       console.log(`Collection Metadata for ${collectionUP}:`, collectionMetadata);
 
-      const collectionData = collectionMetadata?.value;
+      // const collectionData = collectionMetadata?.value;
 
-      if (!collectionData) {
-        console.warn(`No valid collection data for collection ${collectionUP}`);
+      // if (!collectionData) {
+      //   console.warn(`No valid collection data for collection ${collectionUP}`);
+      // }
+
+      // const title = collectionData?.CollectionMetadata?.title || "Untitled Collection";
+      // const description = collectionData?.CollectionMetadata?.description || "No description provided.";
+      // const tags = collectionData?.CollectionMetadata?.tags || [];
+      // const image = collectionData?.CollectionMetadata?.images ? collectionData.CollectionMetadata?.images[0]?.url : null;
+
+      const collectionMetadataValue = collectionMetadata?.value;
+
+      // Ensure it's an object and not an array or string
+      if (
+        typeof collectionMetadataValue !== "object" ||
+        collectionMetadataValue === null ||
+        Array.isArray(collectionMetadataValue)
+      ) {
+        console.warn("Unexpected metadata format:", collectionMetadataValue);
       }
 
-      const title = collectionData?.CollectionMetadata?.title || "Untitled Collection";
-      const description = collectionData?.CollectionMetadata?.description || "No description provided.";
-      const tags = collectionData?.CollectionMetadata?.tags || [];
-      const image = collectionData?.CollectionMetadata?.images ? collectionData.CollectionMetadata?.images[0]?.url : null; 
+      // If CollectionMetadata exists and is an object, use it
+      const collectionData =
+        collectionMetadataValue &&
+        typeof collectionMetadataValue === "object" &&
+        "CollectionMetadata" in collectionMetadataValue &&
+        typeof collectionMetadataValue.CollectionMetadata === "object"
+          ? collectionMetadataValue.CollectionMetadata
+          : {}; // Fallback to an empty object
+
+      console.log("Extracted CollectionMetadata:", collectionData);
+    
+      const title = collectionData.title || "Untitled Collection";
+      const description = collectionData.description || "No description provided.";
+      const tags = collectionData.tags || [];
+      const image = collectionData.images?.[0]?.url || null;
 
       // Convert the image IPFS URI
       const imageUrl = image ? convertIpfsToGatewayUrl(image) : "/logo-icon-400.svg";
@@ -133,22 +162,64 @@ export default function CollectionPage({ params }: { params: { slug: string } })
           const momentMetadata = await erc725js.fetchData('MomentMetadata');
           console.log(`Moment Metadata for ${momentAddress}:`, momentMetadata);
 
-          const momentData = momentMetadata?.value;
+          // const momentData = momentMetadata?.value;
 
-          if (!momentData) {
-            console.warn(`No valid MomentMetadata data for moment ${momentAddress}`);
-            continue; // Skip this collection if no valid data is found
+          // if (!momentData) {
+          //   console.warn(`No valid MomentMetadata data for moment ${momentAddress}`);
+          //   continue; // Skip this collection if no valid data is found
+          // }
+
+          // // Build the Moment card data
+          // fetchedMoments.push({
+          //   title: momentData?.MomentMetadata?.title || "Untitled Collection",
+          //   description: momentData?.MomentMetadata?.description || "No description available.",
+          //   image: momentData?.MomentMetadata?.images ? momentData.MomentMetadata?.images[0]?.url : null,
+          //   owner: account || "Unknown Owner",
+          //   address: momentAddress,
+          //   link: `/moments/${momentAddress}`,
+          // });
+
+          const momentDataValue = momentMetadata?.value;
+
+          // Ensure it's an object and not an array or string
+          if (
+            typeof momentDataValue !== "object" ||
+            momentDataValue === null ||
+            Array.isArray(momentDataValue)
+          ) {
+            console.warn("Unexpected metadata format:", momentDataValue);
           }
+
+          // If MomentMetadata exists and is an object, use it
+          const momentData =
+            momentDataValue &&
+            typeof momentDataValue === "object" &&
+            "MomentMetadata" in momentDataValue &&
+            typeof momentDataValue.MomentMetadata === "object"
+              ? momentDataValue.MomentMetadata
+              : {}; // Fallback to an empty object
+
+          console.log("Extracted MomentMetadata:", momentData);
+        
+          const title = momentData.title || "Untitled Collection";
+          const description = momentData.description || "No description provided.";
+          const tags = momentData.tags || [];
+          const image = momentData.images?.[0]?.url || null;
+
+          // Convert the image IPFS URI
+          const imageUrl = image ? convertIpfsToGatewayUrl(image) : "/logo-icon-400.svg";
 
           // Build the Moment card data
           fetchedMoments.push({
-            title: momentData?.MomentMetadata?.title || "Untitled Collection",
-            description: momentData?.MomentMetadata?.description || "No description available.",
-            image: momentData?.MomentMetadata?.images ? momentData.MomentMetadata?.images[0]?.url : null,
+            title: title || "Untitled Collection",
+            description: description || "No description available.",
+            image: imageUrl,
+            tags: tags || [],
             owner: account || "Unknown Owner",
             address: momentAddress,
             link: `/moments/${momentAddress}`,
           });
+
         } catch (error) {
           console.error(`Error fetching metadata for moment ${momentAddress}:`, error);
         }
@@ -157,7 +228,7 @@ export default function CollectionPage({ params }: { params: { slug: string } })
     } catch (error) {
       console.error("Error loading collection:", error);
     }
-  }, [provider, collectionUP, account]); // ✅ Dependencies added
+  }, [provider, collectionUP, account]);
 
   const fetchUserCollections = useCallback(() => {
     fetchCollectionData();

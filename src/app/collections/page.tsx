@@ -25,6 +25,12 @@ export default function Collections() {
 
   const momentFactoryAddress = "0x5B1c49c322B45637765D2389D6704B5cDfc92345";
 
+  // Convert the IPFS URL to an HTTP-accessible URL
+  const convertIpfsToGatewayUrl = (ipfsUrl: string): string => {
+    if (!ipfsUrl) return "/fallback-image.jpg";
+    return ipfsUrl.replace("ipfs://", "https://api.universalprofile.cloud/ipfs/");
+  };
+
   // Fetch collections metadata
   const fetchCollections = useCallback(async () => {
     if (!provider || !momentFactoryAddress) {
@@ -66,18 +72,48 @@ export default function Collections() {
           const collectionMetadata = await erc725js.fetchData('CollectionMetadata');
           console.log(`Collection Metadata for ${collectionAddress}:`, collectionMetadata);
 
-          const collectionData = collectionMetadata?.value;
+          const collectionMetadataValue = collectionMetadata?.value;
 
-          if (!collectionData) {
-            console.warn(`No valid Collection Metadata for collection ${collectionAddress}`);
-            continue; // Skip this collection if no valid data is found
+          // Ensure it's an object and not an array or string
+          if (
+            typeof collectionMetadataValue !== "object" ||
+            collectionMetadataValue === null ||
+            Array.isArray(collectionMetadataValue)
+          ) {
+            console.warn("Unexpected metadata format:", collectionMetadataValue);
           }
+
+          // If CollectionMetadata exists and is an object, use it
+          const collectionData =
+            collectionMetadataValue &&
+            typeof collectionMetadataValue === "object" &&
+            "CollectionMetadata" in collectionMetadataValue &&
+            typeof collectionMetadataValue.CollectionMetadata === "object"
+              ? collectionMetadataValue.CollectionMetadata
+              : {}; // Fallback to an empty object
+
+          console.log("Extracted CollectionMetadata:", collectionData);
+        
+          const title = collectionData.title || "Untitled Collection";
+          const description = collectionData.description || "No description provided.";
+          const tags = collectionData.tags || [];
+          const image = collectionData.images?.[0]?.url || null;
+
+          // Convert the image IPFS URI
+          const imageUrl = image ? convertIpfsToGatewayUrl(image) : "/logo-icon-400.svg";
+
+          // const collectionData = collectionMetadata?.value;
+
+          // if (!collectionData) {
+          //   console.warn(`No valid Collection Metadata for collection ${collectionAddress}`);
+          //   continue; // Skip this collection if no valid data is found
+          // }
 
           // Build the collection card data
           fetchedCollections.push({
-            title: collectionData?.CollectionMetadata?.title || "Untitled Collection",
-            description: collectionData?.CollectionMetadata?.description || "No description available.",
-            image: collectionData?.CollectionMetadata?.images ? collectionData.CollectionMetadata?.images[0]?.url : "",
+            title: title || "Untitled Collection",
+            description: description || "No description available.",
+            image: imageUrl,
             owner: account || "Unknown Owner",
             collectionUP: collectionAddress,
           });
